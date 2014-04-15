@@ -7,7 +7,7 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -26,10 +26,10 @@ use inc::Module::Install;
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 {
     no warnings 'once';
-    our $YEAR = '2004-2008';
+    our $YEAR = '2004-2009';
 }
 
 #===============================================================================
@@ -40,6 +40,7 @@ MAIN: {
     name          ('Filter-Crypto');
     license       ('perl');
     all_from      ('lib/Filter/Crypto.pm');
+    requires      ('Scalar::Util');
     test_requires ('Test::More');
     feature       ('crypt_file -e tempfile support' => [
                    -default => 0,
@@ -883,7 +884,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -893,11 +894,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.06
+Version 1.07
 
 =head1 DATE
 
-05 Jul 2008
+06 Sep 2009
 
 =head1 HISTORY
 

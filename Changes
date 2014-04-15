@@ -1,9 +1,17 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.23
+                          Filter::Crypto, Version 1.24
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.24 06 Sep 2009
+
+    - Use Scalar::Util::reftype() instead of UNIVERSAL::isa(). The latter is
+      explicitly warned against in the UNIVERSAL documentation, and this also
+      avoids a deprecation warning from UNIVERSAL->import() in Perl 5.11.x which
+      caused t/03_script.t tests 42 and 47 to fail.
 _________________
 
 v1.23 28 Aug 2008

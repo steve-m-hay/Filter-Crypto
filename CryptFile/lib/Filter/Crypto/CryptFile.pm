@@ -7,7 +7,7 @@
 #   which they can be run via Filter::Crypto::Decrypt.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -25,7 +25,7 @@ use warnings;
 use Carp qw(carp croak);
 use Exporter qw();
 use Fcntl qw(:DEFAULT :flock);
-use UNIVERSAL qw(isa);
+use Scalar::Util qw(reftype);
 use XSLoader qw();
 
 sub crypt_file($;$$);
@@ -278,22 +278,18 @@ sub _isa_cryptmode($) {
             $mode eq CRYPT_MODE_DECRYPTED()   ));
 }
 
-# This function is based on the C<isaFilehandle()> function in the
-# Compress::Zlib module (version 1.33).
-
 sub _isa_filehandle($) {
     my $fh = shift;
 
-    return((isa($fh, 'GLOB') or isa(\$fh, 'GLOB')) and defined fileno $fh);
+    return(((    ref $fh and reftype($fh)  eq 'GLOB') or
+            (not ref $fh and reftype(\$fh) eq 'GLOB')   ) and
+           defined fileno $fh);
 }
-
-# This function is based on the C<isaFilename()> function in the Compress::Zlib
-# module (version 1.33).
 
 sub _isa_filename($) {
     my $name = shift;
 
-    return(not ref $name and isa(\$name, 'SCALAR'));
+    return(not ref $name and reftype(\$name) eq 'SCALAR');
 }
 
 1;
@@ -873,10 +869,6 @@ L<Filter::Crypto>.
 
 =head1 ACKNOWLEDGEMENTS
 
-The private C<_isa_filehandle()> and C<_isa_filename()> functions are based on
-the C<isaFilehandle()> and C<isaFilename()> functions in the Compress::Zlib
-module (version 1.33), written by Paul Marquess.
-
 The C<_PRNGInit()> and C<_GetRandNum()> functions used by the XS code are based
 on (code taken from) the C<ssl_rand_seed()> and C<ssl_rand_choosenum()>
 functions in mod_ssl (version 2.8.19-1.3.31).
@@ -891,7 +883,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -901,11 +893,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.16
+Version 1.17
 
 =head1 DATE
 
-06 Jul 2008
+06 Sep 2009
 
 =head1 HISTORY
 
