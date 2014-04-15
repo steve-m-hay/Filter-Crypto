@@ -1,4 +1,4 @@
-#line 1 "inc/Module/Install.pm - C:/WebDB/perl/site/lib/Module/Install.pm"
+#line 1 "inc/Module/Install.pm - C:/perl/site/lib/Module/Install.pm"
 package Module::Install;
 $VERSION = '0.36';
 

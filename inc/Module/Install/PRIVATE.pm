@@ -40,7 +40,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::Base);
 
-    $VERSION = '1.01';
+    $VERSION = '1.02';
 
     # Define public and private API accessor methods.
     foreach my $prop (qw(define inc libs _opts)) {
@@ -72,7 +72,7 @@ sub get_shay_private_obj {
 }
 
 sub process_opts {
-    my($self, $opt_specs) = @_;
+    my($self, $opt_specs, $with_auto_install) = @_;
 
     # Allow options to be introduced with a "/" character on Windows, as is
     # common on those OS's, as well as the default set of characters.
@@ -100,8 +100,52 @@ sub process_opts {
         'manpage|doc'
     );
 
+    # Include the ExtUtils::AutoInstall options if requested.  Also save @ARGV
+    # so that it can be temporarily restored for auto_install() later.
+    my @SAVARGV = ();
+    if ($with_auto_install) {
+        # These options are specified in ExtUtils::AutoInstall::_init().
+        push @opt_specs, (
+            'config:s',
+            'installdeps|install:s',
+            'defaultdeps|default',
+            'checkdeps|check',
+            'skipdeps|skip',
+            'testonly|test'
+        );
+
+        @SAVARGV = @ARGV;
+    }
+
     GetOptions(\%opts, @opt_specs) or
         $self->_exit_with_usage();
+
+    if ($with_auto_install) {
+        # Temporarily restore the original @ARGV for auto_install() since its
+        # options will have been removed from @ARGV by GetOptions().
+        local @ARGV = @SAVARGV;
+        $self->auto_install();
+
+        # We aren't using ExtUtils::AutoInstall's Write() so we have to check
+        # for "check only" mode and exit ourselves if it is set.
+        if ( exists $opts{'checkdeps'} or
+            (exists $ENV{PERL_EXTUTILS_AUTOINSTALL} and
+             " $ENV{PERL_EXTUTILS_AUTOINSTALL} " =~ /\s--check(?:deps)?\s/o))
+        {
+            warn("*** Makefile not written in check-only mode.\n");
+            exit 0;
+        }
+
+        # If it appears that Test::Builder has been loaded during the course of
+        # the auto-install testing then disable the Test::Builder ending
+        # diagnostic code that would otherwise be invoked if the Makefile.PL
+        # die()'s anytime later.  This suppresses a somewhat confusing (given
+        # the context) message about the test having died before it could output
+        # anything.
+        if (my $test = eval { Test::Builder->new() }) {
+            $test->no_ending(1);
+        }
+    }
 
     if ($ENV{PERL_MM_USE_DEFAULT} and $ExtUtils::MakeMaker::VERSION < 5.48_01)
     {
@@ -442,8 +486,11 @@ sub _exit_with_usage {
 sub _exit_with_error {
     my($self, $num, $msg) = splice @_, 0, 3;
     $msg = sprintf $msg, @_ if @_;
+    # Load Carp::Heavy now otherwise (prior to Perl 5.8.7) croak() clobbers $!
+    # when loading it.
+    require Carp::Heavy;
     $! = $num;
-    die "Error ($num): $msg";
+    croak("Error ($num): $msg");
 }
 
 1;

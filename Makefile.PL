@@ -26,7 +26,7 @@ use inc::Module::Install;
 # INITIALISATION
 #===============================================================================
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 {
     no warnings 'once';
     our $YEAR = '2004-2005';
@@ -62,7 +62,6 @@ MAIN: {
     my $obj = get_filter_crypto_private_obj();
 
     my @opt_specs = (
-        'build|b=s',
         'prefix-dir|d=s',
         'cipher-config|c=s',
         'cipher-name|n=s',
@@ -73,13 +72,14 @@ MAIN: {
         'key-len|l=i',
         'rc2-key-bits=i',
         'rc5-rounds=i',
-        'install-script=s'
+        'install-script|i=s',
+        'build|b=s',
+        'unsafe-mode|u',
+        'debug-mode'
     );
 
-    $obj->process_opts(\@opt_specs);
+    $obj->process_opts(\@opt_specs, 1);
     $obj->check_compiler(1);
-
-    auto_install();
 
     $obj->locate_openssl();
     $obj->configure_cipher();
@@ -151,7 +151,6 @@ Makefile.PL - Generate makefiles for Filter-Crypto distribution
 =head1 SYNOPSIS
 
     Makefile.PL [--defaults]
-                [--build=<component>]
                 [--prefix-dir=<dir>]
                 [--cipher-config=<file>]
                 [--cipher-name=<name>] [--cipher-mode=<mode>]
@@ -159,6 +158,7 @@ Makefile.PL - Generate makefiles for Filter-Crypto distribution
                 [--key-len=<len>]
                 [--rc2-key-bits=<num>] [--rc5-rounds=<num>]
                 [--install-script={y|n}>
+                [--build=<component>] [--unsafe-mode] [--debug-mode]
                 [--version] [--help] [--manpage]
                 [<arg>...]
 
@@ -175,9 +175,16 @@ the location of the OpenSSL or SSLeay include and library directory paths.
 Instead, use the B<--prefix-dir> option described below if the default value
 does not match your system.
 
+ExtUtils::MakeMaker arguments can also be given in the PERL_MM_OPTS environment
+variable as usual.
+
 =head1 OPTIONS
 
-The build process for the Filter-Crypto distribution requires the answers to
+Any standard ExtUtils::AutoInstall command-line options may be specified.  These
+can also be given in the PERL_EXTUTILS_AUTOINSTALL environment variable as
+usual.
+
+In addition, the build process for this distribution requires the answers to
 various questions regarding (amongst other things) the location of OpenSSL or
 SSLeay, which cipher algorithm to use, what password or key to use and whether
 or not to install a script.
@@ -204,28 +211,6 @@ the user for a response.
 
 You must be using ExtUtils::MakeMaker version 5.48_01 or later for this option
 to have any effect.
-
-=item B<-b E<lt>componentE<gt>>, B<--build=E<lt>componentE<gt>>
-
-Specify which component ("CryptFile", "Decrypt" or "both") to build.  This
-determines which of the two C extension modules (Filter::Crypto::CryptFile,
-Filter::Crypto::Decrypt or both) gets built.
-
-By default, both components are built.
-
-However, building only one component may be useful if you want to maintain two
-separate Perl installations: one containing the Filter::Crypto::CryptFile module
-to be used for encrypting your Perl files, and another containing only the
-Filter::Crypto::Decrypt module for distributing with your encrypted Perl files
-so that they can be run but not easily decrypted.  (Well, not I<very> easily,
-anyway.  Please see the WARNING in the Filter::Crypto manpage regarding the
-level of security provided for your source code by this software.)
-
-If you are going to setup two such Perl installations then clearly you will need
-to ensure that the components of this distribution installed into each one were
-built with the same cipher configuration options, otherwise the files encrypted
-by one cannot be decrypted by the other.  The B<--cipher-config> option below
-may assist in this.
 
 =item B<-d E<lt>dirE<gt>>, B<--prefix-dir=E<lt>dirE<gt>>
 
@@ -436,6 +421,61 @@ The script is installed by default unless the B<--build> option is set to
 "Decrypt" (in which case the Filter::Crypto::CryptFile module, which the
 B<crypt_file> script uses, does not get built so there would be no point in
 installing the script).
+
+=item B<-b E<lt>componentE<gt>>, B<--build=E<lt>componentE<gt>>
+
+Specify which component ("CryptFile", "Decrypt" or "both") to build.  This
+determines which of the two C extension modules (Filter::Crypto::CryptFile,
+Filter::Crypto::Decrypt or both) gets built.
+
+By default, both components are built.
+
+However, building only one component may be useful if you want to maintain two
+separate Perl installations: one containing the Filter::Crypto::CryptFile module
+to be used for encrypting your Perl files, and another containing only the
+Filter::Crypto::Decrypt module for distributing with your encrypted Perl files
+so that they can be run but not easily decrypted.  (Well, not I<very> easily,
+anyway.  Please see the L<Filter::Crypto/"WARNING"> regarding the level of
+security provided for your source code by this software.)
+
+If you are going to setup two such Perl installations then clearly you will need
+to ensure that the components of this distribution installed into each one were
+built with the same cipher configuration options, otherwise the files encrypted
+by one cannot be decrypted by the other.  The B<--cipher-config> option below
+may assist in this.
+
+=item B<-u>, B<--unsafe-mode>
+
+Specify that the "Decrypt" component should be built in an "unsafe" mode in
+which the Perl compiler backend modules are allowed to be loaded.
+
+By default, the "Decrypt" component contains a check to try to disallow running
+under the Perl compiler backend which works by simply checking whether or not
+any of the relevant modules have been loaded.
+
+Unfortunately, that logic can be unhelpful in certain cases where those modules
+are quite legitimately loaded.  One example is when code is running in a
+mod_perl environment with the Apache::Status module loaded.  Another example is
+when a script that uses an encrypted module is being packaged with PAR: the PAR
+packager will not pick up any dependencies that the encrypted module has unless
+it compiles or executes the module (via B<pp>'s B<-c> or B<-x> options), and the
+Perl compiler backend modules are also loaded during that process.
+
+Note that the existence of this B<--unsafe-mode> option should not be taken to
+imply that omitting it produces a decryption environment that is entirely
+"safe".  Even without the B<--unsafe-mode> option it will still be possible for
+some hackers to make use of the Perl compiler backend modules, and there are
+also other security issues anyway.  Please see the L<Filter::Crypto/"WARNING">
+for more details.
+
+=item B<--debug-mode>
+
+Specify that the modules should be built in "debug" mode.  In this mode, all of
+the checks described in the L<Filter::Crypto/"WARNING"> are disabled and lots of
+output is written to C<STDERR> describing what is going on during the encryption
+or decryption.
+
+By default, the modules are not built in "debug" mode.
 
 =item B<-v>, B<--version>
 
@@ -778,14 +818,20 @@ B<-d> option as shown in the previous examples too.
 
 =head1 ENVIRONMENT
 
-Any standard ExtUtils::MakeMaker environment variables may be specified, namely:
+Any standard ExtUtils::AutoInstall and ExtUtils::MakeMaker environment variables
+may be used, namely:
 
 =over 4
+
+=item PERL_EXTUTILS_AUTOINSTALL
+
+Specify ExtUtils::AutoInstall command-line options to be postpended to the list
+of command-line options before its option processing takes place.
 
 =item PERL_MM_OPT
 
 Specify ExtUtils::MakeMaker command-line arguments to be prepended to the list
-of command-line arguments before the argument processing takes place. 
+of command-line arguments before its argument processing takes place. 
 
 Note that as far as quoting and escaping is concerned, the environment variable
 value is not interpreted in the same way as the Bourne shell would interpret the
@@ -809,6 +855,8 @@ to have any effect.
 =head1 SEE ALSO
 
 The F<INSTALL> file;
+
+L<ExtUtils::AutoInstall>;
 
 L<ExtUtils::MakeMaker>.
 
@@ -845,11 +893,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.01
+Version 1.02
 
 =head1 DATE
 
-03 Mar 2005
+01 Jun 2005
 
 =head1 HISTORY
 

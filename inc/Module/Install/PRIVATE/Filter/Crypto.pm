@@ -443,7 +443,14 @@ sub _set_define {
     my $self = shift;
 
     my $ver_num = $self->_ver_num();
-    $self->define("-DFILTER_CRYPTO_OPENSSL_VERSION=$ver_num");
+    my $unsafe_mode = exists $self->_opts()->{'unsafe-mode'};
+    my $debug_mode  = exists $self->_opts()->{'debug-mode'};
+
+    my $define =  "-DFILTER_CRYPTO_OPENSSL_VERSION=$ver_num";
+    $define   .= ' -DFILTER_CRYPTO_UNSAFE_MODE' if $unsafe_mode;
+    $define   .= ' -DFILTER_CRYPTO_DEBUG_MODE'  if $debug_mode;
+
+    $self->define($define);
 }
 
 sub _locate_lib_dir {

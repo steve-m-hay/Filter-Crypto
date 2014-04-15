@@ -46,13 +46,14 @@ typedef enum {
 
 #include "const-c.inc"
 
-/* PerlLIO_chsize() is defined as chsize() even on systems that don't have
- * chsize().  Therefore, if chsize() isn't available then we define it to be
- * ftruncate() if that's available instead, or else Perl_my_chsize() if F_FREESP
- * is defined (see the my_chsize() and pp_truncate() functions in Perl for
- * details).  Failing that we just have to croak() via a macro with a non-void
- * type to match the context in which PerlLIO_chsize() is called. */
-#ifndef HAS_CHSIZE
+/* Prior to Perl 5.8.7 PerlLIO_chsize() was defined as chsize() even on systems
+ * that don't have chsize().  Therefore, in those situations we define chsize()
+ * to be ftruncate() if that's available instead, or else Perl_my_chsize() if
+ * F_FREESP is defined (see the my_chsize() and pp_truncate() functions in Perl
+ * for details).  Failing that we just have to croak() via a macro with a
+ * non-void type to match the context in which PerlLIO_chsize() is called. */
+#if(!defined(HAS_CHSIZE) && PERL_REVISION == 5 && \
+    (PERL_VERSION < 8 || (PERL_VERSION == 8 && PERL_SUBVERSION < 7)))
 #  ifdef HAS_TRUNCATE
 #    define chsize(fd, size) ftruncate((fd), (size))
 #  elif defined(F_FREESP)
@@ -67,7 +68,7 @@ typedef enum {
  * Therefore, in that situation we have to fall back on the standard Microsoft C
  * library function chsize(), referred to by its Microsoft-specific name
  * _chsize() since chsize() is also defined as win32_chsize(). */
-#if( defined(WIN32) && PERL_REVISION == 5 && \
+#if(defined(WIN32) && PERL_REVISION == 5 && \
     (PERL_VERSION < 8 || (PERL_VERSION == 8 && PERL_SUBVERSION < 5)))
 #  undef  PerlLIO_chsize
 #  define PerlLIO_chsize(fd, size) _chsize((fd), (size))
@@ -140,7 +141,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
         return FALSE;
     }
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
     FilterCrypto_HexDump(aTHX_ in_text, in_len,
         "Read %d bytes from input stream", in_len
     );
@@ -219,7 +220,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
             if (update_mode) {
                 sv_setpvn(buf_sv, filter_crypto_use_text, use_len);
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
                 FilterCrypto_HexDump(aTHX_ filter_crypto_use_text, use_len,
                     "Appended %d-byte header line to output buffer", use_len
                 );
@@ -236,7 +237,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
                     return FALSE;
                 }
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
                 FilterCrypto_HexDump(aTHX_ filter_crypto_use_text, use_len,
                     "Wrote %d-byte header line to output stream", use_len
                 );
@@ -265,7 +266,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
     for (;;) {
         if (have_in_text || (in_len = PerlIO_read(in_fh, in_text, BUFSIZ)) > 0)
         {
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
             if (!have_in_text)
                 FilterCrypto_HexDump(aTHX_ in_text, in_len,
                     "Read %d bytes from input stream", in_len
@@ -297,7 +298,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
             /* We didn't read any data from the input stream, and have now
              * reached EOF, so break out of the "for" loop and finalize the
              * crypto context. */
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
             warn("Reached EOF on input stream\n");
 #endif
             break;
@@ -350,7 +351,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
             return FALSE;
         }
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
         FilterCrypto_HexDump(aTHX_ buf_text, buf_len,
             "Wrote %d-byte output buffer to output stream", buf_len
         );
@@ -372,7 +373,7 @@ static bool FilterCrypto_OutputData(pTHX_ SV *from_sv, bool update_mode,
     if (update_mode) {
         sv_catsv(to_sv, from_sv);
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
         FilterCrypto_HexDumpSV(aTHX_ from_sv,
             "Appended %d bytes to output buffer", SvCUR(from_sv)
         );
@@ -391,7 +392,7 @@ static bool FilterCrypto_OutputData(pTHX_ SV *from_sv, bool update_mode,
             return FALSE;
         }
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
         FilterCrypto_HexDump(aTHX_ from_text, from_len,
             "Wrote %d bytes to output stream", from_len
         );

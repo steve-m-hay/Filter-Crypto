@@ -56,7 +56,7 @@ static char *FilterCrypto_GetErrStr(pTHX);
 /* Magic virtual table to have the filter context pointed to by the filter's SV
  * automatically freed when the SV is destroyed.
  * The copy and dup members were added in Perl 5.7.3. */
-#if( PERL_REVISION == 5 && \
+#if(PERL_REVISION == 5 && \
     (PERL_VERSION < 7 || (PERL_VERSION == 7 && PERL_SUBVERSION < 3)))
 static const MGVTBL FilterCrypto_FilterSvMgVTBL = {
     NULL,                           /* Get   */
@@ -94,7 +94,7 @@ static I32 FilterCrypto_ReadBlock(pTHX_ int idx, SV *sv, int want_size) {
     while (1) {
         /* Check if we have read the required number of bytes yet. */
         if (read_size == want_size) {
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
             FilterCrypto_HexDumpSV(aTHX_ sv,
                 "Read %"IVdf" bytes from input stream", (IV)read_size
             );
@@ -107,7 +107,7 @@ static I32 FilterCrypto_ReadBlock(pTHX_ int idx, SV *sv, int want_size) {
 
         /* Check for read errors or EOF. */
         if (n <= 0) {
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
             FilterCrypto_HexDumpSV(aTHX_ sv,
                 "Read %"IVdf" bytes from input stream (%s)",
                 (IV)read_size, n < 0 ? "Got read error" : "Reached EOF"
@@ -284,7 +284,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 
     /* Check if this is the first time through. */
     if (ctx->filter_status == FILTER_CRYPTO_STATUS_NOT_STARTED) {
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
         warn("Starting filter\n");
 #endif
 
@@ -311,7 +311,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 
                 sv_catpvn(buf_sv, out_ptr, num_bytes);
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
                 FilterCrypto_HexDump(aTHX_ out_ptr, num_bytes,
                     "Wrote block (%"IVdf" bytes) to output stream",
                     (IV)num_bytes
@@ -342,7 +342,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 
                     sv_catpvn(buf_sv, out_ptr, num_bytes);
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
                     FilterCrypto_HexDump(aTHX_ out_ptr, num_bytes,
                         "Wrote line (%"IVdf" bytes) to output stream "
                         "(Reached EOL)", (IV)num_bytes
@@ -364,7 +364,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 
                     sv_catpvn(buf_sv, out_ptr, num_bytes);
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
                     FilterCrypto_HexDump(aTHX_ out_ptr, num_bytes,
                         "Wrote line (%"IVdf" bytes) to output stream "
                         "(Not yet reached EOL)", (IV)num_bytes
@@ -392,7 +392,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
                 return SvCUR(buf_sv);
             }
             else {
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
                 warn("Deleting filter\n");
 #endif
 
@@ -490,7 +490,7 @@ INCLUDE: ../CryptoCommon-xs.inc
 
 BOOT:
 {
-#ifndef FILTER_CRYPTO_DEBUG
+#ifndef FILTER_CRYPTO_DEBUG_MODE
     /* C compile-time check that this not a DEBUGGING Perl.
      * i.e. built with -DDEBUGGING. */
 #  ifdef DEBUGGING
@@ -517,8 +517,10 @@ BOOT:
 
     /* Check that we are not running with the Perl compiler backend enabled.
      * e.g. perl -MO=Deparse <script> */
+#  ifndef FILTER_CRYPTO_UNSAFE_MODE
     if (gv_stashpvn("B", 1, FALSE))
         croak("Can't run with Perl compiler backend");
+#  endif
 #endif
 }
 
@@ -562,7 +564,7 @@ import(module, ...)
          * be freed, but we can't use FilterCrypto_FilterFree() to free it since
          * savepvn() will only have made a shallow copy.) */
         filter_sv = NEWSV(0, 0);
-#if( PERL_REVISION == 5 && \
+#if(PERL_REVISION == 5 && \
     (PERL_VERSION < 7 || (PERL_VERSION == 7 && PERL_SUBVERSION < 3)))
         sv_magic(filter_sv, NULL, PERL_MAGIC_ext, Nullch, 0);
         if (!(mg = mg_find(filter_sv, PERL_MAGIC_ext))) {

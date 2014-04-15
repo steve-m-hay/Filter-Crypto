@@ -14,8 +14,8 @@
  *
  *============================================================================*/
 
-/* Uncomment for debugging. */
-/* #define FILTER_CRYPTO_DEBUG /**/
+/* Uncomment (or build with --debug-mode option) for debugging. */
+/* #define FILTER_CRYPTO_DEBUG_MODE /**/
 
 /* Uncomment for fixed (dummy) salt and/or IV for debugging purposes. */
 /* #define FILTER_CRYPTO_NO_RAND_BYTES /**/
@@ -185,7 +185,7 @@ static bool FilterCrypto_PRNGInit(pTHX);
 static int FilterCrypto_GetRandNum(pTHX_ int min, int max);
 static unsigned long FilterCrypto_GetLastSSLError(void);
 static void FilterCrypto_SetErrStr(pTHX_ const char *value, ...);
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
 static void FilterCrypto_vHexDump(pTHX_ const unsigned char *data,
     unsigned int len, const char *title, va_list args);
 static void FilterCrypto_HexDump(pTHX_ const unsigned char *data,
@@ -338,7 +338,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 
             sv_catpvn(out_sv, salt_text, required_salt_len);
 
-#    ifdef FILTER_CRYPTO_DEBUG
+#    ifdef FILTER_CRYPTO_DEBUG_MODE
             FilterCrypto_HexDump(aTHX_ salt_text, required_salt_len,
                 "Generated %d-byte salt", required_salt_len
             );
@@ -370,7 +370,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 
             sv_catpvn(out_sv, iv_text, required_iv_len);
 
-#    ifdef FILTER_CRYPTO_DEBUG
+#    ifdef FILTER_CRYPTO_DEBUG_MODE
             FilterCrypto_HexDump(aTHX_ iv_text, required_iv_len,
                 "Generated %d-byte IV", required_iv_len
             );
@@ -408,7 +408,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
                     return TRUE;
                 }
 
-#    ifdef FILTER_CRYPTO_DEBUG
+#    ifdef FILTER_CRYPTO_DEBUG_MODE
                 FilterCrypto_HexDumpSV(aTHX_ ctx->salt_sv,
                     "Recovered %d-byte salt", SvCUR(ctx->salt_sv)
                 );
@@ -434,7 +434,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
                     return TRUE;
                 }
 
-#    ifdef FILTER_CRYPTO_DEBUG
+#    ifdef FILTER_CRYPTO_DEBUG_MODE
                 FilterCrypto_HexDumpSV(aTHX_ ctx->iv_sv,
                     "Recovered %d-byte IV", SvCUR(ctx->iv_sv)
                 );
@@ -796,7 +796,7 @@ static bool FilterCrypto_CipherUpdate(pTHX_ EVP_CIPHER_CTX *ctx, SV *in_sv,
     }
 #endif
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
     FilterCrypto_HexDump(aTHX_ out_text, out_len,
         "Converted %d bytes to %d bytes", in_len, out_len
     );
@@ -850,7 +850,7 @@ static bool FilterCrypto_CipherFinal(pTHX_ EVP_CIPHER_CTX *ctx, SV *out_sv) {
     }
 #endif
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
     FilterCrypto_HexDump(aTHX_ out_text, out_len,
         "Converted final block to %d bytes", out_len
     );
@@ -983,7 +983,7 @@ static void FilterCrypto_SetErrStr(pTHX_ const char *value, ...) {
     va_end(args);
 }
 
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
 /*
  * Function to print a dump of the given data.  Each character (octet) is shown
  * as itself if it is "printable", otherwise it is shown as its hexadecimal

@@ -624,8 +624,8 @@ options.
 =back
 
 If there are no file specifiers given, or if there is a single input file
-specifier consisting of just a single dash given, then input is read from STDIN
-instead.
+specifier consisting of just a single dash given, then input is read from
+<STDIN> instead.
 
 =head1 OPTIONS
 
@@ -674,14 +674,14 @@ of input file specifiers.
 
 Run the script in test-only mode.
 
-The input file list will be printed to STDOUT, but no other action is taken.  No
-input files are edited, and no backup files or output files are created.
+The input file list will be printed to C<STDOUT>, but no other action is taken.
+No input files are edited, and no backup files or output files are created.
 
 =item B<-s>, B<--silent>
 
 Run the script in silent mode.
 
-The name of each input file is normally printed on STDERR before it is
+The name of each input file is normally printed on C<STDERR> before it is
 processed, followed by an "OK" message (and/or a warning or error message if
 anything went wrong) when the processing of that file is complete.  Running in
 silent mode suppresses the output of the filename and "OK" message; any relevant
@@ -691,10 +691,11 @@ warnings and/or error messages are still output.
 
 Specify that each input file should be processed "in-place", i.e. the input file
 is overwritten with the output, rather than the output being sent either to
-STDOUT or else to an output file as specified by the B<--out-file-expr> option.
+C<STDOUT> or else to an output file as specified by the B<--out-file-expr>
+option.
 
 This option is ignored if the input file list is empty and input is being read
-from STDIN instead.
+from C<STDIN> instead.
 
 =item B<-e E<lt>modeE<gt>>, B<--edit-mode=E<lt>modeE<gt>>
 
@@ -798,14 +799,14 @@ send the output to when processing each input file.
 
 The mandatory B<expr> value works in exactly the same way as the B<expr> value
 to the B<--bak-file-expr> option described above, except that if the input file
-list is empty and input is being read from STDIN instead then the B<expr> is
+list is empty and input is being read from C<STDIN> instead then the B<expr> is
 used as the actual path (either absolute or relative to the current directory)
 of the output file itself.
 
 This option is mutually exclusive with the B<--in-place> option; if both options
 are specified then B<--in-place> will be used and B<--out-file-expr> is ignored.
 
-The output is written to STDOUT by default.
+The output is written to C<STDOUT> by default.
 
 =item B<-c E<lt>modeE<gt>>, B<--crypt-mode=E<lt>modeE<gt>>
 

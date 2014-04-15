@@ -1,9 +1,40 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.13
+                          Filter::Crypto, Version 1.14
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.14 01 Jun 2005
+
+    - Added an --unsafe-mode option to Makefile.PL to specify that the "Decrypt"
+      component should be built in an "unsafe" mode in which the Perl compiler
+      backend modules are allowed to be loaded.
+
+    - Added a --debug-mode option to Makefile.PL to specify that the modules
+      should be built in "debug" mode.
+
+    - Perl 5.8.7 contains a fix for PerlLIO_chsize() for those systems that
+      don't have chsize() so there is no need for the workaround in
+      CryptFile/CryptFile.xs from Perl 5.8.7 onwards.
+
+    - Updated Module::Install::PRIVATE to version 1.02 for Makefile.PL
+      improvements:
+
+      * ExtUtils::AutoInstall command-line options are now better supported,
+        fixing problems with custom option handling that didn't recognize them;
+
+      * Errors now croak() rather than die() so that the error messages look a
+        little more friendly;
+
+      * If the "auto install" checks loaded Test::Builder then that module's
+        cleanup diagnostic code is now skipped, which suppresses the somewhat
+        confusing (given the context) message
+
+          # Looks like your test died before it could output anything.
+
+        in the event of any subsequent error that causes Makefile.PL to croak().
 _________________
 
 v1.13 14 Mar 2005
@@ -58,10 +89,13 @@ v1.11 03 Mar 2005
       in cases where $^X does contain a space, but that's not an ideal
       configuration anyway.)
 
-    - Added code to Makefile.PL to try to check that on Win32 the same compiler
-      is being used to build these modules as was used to build Perl itself to
-      avoid problems with binaries built by different compiler versions loading
-      different C runtime DLL's.
+    - Updated Module::Install::PRIVATE to version 1.01 for Makefile.PL
+      improvements:
+
+      * Added code to try to check that on Win32 the same compiler is being used
+        to build these modules as was used to build Perl itself to avoid
+        problems with binaries built by different compiler versions loading
+        different C runtime DLL's.
 
     - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
       building these modules.

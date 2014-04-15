@@ -25,7 +25,7 @@ BOOT:
     HV *stash;
 
     /* We need to have an indented line here otherwise xsubpp gets confused. */
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
     if (items > 1)
         warn("Initializing %s (Version %.2"NVff")\n", package, SvNV(ST(1)));
     else
@@ -67,7 +67,7 @@ DESTROY(self)
 
     PPCODE:
     {
-#ifdef FILTER_CRYPTO_DEBUG
+#ifdef FILTER_CRYPTO_DEBUG_MODE
         warn("Destroying %s\n", sv_reftype(SvRV(self), TRUE));
 #endif
 

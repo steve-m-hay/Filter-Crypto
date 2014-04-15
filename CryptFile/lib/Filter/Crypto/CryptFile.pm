@@ -55,7 +55,7 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '1.11';
+    $VERSION = '1.12';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -902,11 +902,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.11
+Version 1.12
 
 =head1 DATE
 
-03 Mar 2005
+01 Jun 2005
 
 =head1 HISTORY
 
