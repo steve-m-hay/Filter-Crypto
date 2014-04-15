@@ -3,14 +3,14 @@ abstract: 'Create runnable Perl files encrypted with OpenSSL libcrypto'
 author:
   - 'Steve Hay <shay@cpan.org>'
 build_requires:
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.6302
   Test::More: 0
   blib: 0
 configure_requires:
   Carp: 0
   Config: 0
   Cwd: 0
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.6302
   File::Basename: 0
   File::Copy: 0
   File::Find: 0
@@ -26,7 +26,8 @@ configure_requires:
   vars: 0
   warnings: 0
 distribution_type: module
-generated_by: 'Module::Install version 1.00'
+dynamic_config: 1
+generated_by: 'Module::Install version 1.04'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -46,10 +47,9 @@ requires:
   File::Temp: 0
   PAR::Filter: 0
   Scalar::Util: 0
-  Test::Pod: 1.00
   Text::ParseWords: 0
   XSLoader: 0
   perl: 5.6.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.31
+version: 1.32

@@ -8,7 +8,7 @@
 #   use in creating PAR archives in which the Perl files are encrypted.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2008, 2012 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -27,6 +27,7 @@ use Carp qw(carp croak);
 use Fcntl qw(:seek);
 use File::Temp qw(tempfile);
 use Filter::Crypto::CryptFile qw(:DEFAULT $ErrStr);
+use Module::ScanDeps qw();
 use PAR::Filter qw();
 
 #===============================================================================
@@ -38,7 +39,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(PAR::Filter);
 
-    $VERSION = '1.04';
+    $VERSION = '1.05';
 }
 
 #===============================================================================
@@ -55,9 +56,14 @@ sub apply {
     # encrypt the decryption module.
     return 1 if $filename eq 'Filter/Crypto/Decrypt.pm';
 
-    if (eval { require Module::ScanDeps; 1 } and
-        $Module::ScanDeps::VERSION eq '0.75')
+    if ($Carp::VERSION eq '1.18' or $Carp::VERSION eq '1.19' or
+        $Carp::VERSION eq '1.20')
     {
+        croak("Detected Carp version $Carp::VERSION, which does not work " .
+              "correctly with " . __PACKAGE__);
+    }
+
+    if ($Module::ScanDeps::VERSION eq '0.75') {
         carp('Detected Module::ScanDeps version 0.75, which may not work ' .
              'correctly with ' . __PACKAGE__);
     }
@@ -215,6 +221,17 @@ corresponding to the standard C library C<errno> variable is also given.
 is used to perform the encryption failed.  The last error message from the
 Filter::Crypto::CryptFile module is also given.
 
+=item Detected Carp version %s, which does not work correctly with
+      PAR::Filter::Crypto
+
+(F) Your current installation of the Carp module, used by the PAR archive when
+it self-extracts and runs, was found to be version 1.18, 1.19 or 1.20, which are
+known to have the effect of preventing the PAR archive from running.
+(Specifically, they auto-vivify the B:: stash, giving the impression that the
+Perl compiler backend bas been loaded, in which state the source code decryption
+filter will refuse to run as documented in L<Filter::Crypto/"WARNING">.) You
+must upgrade Carp to version 1.21 or higher.
+
 =item Detected Module::ScanDeps version 0.75, which may not work correctly with
       PAR::Filter::Crypto
 
@@ -234,20 +251,7 @@ I<None>.
 
 =head1 KNOWN BUGS
 
-=over 4
-
-=item *
-
-The following test failure is expected if your current installation of
-Module::ScanDeps is version 0.75:
-
-    t/04_par.t test 6
-
-This failure is the result of a bug in that version of Module::ScanDeps, and can
-be rectified by upgrading Module::ScanDeps to version 0.76 or higher. See
-L<DESCRIPTION> for more information.
-
-=back
+I<None>.
 
 =head1 SEE ALSO
 
@@ -266,7 +270,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2008, 2012 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -276,11 +280,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.04
+Version 1.05
 
 =head1 DATE
 
-25 Aug 2008
+24 Feb 2012
 
 =head1 HISTORY
 

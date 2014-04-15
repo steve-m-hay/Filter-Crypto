@@ -7,7 +7,7 @@
 #   Test script to check PAR::Filter::Crypto module (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2008-2009 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2008-2009, 2012 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -20,10 +20,12 @@ use 5.006000;
 use strict;
 use warnings;
 
+use Carp qw();
 use Config qw(%Config);
 use Cwd qw(abs_path);
 use File::Spec::Functions qw(canonpath catdir catfile curdir updir);
 use FindBin qw($Bin);
+use Module::ScanDeps qw();
 use Test::More;
 
 #===============================================================================
@@ -46,6 +48,12 @@ BEGIN {
 
     unless (eval { require PAR::Filter; 1 }) {
         plan skip_all => 'PAR::Filter required to test PAR::Filter::Crypto';
+    }
+
+    if ($Carp::VERSION eq '1.18' or $Carp::VERSION eq '1.19' or
+        $Carp::VERSION eq '1.20')
+    {
+        plan skip_all => 'Carp 1.21 or higher required to use PAR::Filter::Crypto';
     }
 
     my @keys = qw(
@@ -93,10 +101,7 @@ MAIN: {
     my $perl = qq[$perl_exe -M$mbname];
 
     my $have_archive_zip = eval { require Archive::Zip; 1 };
-    my $have_broken_module_scandeps;
-    if (eval { require Module::ScanDeps; 1 }) {
-        $have_broken_module_scandeps = ($Module::ScanDeps::VERSION eq '0.75');
-    }
+    my $have_broken_module_scandeps = ($Module::ScanDeps::VERSION eq '0.75');
 
     my($line, $cur_ofile);
 

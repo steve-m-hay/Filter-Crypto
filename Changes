@@ -1,9 +1,28 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.31
+                          Filter::Crypto, Version 1.32
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.32 28 Feb 2012
+
+    - Modified PAR::Filter::Crypto to stop with an error when using certain
+      versions of Carp (and fixed t/04_par.t to skip all tests accordingly): its
+      caller_info() function used to autovivify the B:: stash, causing the
+      generated PAR archive to fail to run due to its restriction on not running
+      with the Perl compiler backend enabled.  The problem was introduced in
+      Carp 1.18 by perl change #bf236c8ee5 and fixed in Carp 1.21 by perl change
+      #1a6d530815.
+
+    - Removed documentation of a formerly known failure in t/04_par.t when using
+      Module::ScanDeps version 0.75 since the failing test(s) have been skipped
+      since version 1.22 anyway.
+
+    - Updated Module::Install components from version 1.04 of that distribution.
+
+    - Updated ppport.h using version 3.20 of the Devel::PPPort distribution.
 _________________
 
 v1.31 25 Jul 2010

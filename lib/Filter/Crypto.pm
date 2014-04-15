@@ -7,7 +7,7 @@
 #   distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2010 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2010, 2012 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -29,7 +29,7 @@ use warnings;
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.31';
+    $VERSION = '1.32';
 }
 
 1;
@@ -253,7 +253,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2010 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2010, 2012 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -263,11 +263,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.31
+Version 1.32
 
 =head1 DATE
 
-25 Jul 2010
+28 Feb 2012
 
 =head1 HISTORY
 
