@@ -1,9 +1,22 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.28
+                          Filter::Crypto, Version 1.29
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.29 26 Oct 2009
+
+    - The previous changes to check in new locations and for libcrypto.so as
+      well as libcrypto.a broke some Solaris 2.10 builds which have a
+      libcrypto.so in /opt/csw/lib/amd64 but aren't using a 64-bit Perl.  Change
+      the library file detection code to only consider the 64-bit library file
+      locations if we are using a 64-bit Perl.
+
+    - The previous change to update ppport.h broke builds with Perl >= 5.9.5
+      because new support for PL_rsfp_filters requires an explicit request for
+      support of PL_parser.
 _________________
 
 v1.28 25 Oct 2009

@@ -88,7 +88,8 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#define NEED_sv_2pv_flags_GLOBAL        /* For SvPV_{nolen_}const().          */
+#define NEED_sv_2pv_flags               /* For SvPV_{nolen_}const().          */
+#define NEED_PL_parser                  /* For PL_rsfp_filters.               */
 #include "ppport.h"
 
 #include "CipherConfig.h"               /* For the cipher details.            */
