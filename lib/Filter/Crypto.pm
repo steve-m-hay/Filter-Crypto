@@ -29,7 +29,7 @@ use warnings;
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.19';
+    $VERSION = '1.20';
 }
 
 1;
@@ -46,12 +46,12 @@ Filter::Crypto - Create runnable Perl files encrypted with OpenSSL libcrypto
 
 =head1 SYNOPSIS
 
-    # Encrypt a Perl script using the crypt_file script; run it as usual:
+    # Encrypt a Perl script using the crypt_file script. Run it as usual:
     $ crypt_file --in-place hello.pl
     $ hello.pl
 
-    # Create a PAR archive containing an encrypted Perl script; run it as usual:
-    # (This example assumes that you also have PAR installed)
+    # Create a PAR archive containing an encrypted Perl script. Run it as usual:
+    # (This example assumes that you also have PAR installed.)
     $ pp -f Crypto -M Filter::Crypto::Decrypt -o hello hello.pl
     $ hello
 
@@ -263,11 +263,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.19
+Version 1.20
 
 =head1 DATE
 
-10 Jul 2007
+25 Jul 2007
 
 =head1 HISTORY
 

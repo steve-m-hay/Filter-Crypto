@@ -22,4 +22,4 @@ recommends:
   Test::Pod: 1.00
 requires:
   perl: 5.6.0
-version: 1.19
+version: 1.20

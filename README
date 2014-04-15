@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.19
+                          Filter::Crypto, Version 1.20
 ________________________________________________________________________________
 
 NAME
@@ -9,12 +9,12 @@ NAME
 
 SYNOPSIS
 
-    # Encrypt a Perl script using the crypt_file script; run it as usual:
+    # Encrypt a Perl script using the crypt_file script. Run it as usual:
     $ crypt_file --in-place hello.pl
     $ hello.pl
 
-    # Create a PAR archive containing an encrypted Perl script; run it as usual:
-    # (This example assumes that you also have PAR installed)
+    # Create a PAR archive containing an encrypted Perl script. Run it as usual:
+    # (This example assumes that you also have PAR installed.)
     $ pp -f Crypto -M Filter::Crypto::Decrypt -o hello hello.pl
     $ hello
 

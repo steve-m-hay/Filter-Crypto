@@ -7,7 +7,7 @@
 #   Test script to check crypt_file script (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -96,6 +96,9 @@ MAIN: {
     my $have_file_temp = eval { require File::Temp; 1 };
 
     my $crypt_file = catfile($top_dir, 'blib', 'script', 'crypt_file');
+
+    require Filter::Crypto::CryptFile;
+    my $debug_mode = Filter::Crypto::CryptFile::_debug_mode();
 
     my($fh, $contents, $line, $dfile, $rdir, $abs_ifile, $cdir, $ddir);
     my($dir3, $dir4, $dir5, $expected, $file, $data);
@@ -330,7 +333,10 @@ MAIN: {
 
     chomp($line = qx{$perl $crypt_file $ifile 2>&1 1>$ofile});
     is($?, 0, 'crypt_file ran OK without --silent option');
-    is($line, "$abs_ifile: OK", '... and output correct file path');
+    SKIP: {
+        skip 'Built in debug mode', 1 if $debug_mode;
+        is($line, "$abs_ifile: OK", '... and output correct file path');
+    }
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
@@ -349,7 +355,10 @@ MAIN: {
 
     chomp($line = qx{$perl $crypt_file --silent $ifile 2>&1 1>$ofile});
     is($?, 0, 'crypt_file ran OK with --silent option');
-    is($line, '', "... and didn't output a file path");
+    SKIP: {
+        skip 'Built in debug mode', 1 if $debug_mode;
+        is($line, '', "... and didn't output a file path");
+    }
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };

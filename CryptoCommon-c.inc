@@ -507,7 +507,10 @@ static bool FilterCrypto_CryptoUpdate(pTHX_ FILTER_CRYPTO_CCTX *ctx, SV *in_sv,
 
 static bool FilterCrypto_CryptoFinal(pTHX_ FILTER_CRYPTO_CCTX *ctx, SV *out_sv)
 {
-    return FilterCrypto_CipherFinal(aTHX_ ctx->cipher_ctx, out_sv);
+    if (ctx->cipher_initialized == TRUE)
+        return FilterCrypto_CipherFinal(aTHX_ ctx->cipher_ctx, out_sv);
+    else
+        return TRUE;
 }
 
 /*

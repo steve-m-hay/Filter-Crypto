@@ -8,7 +8,7 @@
 #   use in creating PAR archives in which the Perl files are encrypted.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -38,7 +38,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(PAR::Filter);
 
-    $VERSION = '1.02';
+    $VERSION = '1.03';
 }
 
 #===============================================================================
@@ -50,6 +50,13 @@ BEGIN {
 
 sub apply {
     my($class, $ref) = @_;
+
+    if (eval { require Module::ScanDeps; 1 } and
+        $Module::ScanDeps::VERSION eq '0.75')
+    {
+        carp('Detected Module::ScanDeps version 0.75, which may not work ' .
+             'correctly with ' . __PACKAGE__);
+    }
 
     # Open a temporary file.  (The temporary file will be deleted automatically
     # since tempfile() is called in scalar context.)
@@ -126,6 +133,13 @@ to be included.  A typical B<pp> invocation is thus something like:
 
     $ pp -f Crypto -M Filter::Crypto::Decrypt -o hello hello.pl
 
+(Version 0.75 of the L<Module::ScanDeps|Module::ScanDeps> module, used by B<pp>
+to scan for dependencies that need including in the PAR archive, is known to
+have problems finding shared library files for modules specified by B<pp>'s
+B<-M> option (as illustrated above).  If you find that the shared library file
+for Filter::Crypto::Decrypt is missing from your PAR archive then you need to
+upgrade Module::ScanDeps to version 0.76 or higher.)
+
 Of course, you must not include the Filter::Crypto::CryptFile module as well,
 otherwise people to whom you distribute your PAR archive will have the means to
 easily decrypt the encrypted Perl script within it!
@@ -190,6 +204,17 @@ corresponding to the standard C library C<errno> variable is also given.
 is used to perform the encryption failed.  The last error message from the
 Filter::Crypto::CryptFile module is also given.
 
+=item Detected Module::ScanDeps version 0.75, which may not work correctly with
+      PAR::Filter::Crypto
+
+(W) Your current installation of the Module::ScanDeps module, used by B<pp> to
+scan for dependencies that need including in the PAR archive, was found to be
+version 0.75, which is known to have problems finding shared library files for
+modules specified by B<pp>'s B<-M> option.  If you are running B<pp> with the
+B<-M> option and find that the shared library file for Filter::Crypto::Decrypt
+is missing from your PAR archive then you need to upgrade Module::ScanDeps to
+version 0.76 or higher.
+
 =back
 
 =head1 EXPORTS
@@ -198,7 +223,20 @@ I<None>.
 
 =head1 KNOWN BUGS
 
-I<None>.
+=over 4
+
+=item *
+
+The following test failure is expected if your current installation of
+Module::ScanDeps is version 0.75:
+
+    t/04_par.t test 6
+
+This failure is the result of a bug in that version of Module::ScanDeps, and can
+be rectified by upgrading Module::ScanDeps to version 0.76 or higher. See
+L<DESCRIPTION> for more information.
+
+=back
 
 =head1 SEE ALSO
 
@@ -217,7 +255,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -227,11 +265,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.02
+Version 1.03
 
 =head1 DATE
 
-14 Feb 2006
+25 Jul 2007
 
 =head1 HISTORY
 

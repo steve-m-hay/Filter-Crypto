@@ -418,6 +418,21 @@ VERSIONCHECK: ENABLE
 INCLUDE: const-xs.inc
 INCLUDE: ../CryptoCommon-xs.inc
 
+# Private function to expose the FILTER_CRYPTO_DEBUG_MODE constant.
+
+void
+_debug_mode();
+    PROTOTYPE: 
+
+    PPCODE:
+    {
+#ifdef FILTER_CRYPTO_DEBUG_MODE
+    XSRETURN_YES;
+#else
+    XSRETURN_EMPTY;
+#endif
+    }
+
 # Private function to expose the FilterCrypto_CryptFh() function above, as
 # called with one in-out filehandle.
 

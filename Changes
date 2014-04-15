@@ -1,9 +1,25 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.19
+                          Filter::Crypto, Version 1.20
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.20 25 Jul 2007
+
+    - Fixed the decryption filter code to not crash when there is nothing to
+      decrypt. This allows a file containing just "use Filter::Crypto::Decrypt;"
+      to run exactly as an empty file would be run.
+
+    - Fixed t/03_script.t to skip tests 42 and 47 when built in debug mode since
+      they otherwise fail due to the debug output.
+
+    - Documented a known failure in t/04_par.t when using Module::ScanDeps
+      version 0.75, and modified PAR::Filter::Crypto to emit a warning if that
+      version of Module::ScanDeps is detected since the generated PAR archive
+      will probably be missing Filter::Crypto::Decrypt's shared library file in
+      that case.
 _________________
 
 v1.19 10 Jul 2007
