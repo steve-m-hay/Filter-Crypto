@@ -1,4 +1,4 @@
-#line 1 "inc/Module/Install/Base.pm - C:/perl5/site/lib/Module/Install/Base.pm"
+#line 1 "inc/Module/Install/Base.pm - C:/WebDB/perl/site/lib/Module/Install/Base.pm"
 package Module::Install::Base;
 
 #line 28

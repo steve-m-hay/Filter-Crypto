@@ -7,7 +7,7 @@
 #   SHAY (Steve Hay).
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -40,7 +40,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::Base);
 
-    $VERSION = '1.00';
+    $VERSION = '1.01';
 
     # Define public and private API accessor methods.
     foreach my $prop (qw(define inc libs _opts)) {
@@ -107,7 +107,7 @@ sub process_opts {
     {
         warn(wrap('', '', "\n" . sprintf(
             'Warning: %s ignored: requires ExtUtils::MakeMaker version ' .
-            '5.48_01 or later.',
+            '5.48_01 or later',
             $opt_def ? '--defaults option'
                      : 'PERL_MM_USE_DEFAULT environment variable'
         )) . "\n\n");
@@ -179,6 +179,89 @@ sub is_win32 {
     return $^O =~ /MSWin32/io;
 }
 
+# Method to perform a rudimentary check that the same compiler is being used to
+# build this module as was used to build Perl itself.  The check is skipped on
+# all platforms except Win32, and is also skipped on Win32 if the compiler used
+# to build Perl is unknown and unguessable.
+# It is good enough, however, to catch the currently rather common situation in
+# which a Win32 user is building this module with the Visual C++ Toolkit 2003
+# for use with any ActivePerl, which are known currently to be built with Visual
+# Studio 98.  This combination generally doesn't work; see the INSTALL file for
+# details.
+
+# This method is based on code taken from the get_avail_w32compilers() function
+# in the configsmoke.pl script in the Test-Smoke distribution (version 1.19).
+
+sub check_compiler {
+    my($self, $exit_on_error) = @_;
+
+    my $cc;
+    unless ($cc = $self->can_cc()) {
+        if ($Config{cc} ne '') {
+            $self->_exit_with_error(8,
+                'Compiler not found: please see INSTALL file for details'
+            );
+        }
+        else {
+            $self->_exit_with_error(9,
+                'Compiler not specified: please see INSTALL file for details'
+            );
+        }
+    }
+    $cc = qq["$cc"] if $cc =~ / /o;
+
+    return unless $self->is_win32();
+
+    my $fmt = "Wrong compiler version ('%s'; Perl was built with version " .
+              "'%s'): please see INSTALL file for details";
+    my $msg = '';
+    # Perl version 5.6.0 didn't have $Config{ccversion} at all on Win32.
+    if (exists $Config{ccversion} and $Config{ccversion} ne '') {
+        my $ccversion;
+        if ($cc =~ /cl(?:\.exe)?"?$/io) {
+            my $output = `$cc --version 2>&1`;
+            $ccversion = $output =~ /^.*Version\s+([\d.]+)/io ? $1 : '?';
+        }
+        elsif ($cc =~ /bcc32(?:\.exe)?"?$/io) {
+            my $output = `$cc --version 2>&1`;
+            $ccversion = $output =~ /(\d+.*)/o ? $1 : '?';
+            $ccversion =~ s/\s+copyright.*//io;
+        }
+        if (defined $ccversion and $ccversion ne $Config{ccversion}) {
+            $msg = sprintf $fmt, $ccversion, $Config{ccversion};
+        }
+    }
+    elsif ($Config{gccversion} ne '') {
+        my $gccversion;
+        if ($cc =~ /gcc(?:\.exe)?"?$/io) {
+            chomp($gccversion = `$cc -dumpversion`);
+        }
+        if (defined $gccversion and $gccversion ne $Config{gccversion}) {
+            $msg = sprintf $fmt, $gccversion, $Config{gccversion};
+        }
+    }
+    elsif ($Config{cf_by} eq 'ActiveState') {
+        my $ccversion;
+        my $vc6version = '12.00.8804';
+        if ($cc =~ /cl(?:\.exe)?"?$/io) {
+            my $output = `$cc --version 2>&1`;
+            $ccversion = $output =~ /^.*Version\s+([\d.]+)/ ? $1 : '?';
+        }
+        if (defined $ccversion and $ccversion ne $vc6version) {
+            $msg = sprintf $fmt, $ccversion, $vc6version;
+        }
+    }
+
+    if ($msg) {
+        if ($exit_on_error) {
+            $self->_exit_with_error(10, $msg);
+        }
+        else {
+            warn("Warning: $msg\n");
+        }
+    }
+}
+
 #===============================================================================
 # PRIVATE API
 #===============================================================================
@@ -222,7 +305,7 @@ sub _prompt_list {
     my %options = map { $_->[0] => 1 } @$options;
     my $num_unique_options = scalar keys %options;
     if ($num_unique_options != $num_options) {
-        $self->_exit_with_error(4, "Options in list are not unique");
+        $self->_exit_with_error(4, 'Options in list are not unique');
     }
 
     my $default_num = 0;
@@ -315,17 +398,12 @@ sub _show_found_var {
     ), "\n";
 }
 
-sub _get_version_str {
-    my $self = shift;
-    return basename($0) . ", Version $main::VERSION\n";
-}
-
 sub _exit_with_version {
     my $self = shift;
     printf "This is %s %s (using Module::Install::PRIVATE %s).\n\n",
            basename($0), $main::VERSION, $VERSION;
 
-    print "Copyright (c) 2004, Steve Hay.  All rights reserved.\n\n";
+    print "Copyright (C) $main::YEAR Steve Hay.  All rights reserved.\n\n";
 
     print wrap('', '',
         "This script is free software; you can redistribute it and/or modify " .

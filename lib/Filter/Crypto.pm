@@ -7,7 +7,7 @@
 #   distribution.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -29,7 +29,7 @@ use warnings;
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.10';
+    $VERSION = '1.11';
 }
 
 1;
@@ -75,7 +75,7 @@ about how Perl source code filters work.
 
 Encrypted files can also be produced more conveniently using the B<crypt_file>
 script, or (if you also have the L<PAR|PAR> module available) using the
-L<PAR::Filter::Crypto|PAR::Filter::Crypto> module.  The latter can be utilised
+L<PAR::Filter::Crypto|PAR::Filter::Crypto> module.  The latter can be utilized
 by the standard L<PAR|PAR> tools to produce PAR archives in which your Perl
 files are encrypted.
 
@@ -253,7 +253,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004, Steve Hay.  All rights reserved.
+Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -263,11 +263,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.10
+Version 1.11
 
 =head1 DATE
 
-12 Dec 2004
+03 Mar 2005
 
 =head1 HISTORY
 

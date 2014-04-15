@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::Decrypt module.
  *
  * COPYRIGHT
- *   Copyright (c) 2004, Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -88,7 +88,7 @@ static I32 FilterCrypto_ReadBlock(pTHX_ int idx, SV *sv, int want_size) {
     I32 n;
     I32 read_size;
 
-    /* Initialise the number of bytes read to zero. */
+    /* Initialize the number of bytes read to zero. */
     read_size = 0;
 
     while (1) {
@@ -154,21 +154,21 @@ static FILTER_CRYPTO_FCTX *FilterCrypto_FilterAlloc(pTHX) {
 }
 
 /*
- * Function to initialise the given filter context in the given mode.
+ * Function to initialize the given filter context in the given mode.
  * Returns a bool to indicate success or failure.
  */
 
 static bool FilterCrypto_FilterInit(pTHX_ FILTER_CRYPTO_FCTX *ctx,
     FILTER_CRYPTO_MODE crypt_mode)
 {
-    /* Initialise the crypto context. */
+    /* Initialize the crypto context. */
     if (!FilterCrypto_CryptoInit(aTHX_ ctx->crypto_ctx, crypt_mode))
         return FALSE;
 
-    /* Initialise the decrypt buffer. */
+    /* Initialize the decrypt buffer. */
     FilterCrypto_SvSetCUR(ctx->decrypt_sv, 0);
 
-    /* Initialise the filter count and status. */
+    /* Initialize the filter count and status. */
     if (PL_rsfp_filters == Nullav)
         ctx->filter_count = 0;
     else
@@ -194,7 +194,7 @@ static bool FilterCrypto_FilterUpdate(pTHX_ FILTER_CRYPTO_FCTX *ctx,
 }
 
 /*
- * Function to finalise the given filter context.  The decrypted output data
+ * Function to finalize the given filter context.  The decrypted output data
  * will be written into an SV within the filter context.
  * Returns a bool to indicate success or failure.
  */
@@ -436,7 +436,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
             }
 
             /* Set the filter status "finished" to remember that we have now
-             * read all the data and finalised the crypt context, with the final
+             * read all the data and finalized the crypt context, with the final
              * block written to the decryption buffer.  All that remains to be
              * done is for that to be written to the output stream buffer. */
             ctx->filter_status = FILTER_CRYPTO_STATUS_FINISHED;
@@ -501,7 +501,7 @@ BOOT:
      * e.g. perl -Dp <script>
      * Do this check before the check for a DEBUGGING Perl below because that
      * check currently seems to always trigger this check to fail even though
-     * its alteration of $^D is local()'ised. */
+     * its alteration of $^D is local()'ized. */
     if (PL_debug)
         croak("Can't run with DEBUGGING flags");
 
@@ -523,7 +523,7 @@ BOOT:
 }
 
 # Import function, automatically called by Perl when processing the
-# "use Filter::Crypto::Decrypt;" line, to initialise the decryption filter's
+# "use Filter::Crypto::Decrypt;" line, to initialize the decryption filter's
 # context.
 
 void
@@ -539,7 +539,7 @@ import(module, ...)
         SV *filter_sv;
         MAGIC *mg;
 
-        /* Allocate and initialise (in decrypt mode) a filter context. */
+        /* Allocate and initialize (in decrypt mode) a filter context. */
         ctx = FilterCrypto_FilterAlloc(aTHX);
         if (!FilterCrypto_FilterInit(aTHX_ ctx, FILTER_CRYPTO_MODE_DECRYPT)) {
             FilterCrypto_FilterFree(aTHX_ ctx);

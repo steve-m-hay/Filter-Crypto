@@ -8,7 +8,7 @@
 #   use in creating PAR archives in which the Perl files are encrypted.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -24,7 +24,7 @@ use strict;
 use warnings;
 
 use Carp;
-use Fcntl qw(:flock :seek);
+use Fcntl qw(:seek);
 use File::Temp qw(tempfile);
 use Filter::Crypto::CryptFile qw(:DEFAULT $ErrStr);
 use PAR::Filter;
@@ -38,7 +38,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(PAR::Filter);
 
-    $VERSION = '1.00';
+    $VERSION = '1.01';
 }
 
 #===============================================================================
@@ -217,7 +217,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004, Steve Hay.  All rights reserved.
+Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -227,11 +227,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.00
+Version 1.01
 
 =head1 DATE
 
-01 Nov 2004
+03 Mar 2005
 
 =head1 HISTORY
 

@@ -7,7 +7,7 @@
 #   Test script to check POD.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License

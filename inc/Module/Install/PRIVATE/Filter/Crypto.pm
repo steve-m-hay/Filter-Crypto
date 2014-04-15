@@ -7,7 +7,7 @@
 #   Filter-Crypto distribution.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -76,7 +76,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::PRIVATE);
 
-    $VERSION = '1.00';
+    $VERSION = '1.01';
 
     # Define private API accessor methods.
     foreach my $prop (qw(
@@ -419,7 +419,7 @@ sub _determine_ver_num {
         }
         else {
             $self->_exit_with_error(106,
-                'Unrecognised version number found (%s)', $ver_define
+                'Unrecognized version number found (%s)', $ver_define
             );
         }
     }
@@ -610,10 +610,10 @@ sub _locate_bin_file {
     # used to be called "ssleay" up to and including 0.9.2b.
     my $bin_dir = $self->_bin_dir();
     my($file, $bin_file);
-    if (-f ($file = catfile($bin_dir, "openssl$Config{exe_ext}"))) {
+    if (-f ($file = catfile($bin_dir, "openssl$Config{_exe}"))) {
         $bin_file = $file;
     }
-    elsif (-f ($file = catfile($bin_dir, "ssleay$Config{exe_ext}"))) {
+    elsif (-f ($file = catfile($bin_dir, "ssleay$Config{_exe}"))) {
         $bin_file = $file;
     }
 

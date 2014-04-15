@@ -1,4 +1,4 @@
-#line 1 "inc/Module/Install/MakeMaker.pm - C:/perl5/site/lib/Module/Install/MakeMaker.pm"
+#line 1 "inc/Module/Install/MakeMaker.pm - C:/WebDB/perl/site/lib/Module/Install/MakeMaker.pm"
 package Module::Install::MakeMaker;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
 

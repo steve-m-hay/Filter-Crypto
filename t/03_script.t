@@ -7,7 +7,7 @@
 #   Test script to check crypt_file script (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -33,7 +33,7 @@ use Test;
 my $num_tests;
 
 BEGIN {
-    $num_tests = 95;
+    $num_tests = 99;
     plan tests => $num_tests;           # Number of tests to be executed
 }
 
@@ -77,6 +77,7 @@ MAIN: {
     my $lfile  = 'test.lst';
     my $dir1   = 'testdir1';
     my $dir2   = 'testdir2';
+    my $cat    = 'cat.pl';
     my $str    = 'Hello, world.';
     my $prog   = qq[print "$str\\n";\n];
     my $scrsrc = qq[use Foo;\nFoo::foo();\n];
@@ -86,14 +87,15 @@ MAIN: {
     my $null   = devnull();
 
     my $perl;
+    my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
     if ($] < 5.007003) {
         # Prior to 5.7.3, -Mblib emitted a "Using ..." message on STDERR which
         # looks ugly when we spawn a child perl process and breaks the --silent
         # test.
-        $perl = qq["$^X" -Iblib/arch -Iblib/lib];
+        $perl = qq[$perl_exe -Iblib/arch -Iblib/lib];
     }
     else {
-        $perl = qq["$^X" -Mblib];
+        $perl = qq[$perl_exe -Mblib];
     }
 
     my $have_decrypt   = -f catfile($lib_dir, 'Decrypt.pm');
@@ -123,7 +125,11 @@ MAIN: {
     print $fh $modsrc;
     close $fh;
 
-                                        # Tests 2-5: Check STDIN input
+    open $fh, ">$cat" or die "Can't create file '$cat': $!\n";
+    print $fh "binmode STDIN; binmode STDOUT; print while <>;\n";
+    close $fh;
+
+                                        # Tests 2-5: Check STD* re-directions
     qx{$perl $crypt_file <$ifile >$ofile 2>$null};
     ok($? == 0);
 
@@ -146,7 +152,33 @@ MAIN: {
 
     unlink $ofile;
 
-                                        # Tests 6-9: Check file spec input
+                                        # Tests 6-9: Check STD* pipelines
+    # Explicitly terminate crypt_file's (empty) options list with a "--" since
+    # Getopt::Long's handling of a lone "-" is broken prior to version 2.25
+    # which was first distributed in Perl 5.6.1.
+    qx{$perl $cat <$ifile | $perl $crypt_file -- - 2>$null | $perl $cat >$ofile};
+    ok($? == 0);
+
+    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    ok($contents eq $prog);
+    open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    ok($contents =~ /^\Q$head\E/);
+
+    if ($have_decrypt) {
+        chomp($line = qx{$perl $ofile});
+        ok($line eq $str);
+    }
+    else {
+        skip('Skip Decrypt component not built', 1);
+    }
+
+    unlink $ofile;
+
+                                        # Tests 10-13: Check file spec input
     qx{$perl $crypt_file $ifile >$ofile 2>$null};
     ok($? == 0);
 
@@ -169,7 +201,7 @@ MAIN: {
 
     unlink $ofile;
 
-                                        # Tests 10-13: Check -l option
+                                        # Tests 14-17: Check -l option
     qx{$perl $crypt_file -l $lfile >$ofile 2>$null};
     ok($? == 0);
 
@@ -192,7 +224,7 @@ MAIN: {
 
     unlink $ofile;
 
-                                        # Tests 14-17: Check -d option
+                                        # Tests 18-21: Check -d option
     mkdir $dir1 or die "Can't create directory '$dir1': $!\n";
     copy($ifile, $dir1) or
         die "Can't copy file '$ifile' into directory '$dir1': $!\n";
@@ -221,7 +253,7 @@ MAIN: {
     unlink $dfile;
     unlink $ofile;
 
-                                        # Tests 18-21: Check -r option
+                                        # Tests 22-25: Check -r option
     $rdir = catdir($dir1, $dir2);
     mkdir $rdir or die "Can't create directory '$rdir': $!\n";
     copy($ifile, $rdir) or
@@ -253,7 +285,7 @@ MAIN: {
     rmdir $dir1;
     unlink $ofile;
 
-                                        # Tests 22-24: Check -t option
+                                        # Tests 26-28: Check -t option
     $abs_ifile = rel2abs($ifile);
     chomp($data = qx{$perl $crypt_file -t $ifile});
     ok($? == 0);
@@ -264,7 +296,7 @@ MAIN: {
     close $fh;
     ok($contents eq $prog);
 
-                                        # Tests 25-37: Check -d/-r/-t options
+                                        # Tests 29-41: Check -d/-r/-t options
     $dir3 = catdir($top_dir, 'lib');
     $dir4 = catdir($dir3, 'Filter');
     $dir5 = catdir($dir3, 'PAR', 'Filter');
@@ -322,7 +354,7 @@ MAIN: {
     $data = join("\n", sort split /\n/, $data) . "\n";
     ok($data eq $expected);
 
-                                        # Tests 38-47: Check --silent option
+                                        # Tests 42-51: Check --silent option
     chomp($line = qx{$perl $crypt_file $ifile 2>&1 1>$ofile});
     ok($? == 0);
     ok($line eq "$abs_ifile: OK");
@@ -367,7 +399,7 @@ MAIN: {
 
     unlink $ofile;
 
-                                        # Tests 48-52: Check -i option
+                                        # Tests 52-56: Check -i option
     qx{$perl $crypt_file -i $iofile 2>$null};
     ok($? == 0);
 
@@ -392,7 +424,7 @@ MAIN: {
     close $fh;
     ok($contents eq $prog);
 
-                                        # Tests 53-61: Check script and module
+                                        # Tests 57-65: Check script and module
     qx{$perl $crypt_file -i $script 2>$null};
     ok($? == 0);
 
@@ -441,7 +473,7 @@ MAIN: {
         skip('Skip Decrypt component not built', 1);
     }
 
-                                        # Tests 62-66: Check -e option
+                                        # Tests 66-70: Check -e option
     qx{$perl $crypt_file -i -e memory $iofile 2>$null};
     ok($? == 0);
 
@@ -477,7 +509,7 @@ MAIN: {
         close $fh;
     }
 
-                                        # Tests 67-70: Check -b option
+                                        # Tests 71-74: Check -b option
     qx{$perl $crypt_file -i -b $q*.bak$q $iofile 2>$null};
     ok($? == 0);
 
@@ -501,7 +533,7 @@ MAIN: {
     unlink $iofile;
     rename $bfile, $iofile;
 
-                                        # Tests 71-74: Check -o option
+                                        # Tests 75-78: Check -o option
     qx{$perl $crypt_file -o $q?.enc.[$q $ifile 2>$null};
     ok($? == 0);
 
@@ -524,7 +556,7 @@ MAIN: {
 
     unlink $ofile;
 
-                                        # Tests 75-92: Check -c option
+                                        # Tests 79-96: Check -c option
     qx{$perl $crypt_file -i -c auto $iofile 2>$null};
     ok($? == 0);
 
@@ -621,19 +653,19 @@ MAIN: {
         skip('Skip Decrypt component not built', 1);
     }
 
-                                        # Test 93: Check -v option
+                                        # Test 97: Check -v option
     chomp($data = qx{$perl $crypt_file -v});
     ok($data =~ qr/\A This\ is\ crypt_file              .*?
                     ^ Copyright                         .*?
                     ^ This\ script\ is\ free\ software /mosx);
 
-                                        # Test 94: Check -h option
+                                        # Test 98: Check -h option
     chomp($data = qx{$perl $crypt_file -h});
     ok($data =~ qr/\A Usage:     .*?
                     ^ Arguments: .*?
                     ^ Options:   /mosx);
 
-                                        # Test 95: Check -m option
+                                        # Test 99: Check -m option
     chomp($data = qx{$perl $crypt_file -m});
     ok($data =~ qr/^ (?:\e\[..)? NAME         .*?
                    ^ (?:\e\[..)? SYNOPSIS     .*?
@@ -656,6 +688,7 @@ MAIN: {
     unlink $lfile;
     unlink $script;
     unlink $module;
+    unlink $cat;
 }
 
 #===============================================================================

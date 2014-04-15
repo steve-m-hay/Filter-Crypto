@@ -18,7 +18,7 @@
 #   from the top-level directory.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -62,8 +62,8 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-    # Test both a syntactically correct program (for which the decryption filter
-    # should complete successfully) and a syntactically incorrect program (for
+    # Test both a syntactically correct script (for which the decryption filter
+    # should complete successfully) and a syntactically incorrect script (for
     # which the decryption filter should fail part-way through).
     my $file1 = 'test1.pl';
     my $prog1 = qq[my \$str = "Hello, world.\\n";\n1;\n];

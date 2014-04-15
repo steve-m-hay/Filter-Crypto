@@ -8,7 +8,7 @@
 #   still runnable, format to hide the source code from casual prying eyes.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -40,7 +40,7 @@ use constant EDIT_MODE_TEMP_FILE => 1;
 use constant WARNING_TYPE_NORMAL => 0;
 use constant WARNING_TYPE_SEVERE => 1;
 
-sub get_input_files($$$$);
+sub get_input_files($$$);
 sub resolve_file_expr($$);
 sub show_warning($$$@);
 sub exit_with_version();
@@ -53,7 +53,8 @@ sub exit_with_error(@);
 # INITIALISATION
 #===============================================================================
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
+our $YEAR    = '2004-2005';
 
 #===============================================================================
 # MAIN PROGRAM
@@ -94,6 +95,25 @@ MAIN: {
     );
 
     exit_with_usage() unless $ok;
+
+    # Complete the list of input file specifiers (that is, the remaining
+    # arguments, if any) from the list file, if one was specified.
+    my @in_file_specs = @ARGV;
+    if (defined $list_file) {
+        my $list_fh;
+        unless (open $list_fh, '<', $list_file) {
+            exit_with_error(5,
+                "Can't open list file '%s' for reading: %s", $list_file, $!
+            );
+        }
+
+        my @list_file_lines;
+        chomp(@list_file_lines = <$list_fh>);
+        push @in_file_specs, @list_file_lines;
+
+        close $list_fh or
+            warn "Can't close list file '$list_file' after reading: $!";
+    }
 
     # Allow multiple directories to be specified either with one --dir option,
     # or via multiple --dir options.  Use the current working directory if no
@@ -150,11 +170,41 @@ MAIN: {
         $crypt_mode = CRYPT_MODE_AUTO;
     }
 
-    my $in_files = get_input_files(\@ARGV, $list_file, \@dirs, $recurse);
+    # Wait on STDIN if there were no input file specifiers, or if there was a
+    # single input file specifier consisting of '-'.
+    if ( @in_file_specs == 0 or
+        (@in_file_specs == 1 and $in_file_specs[0] eq '-'))
+    {
+        my $out_file;
+        if (defined $out_file_expr) {
+            $out_file = $out_file_expr;
+        }
+        else {
+            $out_file = \*STDOUT;
+            binmode $out_file;
+        }
 
-    # Use the (possibly empty!) list of input files if any input file specifiers
-    # were given.  Only wait on STDIN if there were no input file specifiers.
-    if (@ARGV or defined $list_file) {
+        binmode STDIN;
+        if (crypt_file(\*STDIN, $out_file, $crypt_mode)) {
+            unless ($silent) {
+                print STDERR "OK";
+
+                # There may be a message left in $ErrStr even after crypt_file()
+                # completes successfully, so output that too if there is.
+                print STDERR " ($ErrStr)" if $ErrStr ne '';
+
+                print STDERR "\n";
+            }
+        }
+        else {
+            show_warning($silent, WARNING_TYPE_SEVERE, '-',
+                "crypt_file() failed: %s", $ErrStr
+            );
+        }
+    }
+    else {
+        my $in_files = get_input_files(\@in_file_specs, \@dirs, $recurse);
+
         foreach my $file (@$in_files) {
             print STDOUT "$file\n" and next if $test;
             print STDERR "$file: " unless $silent;
@@ -321,33 +371,6 @@ MAIN: {
             }
         }
     }
-    else {
-        my $out_file;
-        if (defined $out_file_expr) {
-            $out_file = $out_file_expr;
-        }
-        else {
-            $out_file = \*STDOUT;
-            binmode $out_file;
-        }
-
-        if (crypt_file(\*STDIN, $out_file, $crypt_mode)) {
-            unless ($silent) {
-                print STDERR "OK";
-
-                # There may be a message left in $ErrStr even after crypt_file()
-                # completes successfully, so output that too if there is.
-                print STDERR " ($ErrStr)" if $ErrStr ne '';
-
-                print STDERR "\n";
-            }
-        }
-        else {
-            show_warning($silent, WARNING_TYPE_SEVERE, '-',
-                "crypt_file() failed: %s", $ErrStr
-            );
-        }
-    }
 
     exit 0;
 }
@@ -356,26 +379,8 @@ MAIN: {
 # SUBROUTINES
 #===============================================================================
 
-sub get_input_files($$$$) {
-    my($in_file_specs, $list_file, $dirs, $recurse) = @_;
-
-    # Complete the list of input file specifiers from the list file if one was
-    # specified.
-    if (defined $list_file) {
-        my $list_fh;
-        unless (open $list_fh, '<', $list_file) {
-            exit_with_error(5,
-                "Can't open list file '%s' for reading: %s", $list_file, $!
-            );
-        }
-
-        my @in_file_specs;
-        chomp(@in_file_specs = <$list_fh>);
-        push @$in_file_specs, @in_file_specs;
-
-        close $list_fh or
-            warn "Can't close list file '$list_file' after reading: $!";
-    }
+sub get_input_files($$$) {
+    my($in_file_specs, $dirs, $recurse) = @_;
 
     # Process each input file specifier and add the corresponding file(s) to the
     # input file list.
@@ -497,7 +502,7 @@ sub exit_with_version() {
     printf "This is %s %s (using Filter::Crypto %s).\n\n",
            basename($0), $VERSION, $Filter::Crypto::VERSION;
 
-    print "Copyright (c) 2004, Steve Hay.  All rights reserved.\n\n";
+    print "Copyright (C) $YEAR Steve Hay.  All rights reserved.\n\n";
 
     print wrap('', '',
         "This script is free software; you can redistribute it and/or modify " .
@@ -618,7 +623,9 @@ options.
 
 =back
 
-If there are no file specifiers given then input is read from STDIN instead.
+If there are no file specifiers given, or if there is a single input file
+specifier consisting of just a single dash given, then input is read from STDIN
+instead.
 
 =head1 OPTIONS
 
@@ -848,7 +855,7 @@ Display the script name and version, and then exit.
 
 =item B<-h>, B<--help> | B<--?>
 
-Display a help page listing the options, and then exit.
+Display a help page listing the arguments and options, and then exit.
 
 =item B<-m>, B<--manpage> | B<--doc>
 
@@ -856,9 +863,10 @@ Display the entire manual page, and then exit.
 
 =back
 
-Options may be introduced with a single dash, a double dash or a forward slash;
-case does not matter; an equals sign may be used or omitted between option names
-and values; long option names may be abbreviated to uniqueness.
+Options may be introduced with a double dash, a single dash, a plus sign or
+(on Win32) a forward slash; case does not matter; an equals sign may be used or
+omitted between option names and values; long option names may be abbreviated to
+uniqueness.
 
 Options may also be placed between non-option arguments, and option processing
 may be stopped at any point in the command-line by inserting a double dash.
@@ -999,14 +1007,14 @@ with the B<--dir> option.
 =item Unknown edit mode '%s'
 
 (I) The mode specified for editing files in-place (i.e. the mode given by the
-B<--edit-mode> option) was not recognised and was not caught by the option
+B<--edit-mode> option) was not recognized and was not caught by the option
 processing code run at the start of the script, causing an unexpected error
 later on.
 
 =item Unknown warning type '%s'
 
 (I) The subroutine called internally when outputting warning messages was passed
-a warning type that it does not recognise.
+a warning type that it does not recognize.
 
 =item %s: Warning: Can't close temporary file '%s' after writing: %s
 
@@ -1033,7 +1041,7 @@ arguments.  (The redirection syntax is unchanged.)
 
 =over 4
 
-=item Process F<test.pl>, writing output to F<testenc.pl>:
+=item Process B<test.pl>, writing output to B<testenc.pl>:
 
     crypt_file <test.pl >testenc.pl
 
@@ -1041,15 +1049,15 @@ arguments.  (The redirection syntax is unchanged.)
 
     crypt_file -o '?enc.pl' test.pl
 
-=item Process F<test.pl> in-place, making a backup copy as F<test.pl.bak>:
+=item Process B<test.pl> in-place, making a backup copy as B<test.pl.bak>:
 
     crypt_file -i -b '*.bak' test.pl
 
-=item Process F<test.pl> in-place, with no backup copy:
+=item Process B<test.pl> in-place, with no backup copy:
 
     crypt_file -i test.pl
 
-=item Process all F<*.pl> files within F</tmp> and all sub-directories in-place:
+=item Process all B<*.pl> files within F</tmp> and all sub-directories in-place:
 
     crypt_file -i -d /tmp -r '*.pl'
 
@@ -1081,7 +1089,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004, Steve Hay.  All rights reserved.
+Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -1091,11 +1099,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.00
+Version 1.01
 
 =head1 DATE
 
-01 Nov 2004
+03 Mar 2005
 
 =head1 HISTORY
 

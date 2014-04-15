@@ -6,7 +6,7 @@
 #   Common XS code for Filter::Crypto modules.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -27,12 +27,12 @@ BOOT:
     /* We need to have an indented line here otherwise xsubpp gets confused. */
 #ifdef FILTER_CRYPTO_DEBUG
     if (items > 1)
-        warn("Initialising %s (Version %.2"NVff")\n", package, SvNV(ST(1)));
+        warn("Initializing %s (Version %.2"NVff")\n", package, SvNV(ST(1)));
     else
-        warn("Initialising %s (Unknown version)\n", package);
+        warn("Initializing %s (Unknown version)\n", package);
 #endif
 
-    /* Allocate and initialise the relevant Perl module's $ErrStr variable name.
+    /* Allocate and initialize the relevant Perl module's $ErrStr variable name.
      * Note that the value returned by the sizeof() operator includes the NUL
      * terminator, which we must also include when calling Newz(). */
     Newz(0, filter_crypto_errstr_var,

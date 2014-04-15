@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::CryptFile module.
  *
  * COPYRIGHT
- *   Copyright (c) 2004, Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -253,7 +253,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
             croak("Unknown crypt mode '%d'", crypt_mode);
     }
 
-    /* Allocate and initialise the crypto context. */
+    /* Allocate and initialize the crypto context. */
     ctx = FilterCrypto_CryptoAlloc(aTHX);
 
     if (!FilterCrypto_CryptoInit(aTHX_ ctx, crypt_mode)) {
@@ -295,7 +295,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
         }
         else if (in_len == 0) {
             /* We didn't read any data from the input stream, and have now
-             * reached EOF, so break out of the "for" loop and finalise the
+             * reached EOF, so break out of the "for" loop and finalize the
              * crypto context. */
 #ifdef FILTER_CRYPTO_DEBUG
             warn("Reached EOF on input stream\n");

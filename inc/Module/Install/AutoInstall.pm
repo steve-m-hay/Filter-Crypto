@@ -1,4 +1,4 @@
-#line 1 "inc/Module/Install/AutoInstall.pm - C:/perl5/site/lib/Module/Install/AutoInstall.pm"
+#line 1 "inc/Module/Install/AutoInstall.pm - C:/WebDB/perl/site/lib/Module/Install/AutoInstall.pm"
 package Module::Install::AutoInstall;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
 

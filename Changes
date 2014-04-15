@@ -1,9 +1,56 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.10
+                          Filter::Crypto, Version 1.11
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.11 03 Mar 2005
+
+    - Fixed crypt_file so that it now sets STDIN to "binary mode" if it is
+      reading input from STDIN.
+
+    - Fixed crypt_file so that it now accepts a single input file specifier
+      consisting of just '-' to mean STDIN so that one can write commands like
+      "someprogram | crypt_file -".
+
+    - Fixed crypt_file so that it no longer tries to flock() STDIN or STDOUT
+      when they are some other program's STDOUT or STDIN respectively because
+      this doesn't work on Win32 (at least).  All of the following commands
+      should now work:
+
+          crypt_file                    STDIN from keyboard
+          crypt_file <file              STDIN from file
+          someprogram | crypt_file -    STDIN from someprogram
+
+          crypt_file                    STDOUT to console
+          crypt_file >file              STDOUT to file
+          crypt_file | someprogram -    STDOUT to someprogram
+
+    - Added new tests for these changes.
+
+    - Changed the use of qq["$^X"] in some test scripts to only include the
+      double-quotes if $^X actually contains a space since shell commands like
+
+          qq["$^X" -e print(1) | "$^X" -ne print];
+
+      (used in the new tests) don't work under Perl 5.6.0 on Win32 (at least)
+      with the double-quotes included.  (These tests will therefore still fail
+      in cases where $^X does contain a space, but that's not an ideal
+      configuration anyway.)
+
+    - Added code to Makefile.PL to try to check that on Win32 the same compiler
+      is being used to build these modules as was used to build Perl itself to
+      avoid problems with binaries built by different compiler versions loading
+      different C runtime DLL's.
+
+    - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
+      building these modules.
+
+    - Corrected spelling mistakes: finalise, initialise, localise, recognise and
+      utilise are more properly spelled finalize, initialize, localize,
+      recognize and utilize respectively.
 _________________
 
 v1.10 12 Dec 2004

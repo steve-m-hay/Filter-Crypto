@@ -7,7 +7,7 @@
 #   been encrypted via Filter::Crypto::CryptFile.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -31,7 +31,7 @@ use XSLoader qw();
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.10';
+    $VERSION = '1.11';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -91,7 +91,7 @@ destroyed.
 
 (F) There was an error producing the final block of decrypted data.  The cipher
 context structure used to perform the source code decryption could not be
-finalised so the decryption could not be completed.  The last error message from
+finalized so the decryption could not be completed.  The last error message from
 the decryption code is also given.
 
 =item Can't continue decryption: %s
@@ -139,7 +139,7 @@ in retrieving the original unencrypted source code.
 =item Can't start decryption: %s
 
 (F) The cipher context structure used to perform the source code decryption
-could not be initialised so the decryption could not be started.  The last error
+could not be initialized so the decryption could not be started.  The last error
 message from the decryption code is also given.
 
 =item Found wrong MAGIC in decryption filter's SV: No valid mg_ptr
@@ -162,7 +162,7 @@ doesn't exist.
 =item Unknown crypto context mode '%d'
 
 (I) The crypto context structure used internally when performing decryption has
-been setup with a crypt mode that it does not recognise.
+been setup with a crypt mode that it does not recognize.
 
 =back
 
@@ -199,7 +199,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004, Steve Hay.  All rights reserved.
+Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -209,11 +209,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.10
+Version 1.11
 
 =head1 DATE
 
-12 Dec 2004
+03 Mar 2005
 
 =head1 HISTORY
 

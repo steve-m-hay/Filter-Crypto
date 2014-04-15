@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.10
+                          Filter::Crypto, Version 1.11
 ________________________________________________________________________________
 
 NAME
@@ -41,7 +41,7 @@ DESCRIPTION
 
     Encrypted files can also be produced more conveniently using the crypt_file
     script, or (if you also have the PAR module available) using the
-    PAR::Filter::Crypto module.  The latter can be utilised by the standard PAR
+    PAR::Filter::Crypto module.  The latter can be utilized by the standard PAR
     tools to produce PAR archives in which your Perl files are encrypted.  The
     Filter::Crypto::Decrypt module (only) can also be automatically included in
     these PAR archives, so this is perhaps the easiest way to produce
@@ -75,7 +75,7 @@ INSTALLATION
 
 COPYRIGHT
 
-    Copyright (c) 2004, Steve Hay.  All rights reserved.
+    Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 
 LICENCE
 

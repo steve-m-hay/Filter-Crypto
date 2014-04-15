@@ -6,7 +6,7 @@
  *   Common C code for Filter::Crypto modules.
  *
  * COPYRIGHT
- *   Copyright (c) 2004, Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -164,7 +164,7 @@ typedef struct {
     SV *salt_sv;
     SV *iv_sv;
     FILTER_CRYPTO_MODE crypt_mode;
-    bool cipher_initialised;
+    bool cipher_initialized;
 } FILTER_CRYPTO_CCTX;
 
 static FILTER_CRYPTO_CCTX *FilterCrypto_CryptoAlloc(pTHX);
@@ -214,7 +214,7 @@ static FILTER_CRYPTO_CCTX *FilterCrypto_CryptoAlloc(pTHX) {
     Newz(0, ctx->cipher_ctx, 1, EVP_CIPHER_CTX);
 
     /* Allocate a pair of SV's with enough string space to hold a salt and an
-     * initialisation vector (IV) respectively.  Mark each one as being a string
+     * initialization vector (IV) respectively.  Mark each one as being a string
      * only. */
 #if FILTER_CRYPTO_NEED_RANDOM_SALT
     ctx->salt_sv = NEWSV(0, PKCS5_SALT_LEN);
@@ -230,19 +230,19 @@ static FILTER_CRYPTO_CCTX *FilterCrypto_CryptoAlloc(pTHX) {
 }
 
 /*
- * Function to initialise the given crypto context in the given mode.
+ * Function to initialize the given crypto context in the given mode.
  * Returns a bool to indicate success or failure.
  */
 
 static bool FilterCrypto_CryptoInit(pTHX_ FILTER_CRYPTO_CCTX *ctx,
     FILTER_CRYPTO_MODE crypt_mode)
 {
-    /* The cipher context gets initialised later (by
+    /* The cipher context gets initialized later (by
      * FilterCrypto_CryptoInitCipher(), called from FilterCrypto_CryptoUpdate())
      * rather than now because we do not necessarily have all the required
      * information to do it now. */
 
-    /* Initialise the salt and IV. */
+    /* Initialize the salt and IV. */
 #if FILTER_CRYPTO_NEED_RANDOM_SALT
     FilterCrypto_SvSetCUR(ctx->salt_sv, 0);
 #else
@@ -254,9 +254,9 @@ static bool FilterCrypto_CryptoInit(pTHX_ FILTER_CRYPTO_CCTX *ctx,
     ctx->iv_sv = NULL;
 #endif
 
-    /* Initialise the crypt mode and cipher context initialisation status. */
+    /* Initialize the crypt mode and cipher context initialization status. */
     ctx->crypt_mode         = crypt_mode;
-    ctx->cipher_initialised = FALSE;
+    ctx->cipher_initialized = FALSE;
 
     /* Clear the current thread's OpenSSL/SSLeay error queue. */
     ERR_clear_error();
@@ -267,7 +267,7 @@ static bool FilterCrypto_CryptoInit(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 }
 
 /*
- * Function to initialise the cipher context within the given crypto context.
+ * Function to initialize the cipher context within the given crypto context.
  * This is called automatically from FilterCrypto_CryptoUpdate() since when
  * decrypting a salt and/or an IV may need to be recovered from the given input
  * SV which is passed to FilterCrypto_CryptoUpdate().  In that case, the salt
@@ -460,7 +460,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
             ctx->iv_sv, ctx->crypt_mode))
         return FALSE;
 
-    ctx->cipher_initialised = TRUE;
+    ctx->cipher_initialized = TRUE;
 
     return TRUE;
 }
@@ -476,14 +476,14 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 static bool FilterCrypto_CryptoUpdate(pTHX_ FILTER_CRYPTO_CCTX *ctx, SV *in_sv,
     SV *out_sv)
 {
-    /* If the cipher context is not yet initialised then use the data in the
-     * input SV to initialise it now. */
-    if (!ctx->cipher_initialised) {
+    /* If the cipher context is not yet initialized then use the data in the
+     * input SV to initialize it now. */
+    if (!ctx->cipher_initialized) {
         if (!FilterCrypto_CryptoInitCipher(aTHX_ ctx, in_sv, out_sv))
             return FALSE;
     }
 
-    /* If there is any data left in the input SV after the above initialisation
+    /* If there is any data left in the input SV after the above initialization
      * has potentially been run then use it to update the cipher context.
      * Otherwise just return success. */
     if (SvCUR(in_sv))
@@ -493,7 +493,7 @@ static bool FilterCrypto_CryptoUpdate(pTHX_ FILTER_CRYPTO_CCTX *ctx, SV *in_sv,
 }
 
 /*
- * Function to finalise the given crypto context.  The data written into the
+ * Function to finalize the given crypto context.  The data written into the
  * output SV is not assumed to be null-terminated, so SvCUR(out_sv) will be set
  * correctly by this function.
  * Returns a bool to indicate success or failure.
@@ -525,7 +525,7 @@ static void FilterCrypto_CryptoFree(pTHX_ FILTER_CRYPTO_CCTX *ctx) {
 }
 
 /*
- * Function to initialise the given cipher context in the given mode using the
+ * Function to initialize the given cipher context in the given mode using the
  * given salt and/or IV if necessary.
  * Returns a bool to indicate success or failure.
  */
@@ -560,7 +560,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
     int derived_key_len;
 #endif
 
-    /* Derive the key from the given password.  PBE should really be initialised
+    /* Derive the key from the given password.  PBE should really be initialized
      * with PKCS5_pbe2_set() and EVP_PBE_CipherInit().  The former generates a
      * random IV, while the latter derives a key from the given password by a
      * PKCS#5 v2.0 key derivation algorithm (via PKCS5_v2_PBE_keyivgen() and
@@ -651,7 +651,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
 #  if FILTER_CRYPTO_OPENSSL_VERSION < 90700
     if (!EVP_CipherInit(ctx, cipher_func, NULL, NULL, crypt_mode)) {
         FilterCrypto_SetErrStr(aTHX_
-            "Can't initialise cipher context in crypt mode '%d': %s",
+            "Can't initialize cipher context in crypt mode '%d': %s",
             crypt_mode, FILTER_CRYPTO_OPENSSL_ERR_STR
         );
         return FALSE;
@@ -661,7 +661,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
 
     if (!EVP_CipherInit_ex(ctx, cipher_func, NULL, NULL, NULL, crypt_mode)) {
         FilterCrypto_SetErrStr(aTHX_
-            "Can't initialise cipher context in crypt mode '%d': %s",
+            "Can't initialize cipher context in crypt mode '%d': %s",
             crypt_mode, FILTER_CRYPTO_OPENSSL_ERR_STR
         );
         return FALSE;
@@ -702,7 +702,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
 #  endif
 
     /* We have finished modifying the cipher parameters, so we can now
-     * finish the initialisation of the cipher context by deriving the key
+     * finish the initialization of the cipher context by deriving the key
      * and setting both it and the IV. */
 #  if FILTER_CRYPTO_USING_PBE
     if (PKCS5_PBKDF2_HMAC_SHA1(filter_crypto_pswd, sizeof(filter_crypto_pswd),
@@ -722,7 +722,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
 #  if FILTER_CRYPTO_OPENSSL_VERSION < 90700
     if (!EVP_CipherInit(ctx, NULL, key, iv, crypt_mode)) {
         FilterCrypto_SetErrStr(aTHX_
-            "Can't initialise cipher context in crypt mode '%d' using %d-byte "
+            "Can't initialize cipher context in crypt mode '%d' using %d-byte "
             "key: %s",
             crypt_mode, FILTER_CRYPTO_KEY_LEN, FILTER_CRYPTO_OPENSSL_ERR_STR
         );
@@ -731,7 +731,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
 #  else
     if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, crypt_mode)) {
         FilterCrypto_SetErrStr(aTHX_
-            "Can't initialise cipher context in crypt mode '%d' using %d-byte "
+            "Can't initialize cipher context in crypt mode '%d' using %d-byte "
             "key: %s",
             crypt_mode, FILTER_CRYPTO_KEY_LEN, FILTER_CRYPTO_OPENSSL_ERR_STR
         );
@@ -780,7 +780,7 @@ static bool FilterCrypto_CipherUpdate(pTHX_ EVP_CIPHER_CTX *ctx, SV *in_sv,
 
     /* Advance the out_text pointer to the end of any existing output since the
      * output buffer may already have a salt and/or an IV in it if we have just
-     * initialised an encryption process. */
+     * initialized an encryption process. */
     orig_out_len = SvCUR(out_sv);
     out_text += orig_out_len;
 
@@ -810,7 +810,7 @@ static bool FilterCrypto_CipherUpdate(pTHX_ EVP_CIPHER_CTX *ctx, SV *in_sv,
 }
 
 /*
- * Function to finalise the given cipher context.  The data written into the
+ * Function to finalize the given cipher context.  The data written into the
  * output SV is not assumed to be null-terminated, so SvCUR(out_sv) will be set
  * correctly by this function.
  * Returns a bool to indicate success or failure.
@@ -830,14 +830,14 @@ static bool FilterCrypto_CipherFinal(pTHX_ EVP_CIPHER_CTX *ctx, SV *out_sv) {
 #if FILTER_CRYPTO_OPENSSL_VERSION < 90700
     if (!EVP_CipherFinal(ctx, out_text, &out_len)) {
         FilterCrypto_SetErrStr(aTHX_
-            "Can't finalise cipher context: %s", FILTER_CRYPTO_OPENSSL_ERR_STR
+            "Can't finalize cipher context: %s", FILTER_CRYPTO_OPENSSL_ERR_STR
         );
         return FALSE;
     }
 #else
     if (!EVP_CipherFinal_ex(ctx, out_text, &out_len)) {
         FilterCrypto_SetErrStr(aTHX_
-            "Can't finalise cipher context: %s", FILTER_CRYPTO_OPENSSL_ERR_STR
+            "Can't finalize cipher context: %s", FILTER_CRYPTO_OPENSSL_ERR_STR
         );
         return FALSE;
     }
@@ -863,7 +863,7 @@ static bool FilterCrypto_CipherFinal(pTHX_ EVP_CIPHER_CTX *ctx, SV *out_sv) {
 }
 
 /*
- * Function to initialise the OpenSSL/SSLeay PRNG.
+ * Function to initialize the OpenSSL/SSLeay PRNG.
  * Returns a bool to indicate success or failure.
  *
  * This function is based on code taken from the ssl_rand_seed() function in
@@ -912,7 +912,7 @@ static bool FilterCrypto_PRNGInit(pTHX) {
         return TRUE;
     }
     else {
-        FilterCrypto_SetErrStr(aTHX_ "Can't initialise PRNG");
+        FilterCrypto_SetErrStr(aTHX_ "Can't initialize PRNG");
         return FALSE;
     }
 #else

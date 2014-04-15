@@ -1,7 +1,63 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.10
+                          Filter::Crypto, Version 1.11
 ________________________________________________________________________________
+
+PREREQUISITES
+
+    Compiler
+
+        You need a C compiler to build these modules.
+
+        Note that you should try to use the same compiler as was used to build
+        your Perl itself.
+
+        In particular, Windows users should be aware that these modules will not
+        work correctly if they load a different C runtime DLL to that loaded by
+        perl itself.  Note that Visual Studio 98 (VC++ 6) and earlier produce
+        binaries that require the system's msvcrt.dll, while Visual Studio
+        .NET/2003 (VC++ 7) and later (including the free Visual C++ Toolkit
+        2003) produce binaries that require compiler-specific DLL's named
+        msvcr70.dll, msvcr71.dll, etc.  Therefore, building these modules with
+        the Visual C++ Toolkit 2003 for use with any ActivePerl, which are known
+        currently to be built with Visual Studio 98, will not work.
+
+        On Windows, the Makefile.PL script will try to detect if a different
+        compiler is being used and will give an error if necessary.  Note,
+        however, that it is not always possible for it to detect which
+        particular compiler version was used to build Perl, especially for Perl
+        version 5.8.6 or older which didn't have this information stored in the
+        standard library module Config.
+
+    OpenSSL
+
+        OpenSSL (any version), or SSLeay version 0.6.0 or later.
+        The latest version of OpenSSL is available from http://www.openssl.org/.
+
+    Perl
+
+        Perl version 5.6.0 or later.
+        The latest version of Perl is available from http://www.perl.com/.
+
+    Perl Modules
+
+        There are no non-standard Perl modules required by the two main modules
+        in this distribution (Filter::Crypto::CryptFile and
+        Filter::Crypto::Decrypt), but the crypt_file script and the
+        PAR::Filter::Crypto module both require
+
+            File::Temp
+
+        which is only a standard Perl module from Perl version 5.6.1 onwards
+        (crypt_file only requires it when run with the "-e tempfile" option),
+        and the PAR::Filter::Crypto module also requires
+
+            PAR::Filter
+
+        which is part of the PAR distribution.
+
+        A standalone distribution of the File::Temp module, as well as the PAR
+        distribution, is available from CPAN (http://www.cpan.org/).
 
 INSTALLATION
 
@@ -18,7 +74,7 @@ INSTALLATION
     what password or key to use and whether or not to install a script.
 
     Alternatively, command-line options can be used to provide the answers to
-    these questions and hence run the script non-interactively.  Type
+    these questions and hence run the script non-interactively.  Type:
 
         perl Makefile.PL --help
 
@@ -30,40 +86,4 @@ INSTALLATION
     type the following:
 
         perl -V:make
-
-    Note that you should try to use the same compiler to build this module as
-    was used to build your Perl itself.
-
-    In particular, Windows users should note that linking against the msvcrt.lib
-    import library that comes with recent versions of the Microsoft Visual C++
-    compiler (version 7 and above) now produces binaries that depend on
-    compiler-specific DLL's named msvcr70.dll, msvcr71.dll, etc, rather than the
-    OS's msvcrt.dll.  These modules may not work correctly if you build them
-    with a different compiler than was used to build your Perl such that two
-    different C runtime DLL's get loaded.
-
-PREREQUISITES
-
-    OpenSSL (any version), or SSLeay version 0.6.0 or later.
-    The latest version of OpenSSL is available from http://www.openssl.org/.
-
-    Perl version 5.6.0 or later.
-    The latest version of Perl is available from http://www.perl.com/.
-
-    There are no non-standard Perl modules required by the two main modules in
-    this distribution (Filter::Crypto::CryptFile and Filter::Crypto::Decrypt),
-    but the crypt_file script and the PAR::Filter::Crypto module both require
-
-        File::Temp
-
-    which is only a standard Perl module from Perl version 5.6.1 onwards
-    (crypt_file only requires it when run with the "-e tempfile" option), and
-    the PAR::Filter::Crypto module also requires
-
-        PAR::Filter
-
-    which is part of the PAR distribution.
-
-    A standalone distribution of the File::Temp module, as well as the PAR
-    distribution, are both available from CPAN (http://www.cpan.org/).
 ________________________________________________________________________________

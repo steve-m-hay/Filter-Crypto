@@ -7,7 +7,7 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -26,7 +26,11 @@ use inc::Module::Install;
 # INITIALISATION
 #===============================================================================
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
+{
+    no warnings 'once';
+    our $YEAR = '2004-2005';
+}
 
 #===============================================================================
 # MAIN PROGRAM
@@ -41,12 +45,16 @@ MAIN: {
     perl_version   (5.006000);
     features       ('crypt_file -e tempfile support' => [
         -default   => 0,
-        recommends ('File::Temp'),
+        recommends ('File::Temp')
     ]);
     features       ('PAR::Filter support' => [
         -default   => 0,
         recommends ('PAR::Filter'),
         recommends ('File::Temp')
+    ]);
+    features       ('POD testing' => [
+        -default   => 0,
+        recommends ('Test::Pod' => '1.00')
     ]);
     include        ('ExtUtils::AutoInstall');
     clean_files    ('CipherConfig.h');
@@ -69,6 +77,7 @@ MAIN: {
     );
 
     $obj->process_opts(\@opt_specs);
+    $obj->check_compiler(1);
 
     auto_install();
 
@@ -291,7 +300,7 @@ The key will be derived using the PBKDF2 algorithm defined in PKCS#5 v2.0 (which
 is also available as RFC2898) if you have OpenSSL 0.9.4 or later.  This is not
 available in earlier versions of OpenSSL or SSLeay so in those cases a different
 algorithm, largely compatible with PKCS#5 v1.5, is used instead.  In either case
-an 8-byte random salt and 2048 iterations are used.  A random initialisation
+an 8-byte random salt and 2048 iterations are used.  A random initialization
 vector (IV) is also generated if required.  When encrypting, both the salt and
 IV are prepended to the ciphertext so that they may be recovered for use when
 decrypting.
@@ -434,7 +443,7 @@ Display the script name and version, and then exit.
 
 =item B<-h>, B<--help> | B<--?>
 
-Display a help page listing the options, and then exit.
+Display a help page listing the arguments and options, and then exit.
 
 =item B<--manpage> | B<--doc>
 
@@ -442,9 +451,10 @@ Display the entire manual page, and then exit.
 
 =back
 
-Options may be introduced with a single dash, a double dash or a forward slash;
-case does not matter; an equals sign may be used or omitted between option names
-and values; long option names may be abbreviated to uniqueness.
+Options may be introduced with a double dash, a single dash, a plus sign or
+(on Win32) a forward slash; case does not matter; an equals sign may be used or
+omitted between option names and values; long option names may be abbreviated to
+uniqueness.
 
 Options may also be placed between non-option arguments, and option processing
 may be stopped at any point in the command-line by inserting a double dash.
@@ -477,6 +487,25 @@ classified as follows (a la L<perldiag>):
 (F) The specified module could not be loaded and therefore could not be used
 as the random number generator (RNG).  Make sure that the module concerned is
 properly installed or use one of the other RNG's instead.
+
+=item Compiler not found: please see INSTALL file for details
+
+(F) The compiler that was used to build Perl, which can be seen by running the
+command:
+
+    perl -V:cc
+
+could not be found and therefore could not be used to build this module.
+
+=item Compiler not specified: please see INSTALL file for details
+
+(F) The compiler that was used to build Perl, which can normally be seen by
+running the command:
+
+    perl -V:cc
+
+was not specified in the standard library module Config and therefore could not
+be used to build this module.
 
 =item Could not copy configuration file '%s' to '%s': %s
 
@@ -541,7 +570,7 @@ default response that was not valid itself.
 =item Invalid 'install_script' option value '%s'
 
 (I) The method called internally to determine whether or not to install the
-B<crypt_file> script was passed an option value that it did not recognise.
+B<crypt_file> script was passed an option value that it did not recognize.
 
 =item Invalid key '%s'
 
@@ -615,12 +644,12 @@ the prefix directory.
 =item No such cipher mode '%s'
 
 (F) The specified cipher mode (i.e. the mode given by the B<--cipher-mode>
-option) is not recognised.
+option) is not recognized.
 
 =item No such cipher name '%s'
 
 (F) The specified cipher name (i.e. the name given by the B<--cipher-name>
-option) is not recognised.
+option) is not recognized.
 
 =item No such configuration file '%s'
 
@@ -664,10 +693,10 @@ specify the cipher key returned an unknown value.
 (I) The method called internally to prompt the user for a choice random number
 generator returned an unknown value.
 
-=item Unrecognised version number found (%s)
+=item Unrecognized version number found (%s)
 
 (F) The OpenSSL or SSLeay package's version number, read from the relevant
-header file, is not in a format that is recognised.
+header file, is not in a format that is recognized.
 
 =item Warning: %s ignored: requires ExtUtils::MakeMaker version 5.48_01 or later
 
@@ -676,6 +705,14 @@ PERL_MM_USE_DEFAULT environment variable set to a true value, but you do not
 have ExtUtils::MakeMaker version 5.48_01 or later, without which these options
 have no effect.  The user will therefore be prompted for responses as usual
 instead.
+
+=item Wrong compiler version ('%s'; Perl was built with version '%s'): please
+      see INSTALL file for details
+
+(F) A different version of the compiler that was used to build Perl is being
+used to build this module.  This is not allowed since it is known to cause
+breakages with some combinations of compilers.  Please use the same compiler to
+build this module as was used to build Perl itself.
 
 =back
 
@@ -778,8 +815,13 @@ L<ExtUtils::MakeMaker>.
 =head1 ACKNOWLEDGEMENTS
 
 The C<MY::test()> override method is based on code taken from that in the
-top-level F<Makefile.PL> script in the Tk distribution (version 804.027),
+top-level B<Makefile.PL> script in the Tk distribution (version 804.027),
 written by Nick Ing-Simmons.
+
+The C<check_compiler()> method in the Module::Install::PRIVATE module used by
+this script is based on code taken from the C<get_avail_w32compilers()> function
+in the B<configsmoke.pl> script in the Test-Smoke distribution (version 1.19),
+written by Abe Timmerman.
 
 The C<_use_default_response()> and C<_isa_tty()> methods in the
 Module::Install::PRIVATE module used by this script are based on code taken from
@@ -793,7 +835,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004, Steve Hay.  All rights reserved.
+Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -803,11 +845,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.00
+Version 1.01
 
 =head1 DATE
 
-01 Nov 2004
+03 Mar 2005
 
 =head1 HISTORY
 

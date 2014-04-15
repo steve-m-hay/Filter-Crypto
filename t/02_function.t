@@ -7,7 +7,7 @@
 #   Test script to check crypt_file() function (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -73,13 +73,14 @@ MAIN: {
     my $head   = 'use Filter::Crypto::Decrypt;';
 
     my $perl;
+    my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
     if ($] < 5.007003) {
         # Prior to 5.7.3, -Mblib emitted a "Using ..." message on STDERR which
         # looks ugly when we spawn a child perl process.
-        $perl = qq["$^X" -Iblib/arch -Iblib/lib];
+        $perl = qq[$perl_exe -Iblib/arch -Iblib/lib];
     }
     else {
-        $perl = qq["$^X" -Mblib];
+        $perl = qq[$perl_exe -Mblib];
     }
 
     my($fh, $ifh, $ofh, $iofh, $contents, $saved_contents, $line, $i);

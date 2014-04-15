@@ -7,7 +7,7 @@
 #   which they can be run via Filter::Crypto::Decrypt.
 #
 # COPYRIGHT
-#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -55,7 +55,7 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '1.10';
+    $VERSION = '1.11';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -118,7 +118,7 @@ sub crypt_file($;$$) {
             croak("'$_[0]' is not a filehandle or a file name");
         }
 
-        if (not -t $fh) {
+        if (-f $fh) {
             unless (flock $fh, LOCK_EX | LOCK_NB) {
                 $ErrStr = "Can't acquire exclusive lock on update " .
                           "filehandle: $!";
@@ -165,7 +165,7 @@ sub crypt_file($;$$) {
             croak("'$_[0]' is not a filehandle or a file name");
         }
 
-        if (not -t $in_fh) {
+        if (-f $in_fh) {
             unless (flock $in_fh, LOCK_SH | LOCK_NB) {
                 $ErrStr = "Can't acquire shared lock on input filehandle: $!";
                 local($!, $^E);
@@ -200,7 +200,7 @@ sub crypt_file($;$$) {
                   "file name");
         }
 
-        if (not -t $out_fh) {
+        if (-f $out_fh) {
             unless (flock $out_fh, LOCK_EX | LOCK_NB) {
                 $ErrStr = "Can't acquire exclusive lock on output " .
                           "filehandle: $!";
@@ -584,7 +584,7 @@ doesn't exist.
 =item Random IV may not be cryptographically strong
 
 (W) libcrypto's random number generator failed to generate cryptographically
-strong pseudo-random bytes for use as the initialisation vector (IV) in the
+strong pseudo-random bytes for use as the initialization vector (IV) in the
 encryption.  A weaker sequence of pseudo-random bytes was used instead which is
 not necessarily unpredictable and may not be suitable for this purpose.
 
@@ -611,14 +611,14 @@ type.
 =item Unknown crypt mode '%d'
 
 (I) The XSUB called internally by C<crypt_file()> was passed a crypt mode that
-it does not recognise or failed to derive correctly a crypt mode for setting in
+it does not recognize or failed to derive correctly a crypt mode for setting in
 the crypto context structure to be used when performing the encryption or
 decryption.
 
 =item Unknown crypto context mode '%d'
 
 (I) The crypto context structure used internally when performing encryption or
-decryption has been setup with a crypt mode that it does not recognise.
+decryption has been setup with a crypt mode that it does not recognize.
 
 =item Your vendor has not defined Filter::Crypto::CryptFile macro %s
 
@@ -665,10 +665,10 @@ libcrypto's PKCS#5 v2.0 compatible key derivation algorithm failed to derive a
 key of the specified length from the supplied password for use in the encryption
 or decryption.  The last error message from libcrypto is also given.
 
-=item Can't finalise cipher context: %s
+=item Can't finalize cipher context: %s
 
 The cipher context structure used to perform the encryption or decryption could
-not be finalised.  The last error message from libcrypto is also given.
+not be finalized.  The last error message from libcrypto is also given.
 
 =item Can't generate %d-byte random salt: %s
 
@@ -679,26 +679,26 @@ to encryption.  The last error message from libcrypto is also given.
 =item Can't generate %d-byte random IV: %s
 
 libcrypto's random number generator failed to generate the specified number of
-pseudo-random bytes for use as the initialisation vector (IV) in the encryption.
+pseudo-random bytes for use as the initialization vector (IV) in the encryption.
 The last error message from libcrypto is also given.
 
-=item Can't initialise cipher context in crypt mode '%d': %s
+=item Can't initialize cipher context in crypt mode '%d': %s
 
 The cipher context structure used to perform the encryption or decryption could
-not be initialised in the specified crypt mode.  This is the first stage of the
-cipher context structure initialisation, performed prior to setting the key
+not be initialized in the specified crypt mode.  This is the first stage of the
+cipher context structure initialization, performed prior to setting the key
 length and modifying other cipher parameters.  The last error message from
 libcrypto is also given.
 
-=item Can't initialise cipher context in crypt mode '%d' using %d-byte key: %s
+=item Can't initialize cipher context in crypt mode '%d' using %d-byte key: %s
 
 The cipher context structure used to perform the encryption or decryption could
-not be initialised in the specified crypt mode with the specified key length.
-This is the final stage of the cipher context structure initialisation,
+not be initialized in the specified crypt mode with the specified key length.
+This is the final stage of the cipher context structure initialization,
 performed after setting the key length and modifying other cipher parameters.
 The last error message from libcrypto is also given.
 
-=item Can't initialise PRNG
+=item Can't initialize PRNG
 
 libcrypto's random number generator could not be seeded with enough entropy.
 
@@ -892,7 +892,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004, Steve Hay.  All rights reserved.
+Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -902,11 +902,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.10
+Version 1.11
 
 =head1 DATE
 
-12 Dec 2004
+03 Mar 2005
 
 =head1 HISTORY
 
