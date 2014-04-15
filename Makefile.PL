@@ -7,7 +7,7 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -26,10 +26,10 @@ use inc::Module::Install;
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 {
     no warnings 'once';
-    our $YEAR = '2004-2007';
+    our $YEAR = '2004-2008';
 }
 
 #===============================================================================
@@ -37,23 +37,26 @@ our $VERSION = '1.05';
 #===============================================================================
 
 MAIN: {
-    name           ('Filter-Crypto');
-    all_from       ('lib/Filter/Crypto.pm');
-    build_requires ('Test::More');
-    features       ('crypt_file -e tempfile support' => [
-        -default   => 0,
-        recommends ('File::Temp')
+    name          ('Filter-Crypto');
+    license       ('perl');
+    all_from      ('lib/Filter/Crypto.pm');
+    test_requires ('Test::More');
+    feature       ('crypt_file -e tempfile support' => [
+                   -default => 0,
+                   'File::Temp'
     ]);
-    features       ('PAR::Filter support' => [
-        -default   => 0,
-        recommends ('PAR::Filter'),
-        recommends ('File::Temp')
+    feature       ('PAR::Filter support' => [
+                   -default => 0,
+                   'PAR::Filter',
+                   'File::Temp'
     ]);
-    features       ('POD testing' => [
-        -default   => 0,
-        recommends ('Test::Pod' => '1.00')
+    feature       ('POD testing' => [
+                   -default    => 0,
+                   'Test::Pod' => '1.00'
     ]);
-    clean_files    ('CipherConfig.h');
+    recommends    ('File::Temp');
+    recommends    ('PAR::Filter');
+    clean_files   ('CipherConfig.h');
 
     my $obj = get_filter_crypto_private_obj();
 
@@ -102,14 +105,14 @@ MAIN: {
 
         dist => {
             DIST_CP  => 'cp',
-            PREOP    => 'chmod -R a+w $(DISTVNAME) && ' .
+            PREOP    => 'C:\\cygwin\\bin\\chmod -R a+w $(DISTVNAME) && ' .
                         'C:\\cygwin\\bin\\find $(DISTVNAME) -type f ' .
-                        '-exec dos2unix {} ; && ' .
-                        'chmod -R a-x+rwX,go-w $(DISTVNAME) && ' .
-                        'chmod a+x $(DISTVNAME)/script/*',
-            COMPRESS => 'gzip -9fv',
-            SUFFIX   => '.gz',
-            ZIPFLAGS => '-9r'
+                        '-exec C:\\cygwin\\bin\\dos2unix {} ; && ' .
+                        'C:\\cygwin\\bin\\chmod -R a-x+rwX,go-w ' .
+                        '$(DISTVNAME) && ' .
+                        'C:\\cygwin\\bin\\chmod a+x $(DISTVNAME)/script/*',
+            TAR      => 'C:\\cygwin\\bin\\tar',
+            COMPRESS => 'C:\\cygwin\\bin\\gzip --best'
         }
     );
 }
@@ -526,12 +529,13 @@ as follows (a la L<perldiag>):
 as the random number generator (RNG).  Make sure that the module concerned is
 properly installed or use one of the other RNGs instead.
 
-=item Compiler used to build perl ('%s') not found
+=item OS unsupported: Compiler used to build perl ('%s') not found
 
 (F) The specified compiler that was used to build Perl could not be found and
 therefore could not be used to build this module.
 
-=item Compiler used to build perl not specified in perl configuration
+=item OS unsupported: Compiler used to build perl not specified in perl
+configuration
 
 (F) The compiler that was used to build Perl, which can normally be seen by
 running the command:
@@ -663,7 +667,7 @@ the prefix directory.
 there is a full installation of OpenSSL or SSLeay in the location specified by
 the prefix directory.
 
-=item No prefix directory found for OpenSSL or SSLeay
+=item OS unsupported: No prefix directory found for OpenSSL or SSLeay
 
 (F) The OpenSSL or SSLeay prefix directory could not be located.  This error is
 only produced when running non-interactively.  (In interactive mode the user
@@ -742,16 +746,8 @@ to locate the OpenSSL or SSLeay to use turned out to be a Cygwin binary, which
 is of no use with the Win32 perl that is being used and will therefore be
 ignored.
 
-=item Warning: Wrong compiler version ('%s'; Perl was built with version '%s'):
-      please see INSTALL file for details
-
-(W) A different version of the compiler that was used to build Perl is being
-used to build this module.  This is not recommended since it may cause breakages
-with some combinations of compilers.  If possible, please use the same compiler
-to build this module as was used to build Perl itself.
-
-=item Wrong compiler version ('%s'; Perl was built with version '%s'): please
-      see INSTALL file for details
+=item OS unsupported: Wrong compiler version ('%s'). Perl was built with version
+'%s'. Please see INSTALL file for details
 
 (F) A different version of the compiler that was used to build Perl is being
 used to build this module.  This is not allowed since it is known to cause
@@ -887,7 +883,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -897,11 +893,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.05
+Version 1.06
 
 =head1 DATE
 
-10 Jul 2007
+05 Jul 2008
 
 =head1 HISTORY
 

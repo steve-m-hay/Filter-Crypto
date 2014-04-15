@@ -1,9 +1,31 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.20
+                          Filter::Crypto, Version 1.21
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.21 06 Jul 2008
+
+    - Added the magic "OS unsupported" phrase to Makefile.PL's die() message so
+      that CPAN Testers report "N/A" rather than "FAIL" on OSes where no OpenSSL
+      or SSLeay installation has been detected.
+
+    - Updated Module::Install::PRIVATE to version 1.06 for Makefile.PL
+      improvements:
+
+      * Added the magic "OS unsupported" phrase to Makefile.PL's die() message
+        so that CPAN Testers report "N/A" rather than "FAIL" on OSes where the
+        appropriate C compiler cannot be found.
+
+    - Updated Module::Install components from version 0.75 of that distribution.
+      Changed Makefile.PL appropriately to cope with a non-backwards-compatible
+      change in the (undocumented) recommends() method.
+
+    - Added full paths to Cygwin tools used when creating the distribution.
+        
+    - Updated ppport.h using version 3.14 of the Devel::PPPort distribution.
 _________________
 
 v1.20 25 Jul 2007

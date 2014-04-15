@@ -8,7 +8,7 @@
 #   Filter-Crypto distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2008 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -77,7 +77,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::PRIVATE);
 
-    $VERSION = '1.03';
+    $VERSION = '1.04';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(
@@ -272,7 +272,8 @@ sub query_prefix_dir {
             unless (-d $default) {
                 if ($self->use_default_response()) {
                     $self->exit_with_error(132,
-                        'No prefix directory found for OpenSSL or SSLeay'
+                        'OS unsupported: No prefix directory found for ' .
+                        'OpenSSL or SSLeay'
                     );
                 }
                 else {

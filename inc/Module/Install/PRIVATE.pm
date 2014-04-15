@@ -8,7 +8,7 @@
 #   SHAY (Steve Hay).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -41,7 +41,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::Base);
 
-    $VERSION = '1.05';
+    $VERSION = '1.06';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(define inc libs opts)) {
@@ -181,13 +181,14 @@ sub check_compiler {
     unless ($cc = $self->can_cc()) {
         if ($Config{cc} ne '') {
             $self->exit_with_error(8,
-                "Compiler used to build perl ('%s') not found", $Config{cc}
+                "OS unsupported: Compiler used to build perl ('%s') not found",
+                $Config{cc}
             );
         }
         else {
             $self->exit_with_error(9,
-                'Compiler used to build perl not specified in perl ' .
-                'configuration'
+                'OS unsupported: Compiler used to build perl not specified ' .
+                'in perl configuration'
             );
         }
     }
@@ -195,8 +196,8 @@ sub check_compiler {
 
     return unless $self->is_win32();
 
-    my $fmt = "Wrong compiler version ('%s'; Perl was built with version " .
-              "'%s'): please see INSTALL file for details";
+    my $fmt = "Wrong compiler version ('%s'). Perl was built with version " .
+              "'%s'. Please see INSTALL file for details";
     my $msg = '';
     # Perl version 5.6.0 did not have $Config{ccversion} at all on Win32.
     if (exists $Config{ccversion} and $Config{ccversion} ne '') {
@@ -273,7 +274,7 @@ sub check_compiler {
 
     if ($msg) {
         if ($exit_on_error) {
-            $self->exit_with_error(10, $msg);
+            $self->exit_with_error(10, "OS unsupported: $msg");
         }
         else {
             warn("Warning: $msg\n");

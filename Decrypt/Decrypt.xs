@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::Decrypt module.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -20,17 +20,8 @@
 
 #include "../CryptoCommon-c.inc"
 
-                                        /* PL_rsfp_filters was moved into the */
-                                        /* PL_parser structure in perl change */
-                                        /* #31200, which simultaneously added */
-                                        /* the PERL_FILTER_EXISTS macro.      */
-#ifdef PERL_FILTER_EXISTS
-#  define FILTER_CRYPTO_FILTER_COUNT \
-    (PL_parser && PL_parser->rsfp_filters ? av_len(PL_parser->rsfp_filters) : 0)
-#else
-#  define FILTER_CRYPTO_FILTER_COUNT \
+#define FILTER_CRYPTO_FILTER_COUNT \
     (PL_rsfp_filters ? av_len(PL_rsfp_filters) : 0)
-#endif
 
 typedef enum {
     FILTER_CRYPTO_STATUS_NOT_STARTED,

@@ -7,7 +7,7 @@
 #   which they can be run via Filter::Crypto::Decrypt.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -55,7 +55,7 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '1.15';
+    $VERSION = '1.16';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -891,7 +891,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -901,11 +901,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.15
+Version 1.16
 
 =head1 DATE
 
-25 Jul 2007
+06 Jul 2008
 
 =head1 HISTORY
 

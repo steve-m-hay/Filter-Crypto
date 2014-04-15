@@ -6,7 +6,7 @@
  *   Common C code for Filter::Crypto modules.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -87,6 +87,8 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+
+#define NEED_sv_2pv_flags_GLOBAL        /* For SvPV_{nolen_}const().          */
 #include "ppport.h"
 
 #include "CipherConfig.h"               /* For the cipher details.            */
@@ -131,18 +133,6 @@
 #endif
 #ifndef EVP_CIPHER_iv_length
 #  define EVP_CIPHER_iv_length(e)      ((e)->iv_len)
-#endif
-
-                                        /* SvPV_const() and                   */
-                                        /* SvPV_nolen_const() were added in   */
-                                        /* Perl 5.9.3 but are not yet         */
-                                        /* supported by Devel::PPPort (as of  */
-                                        /* version 3.11).                     */
-#ifndef SvPV_const
-#  define SvPV_const(sv, len)  ((const char*) (0 + SvPV(sv, len)))
-#endif
-#ifndef SvPV_nolen_const
-#  define SvPV_nolen_const(sv) ((const char*) (0 + SvPV_nolen(sv)))
 #endif
 
 #define FILTER_CRYPTO_OPENSSL_ERR_STR \
