@@ -6,7 +6,7 @@
  *   Common C code for Filter::Crypto modules.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -40,8 +40,8 @@
  * it is not by default (even on Win32).  The C file containing the definition
  * #include's "e_os.h" first which #define's WINDOWS if it is not aleady
  * #define'd and WIN32 is (which is indeed the case on Win32).  However, the
- * header file declaring RAND_screen() doesn't include "e_os.h" so the
- * declaration (which, prior to 0.9.5a, is also only seen if WINDOWS #define'd)
+ * header file declaring RAND_screen() does not include "e_os.h" so the
+ * declaration (which, before 0.9.5a, is also only seen if WINDOWS #define'd)
  * does not get seen.  From 0.9.5a onwards the header file declaring
  * RAND_screen() tests if WIN32 is #define'd too so it works OK.  Therefore,
  * ensure WINDOWS is #define'd if WIN32 is so that earlier versions work too. */
@@ -54,7 +54,7 @@
 /* For the ERR_*(), EVP_*() and RAND_*() functions.
  * The header files were located directly in the OpenSSL include directory prior
  * to 0.9.3, but are now located in an openssl/ sub-directory of that.  The EVP
- * header was called "envelope.h" prior to 0.8.0, but is now called "evp.h."  */
+ * header was called "envelope.h" before 0.8.0, but is now called "evp.h." */
 #if FILTER_CRYPTO_OPENSSL_VERSION < 80000
 #  include <envelope.h>
 #  include <err.h>
@@ -87,10 +87,11 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "ppport.h"
 
 #include "CipherConfig.h"               /* For the cipher details.            */
 
-                                        /* RAND_MAX doesn't exist on SunOS.   */
+                                        /* RAND_MAX does not exist on SunOS.  */
 #ifndef RAND_MAX
 #  include <limits.h>
 #  if INT_MAX == 32767
@@ -162,7 +163,9 @@ typedef enum {
 typedef struct {
     EVP_CIPHER_CTX *cipher_ctx;
     SV *salt_sv;
+    int required_salt_len;
     SV *iv_sv;
+    int required_iv_len;
     FILTER_CRYPTO_MODE crypt_mode;
     bool cipher_initialized;
 } FILTER_CRYPTO_CCTX;
@@ -208,22 +211,24 @@ static FILTER_CRYPTO_CCTX *FilterCrypto_CryptoAlloc(pTHX) {
     FILTER_CRYPTO_CCTX *ctx;
 
     /* Allocate the new crypto context. */
-    Newz(0, ctx, 1, FILTER_CRYPTO_CCTX);
+    Newxz(ctx, 1, FILTER_CRYPTO_CCTX);
 
     /* Allocate the cipher context. */
-    Newz(0, ctx->cipher_ctx, 1, EVP_CIPHER_CTX);
+    Newxz(ctx->cipher_ctx, 1, EVP_CIPHER_CTX);
 
     /* Allocate a pair of SV's with enough string space to hold a salt and an
-     * initialization vector (IV) respectively.  Mark each one as being a string
-     * only. */
+     * initialization vector (IV) respectively, and store their required
+     * lengths.  Mark each one as being a string only. */
 #if FILTER_CRYPTO_NEED_RANDOM_SALT
-    ctx->salt_sv = NEWSV(0, PKCS5_SALT_LEN);
+    ctx->salt_sv = newSV(PKCS5_SALT_LEN);
     SvPOK_only(ctx->salt_sv);
+    ctx->required_salt_len = PKCS5_SALT_LEN;
 #endif
 
 #if FILTER_CRYPTO_NEED_RANDOM_IV
-    ctx->iv_sv = NEWSV(0, EVP_CIPHER_iv_length(FILTER_CRYPTO_CIPHER_FUNC));
+    ctx->iv_sv = newSV(EVP_CIPHER_iv_length(FILTER_CRYPTO_CIPHER_FUNC));
     SvPOK_only(ctx->iv_sv);
+    ctx->required_iv_len = EVP_CIPHER_iv_length(FILTER_CRYPTO_CIPHER_FUNC);
 #endif
 
     return ctx;
@@ -246,12 +251,12 @@ static bool FilterCrypto_CryptoInit(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 #if FILTER_CRYPTO_NEED_RANDOM_SALT
     FilterCrypto_SvSetCUR(ctx->salt_sv, 0);
 #else
-    ctx->salt_sv = NULL;
+    ctx->salt_sv = Nullsv;
 #endif
 #if FILTER_CRYPTO_NEED_RANDOM_IV
     FilterCrypto_SvSetCUR(ctx->iv_sv,   0);
 #else
-    ctx->iv_sv = NULL;
+    ctx->iv_sv = Nullsv;
 #endif
 
     /* Initialize the crypt mode and cipher context initialization status. */
@@ -269,13 +274,13 @@ static bool FilterCrypto_CryptoInit(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 /*
  * Function to initialize the cipher context within the given crypto context.
  * This is called automatically from FilterCrypto_CryptoUpdate() since when
- * decrypting a salt and/or an IV may need to be recovered from the given input
- * SV which is passed to FilterCrypto_CryptoUpdate().  In that case, the salt
+ * decrypting, a salt and/or an IV may need to be recovered from the given input
+ * SV that is passed to FilterCrypto_CryptoUpdate().  In that case, the salt
  * and/or IV will be removed from the start of the input SV, leaving any further
  * data in place for FilterCrypto_CryptoUpdate() to process afterwards.  When
  * encrypting, it may be necessary to have a salt and/or IV randomly generated.
  * In that case, they will be written to the start of the given output SV, which
- * will be grown accordingly to accomodate them as well as the output data which
+ * will be grown accordingly to accomodate them as well as the output data that
  * it should already be large enough for.
  * Returns a bool to indicate success or failure.
  */
@@ -283,22 +288,12 @@ static bool FilterCrypto_CryptoInit(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
     SV *in_sv, SV *out_sv)
 {
-    /* Get the size of any required salt and IV from the size of the buffers
-     * that were allocated for them.  Note that SvLEN() includes the extra byte
-     * that NEWSV() allocated for a NUL terminator. */
-#if FILTER_CRYPTO_NEED_RANDOM_SALT
-    STRLEN required_salt_len = SvLEN(ctx->salt_sv) - 1;
-#endif
-#if FILTER_CRYPTO_NEED_RANDOM_IV
-    STRLEN required_iv_len   = SvLEN(ctx->iv_sv)   - 1;
-#endif
-
     /* If we're using password-based encryption (PBE) then a salt is required
      * for the key derivation.  It must be randomly generated when encrypting,
      * and output with the encrypted data so that it can be read back in and
      * used again for decrypting.  We also need an IV, which must be handled in
      * the same way, except that the old key derivation algorithm used by
-     * FilterCrypto_CipherInit() prior to 0.9.4 generates an IV for us. */
+     * FilterCrypto_CipherInit() before 0.9.4 generates an IV for us. */
 #if(FILTER_CRYPTO_NEED_RANDOM_SALT || FILTER_CRYPTO_NEED_RANDOM_IV)
     switch (ctx->crypt_mode) {
         case FILTER_CRYPTO_MODE_ENCRYPT: {
@@ -315,64 +310,64 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 
 #  if FILTER_CRYPTO_NEED_RANDOM_SALT
 #    if defined(FILTER_CRYPTO_NO_RAND_BYTES)
-            memset(salt_text, '*', required_salt_len);
+            memset(salt_text, '*', ctx->required_salt_len);
 #    elif FILTER_CRYPTO_OPENSSL_VERSION < 90500
-            RAND_bytes(salt_text, required_salt_len);
+            RAND_bytes(salt_text, ctx->required_salt_len);
 #    else
-            if (!RAND_bytes(salt_text, required_salt_len)) {
-                if (!RAND_pseudo_bytes(salt_text, required_salt_len)) {
+            if (!RAND_bytes(salt_text, ctx->required_salt_len)) {
+                if (!RAND_pseudo_bytes(salt_text, ctx->required_salt_len)) {
                     FilterCrypto_SetErrStr(aTHX_
                         "Can't generate %d-byte random salt: %s",
-                        required_salt_len, FILTER_CRYPTO_OPENSSL_ERR_STR
+                        ctx->required_salt_len, FILTER_CRYPTO_OPENSSL_ERR_STR
                     );
                     return FALSE;
                 }
                 warn("Random salt may not be cryptographically strong");
             }
 #    endif
-            FilterCrypto_SvSetCUR(ctx->salt_sv, required_salt_len);
+            FilterCrypto_SvSetCUR(ctx->salt_sv, ctx->required_salt_len);
 
             /* Grow the output SV's buffer enough to hold the salt as well as
-             * the output data which it should already be large enough for. */
-            SvGROW(out_sv, SvLEN(out_sv) + required_salt_len);
+             * the output data that it should already be large enough for. */
+            SvGROW(out_sv, SvLEN(out_sv) + ctx->required_salt_len);
 
-            sv_catpvn(out_sv, salt_text, required_salt_len);
+            sv_catpvn(out_sv, salt_text, ctx->required_salt_len);
 
 #    ifdef FILTER_CRYPTO_DEBUG_MODE
-            FilterCrypto_HexDump(aTHX_ salt_text, required_salt_len,
-                "Generated %d-byte salt", required_salt_len
+            FilterCrypto_HexDump(aTHX_ salt_text, ctx->required_salt_len,
+                "Generated %d-byte salt", ctx->required_salt_len
             );
 #    endif
 #  endif
 
 #  if FILTER_CRYPTO_NEED_RANDOM_IV
 #    if defined(FILTER_CRYPTO_NO_RAND_BYTES)
-            memset(iv_text, '*', required_iv_len);
+            memset(iv_text, '*', ctx->required_iv_len);
 #    elif FILTER_CRYPTO_OPENSSL_VERSION < 90500
-            RAND_bytes(iv_text, required_iv_len);
+            RAND_bytes(iv_text, ctx->required_iv_len);
 #    else
-            if (!RAND_bytes(iv_text, required_iv_len)) {
-                if (!RAND_pseudo_bytes(iv_text, required_iv_len)) {
+            if (!RAND_bytes(iv_text, ctx->required_iv_len)) {
+                if (!RAND_pseudo_bytes(iv_text, ctx->required_iv_len)) {
                     FilterCrypto_SetErrStr(aTHX_
                         "Can't generate %d-byte random IV: %s",
-                        required_iv_len, FILTER_CRYPTO_OPENSSL_ERR_STR
+                        ctx->required_iv_len, FILTER_CRYPTO_OPENSSL_ERR_STR
                     );
                     return FALSE;
                 }
                 warn("Random IV may not be cryptographically strong");
             }
 #    endif
-            FilterCrypto_SvSetCUR(ctx->iv_sv, required_iv_len);
+            FilterCrypto_SvSetCUR(ctx->iv_sv, ctx->required_iv_len);
 
             /* Grow the output SV's buffer enough to hold the IV as well as the
-             * output data which it should already be large enough for. */
-            SvGROW(out_sv, SvLEN(out_sv) + required_iv_len);
+             * output data that it should already be large enough for. */
+            SvGROW(out_sv, SvLEN(out_sv) + ctx->required_iv_len);
 
-            sv_catpvn(out_sv, iv_text, required_iv_len);
+            sv_catpvn(out_sv, iv_text, ctx->required_iv_len);
 
 #    ifdef FILTER_CRYPTO_DEBUG_MODE
-            FilterCrypto_HexDump(aTHX_ iv_text, required_iv_len,
-                "Generated %d-byte IV", required_iv_len
+            FilterCrypto_HexDump(aTHX_ iv_text, ctx->required_iv_len,
+                "Generated %d-byte IV", ctx->required_iv_len
             );
 #    endif
 #  endif
@@ -391,7 +386,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
             unsigned char *in_text;
 
 #  if FILTER_CRYPTO_NEED_RANDOM_SALT
-            missing_salt_len = required_salt_len - SvCUR(ctx->salt_sv);
+            missing_salt_len = ctx->required_salt_len - SvCUR(ctx->salt_sv);
             if (missing_salt_len > 0) {
                 in_len = SvCUR(in_sv);
                 in_text = (unsigned char *)SvPVX(in_sv);
@@ -403,7 +398,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
                     sv_catpvn(ctx->salt_sv, in_text, in_len);
                     FilterCrypto_SvSetCUR(in_sv, 0);
 
-                    /* We haven't fully populated the salt yet so just return
+                    /* We have not fully populated the salt yet so just return
                      * success for now.  We'll be called again later. */
                     return TRUE;
                 }
@@ -417,7 +412,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 #  endif
 
 #  if FILTER_CRYPTO_NEED_RANDOM_IV
-            missing_iv_len = required_iv_len - SvCUR(ctx->iv_sv);
+            missing_iv_len = ctx->required_iv_len - SvCUR(ctx->iv_sv);
             if (missing_iv_len > 0) {
                 in_len = SvCUR(in_sv);
                 in_text = (unsigned char *)SvPVX(in_sv);
@@ -429,7 +424,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
                     sv_catpvn(ctx->iv_sv, in_text, in_len);
                     FilterCrypto_SvSetCUR(in_sv, 0);
 
-                    /* We haven't fully populated the IV yet so just return
+                    /* We have not fully populated the IV yet so just return
                      * success for now.  We'll be called again later. */
                     return TRUE;
                 }
@@ -582,8 +577,8 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
      * See the exchanges between myself and Steve Henson on the "openssl-users"
      * mailing list, 08-13 Sep 2004, for more details on all of this.
      * One final fly in the ointment is that PKCS5_PBKDF2_HMAC_SHA1() is only
-     * available as of 0.9.4, so prior to that we use EVP_BytesToKey() instead.
-     * This is at best PKCS#5 v1.5 compatible and also doesn't support non-
+     * available as of 0.9.4, so before that we use EVP_BytesToKey() instead.
+     * This is at best PKCS#5 v1.5 compatible and also does not support non-
      * default key lengths for variable key length ciphers.  In this case,
      * however, the latter is not an issue because the EVP library only has
      * facilities for changing the key lengths from 0.9.6 onwards anyway. */
@@ -591,9 +586,9 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
 #if FILTER_CRYPTO_OPENSSL_VERSION < 90400
 
 #  if FILTER_CRYPTO_USING_PBE
-    Newz(0, iv, EVP_CIPHER_iv_length(cipher_func), unsigned char);
+    Newxz(iv, EVP_CIPHER_iv_length(cipher_func), unsigned char);
 
-    /* Don't check the return value of EVP_BytesToKey() prior to 0.9.0: it was
+    /* Do not check the return value of EVP_BytesToKey() before 0.9.0: it was
      * faulty. */
 #    if FILTER_CRYPTO_OPENSSL_VERSION < 90000
     EVP_BytesToKey(cipher_func, EVP_md5(), salt, filter_crypto_pswd,
@@ -770,8 +765,8 @@ static bool FilterCrypto_CipherUpdate(pTHX_ EVP_CIPHER_CTX *ctx, SV *in_sv,
     int orig_out_len;
     int out_len;
 
-    /* Upto in_len + EVP_CIPHER_CTX_block_size(ctx) - 1 bytes may be written
-     * when encrypting, and upto in_len + EVP_CIPHER_CTX_block_size(ctx) bytes
+    /* Up to in_len + EVP_CIPHER_CTX_block_size(ctx) - 1 bytes may be written
+     * when encrypting, and up to in_len + EVP_CIPHER_CTX_block_size(ctx) bytes
      * may be written when decrypting, so ensure that the output buffer is big
      * enough (plus space for a NUL terminator). */
     out_text = (unsigned char *)SvGROW(
@@ -820,7 +815,7 @@ static bool FilterCrypto_CipherFinal(pTHX_ EVP_CIPHER_CTX *ctx, SV *out_sv) {
     unsigned char *out_text;
     int out_len;
 
-    /* Upto EVP_CIPHER_CTX_block_size(ctx) bytes may be written when encrypting
+    /* Up to EVP_CIPHER_CTX_block_size(ctx) bytes may be written when encrypting
      * or decrypting, so ensure that the output buffer is big enough (plus space
      * for a NUL terminator). */
     out_text = (unsigned char *)SvGROW(
@@ -875,8 +870,8 @@ static bool FilterCrypto_PRNGInit(pTHX) {
      * /dev/urandom or /dev/random devices or Win32's Crypto API) in some
      * versions of OpenSSL and SSLeay, but in other cases we must do it
      * manually.  From 0.9.5 onwards RAND_status() is available to report
-     * whether the PRNG is seeded or not.  Prior to 0.9.5 we always seed the
-     * PRNG ourselves just to be sure. */
+     * whether the PRNG is seeded.  Before 0.9.5 we always seed the PRNG
+     * ourselves just to be sure. */
 #if FILTER_CRYPTO_OPENSSL_VERSION >= 90500
     if (RAND_status())
         return TRUE;
@@ -904,8 +899,8 @@ static bool FilterCrypto_PRNGInit(pTHX) {
     }
 #endif
 
-    /* We can't check whether or not we've seeded the PRNG with enough entropy
-     * prior to 0.9.5, so we just return TRUE in that case and hope for the
+    /* We cannot check whether we have seeded the PRNG with enough entropy
+     * before 0.9.5, so we just return TRUE in that case and hope for the
      * best. */
 #if FILTER_CRYPTO_OPENSSL_VERSION >= 90500
     if (RAND_status()) {
@@ -958,10 +953,10 @@ static unsigned long FilterCrypto_GetLastSSLError(void) {
 #else
     unsigned long err;
     unsigned long last_err = 0;
-    /* There are no ERR_peek_last_*() functions prior to 0.9.7, so we have to
-     * get the errors (removing them from the queue) from the earliest to the
-     * last instead.  We probably ought to put them back again afterwards, but
-     * it doesn't really matter. */
+    /* There are no ERR_peek_last_*() functions before 0.9.7, so we have to get
+     * the errors (removing them from the queue) from the earliest to the last
+     * instead.  We probably ought to put them back again afterwards, but it
+     * does not really matter. */
     while ((err = ERR_get_error()))
         last_err = err;
     return last_err;
@@ -986,7 +981,7 @@ static void FilterCrypto_SetErrStr(pTHX_ const char *value, ...) {
 #ifdef FILTER_CRYPTO_DEBUG_MODE
 /*
  * Function to print a dump of the given data.  Each character (octet) is shown
- * as itself if it is "printable", otherwise it is shown as its hexadecimal
+ * as itself if it is "printable"; otherwise it is shown as its hexadecimal
  * code.  An optional title can be printed first.  Pass NULL as the third
  * argument to omit the title.
  * Use this via either FilterCrypto_HexDump() or FilterCrypto_HexDumpSV().

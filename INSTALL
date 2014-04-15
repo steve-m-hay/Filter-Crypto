@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.16
+                          Filter::Crypto, Version 1.17
 ________________________________________________________________________________
 
 PREREQUISITES
@@ -13,7 +13,7 @@ PREREQUISITES
         your Perl itself.
 
         In particular, Windows users should be aware that these modules will not
-        work correctly if they load a different C runtime DLL to that loaded by
+        work correctly if they load a different C run-time DLL to that loaded by
         perl itself.  Note that Visual Studio 98 (VC++ 6) and earlier produce
         binaries that require the system's msvcrt.dll, while Visual Studio
         .NET/2003 (VC++ 7) and later (including the free Visual C++ Toolkit
@@ -26,8 +26,8 @@ PREREQUISITES
         compiler is being used and will give an error if necessary.  Note,
         however, that it is not always possible for it to detect which
         particular compiler version was used to build Perl, especially for Perl
-        version 5.8.6 or older which didn't have this information stored in the
-        standard library module Config.
+        version 5.8.6 or older, which did not have this information stored in
+        the standard library module Config.
 
     OpenSSL
 
@@ -71,7 +71,7 @@ INSTALLATION
 
     The Makefile.PL script will ask various questions regarding (amongst other
     things) the location of OpenSSL or SSLeay, which cipher algorithm to use,
-    what password or key to use and whether or not to install a script.
+    what password or key to use and whether to install a script.
 
     Alternatively, command-line options can be used to provide the answers to
     these questions and hence run the script non-interactively.  Type:

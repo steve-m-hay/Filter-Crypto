@@ -7,7 +7,7 @@
 #   Filter-Crypto distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -22,13 +22,13 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Config;
+use Config qw(%Config);
 use Cwd qw(abs_path);
 use Fcntl;
-use File::Basename;
-use File::Copy;
+use File::Basename qw(dirname);
+use File::Copy qw(copy);
 use File::Spec::Functions qw(canonpath catdir catfile updir);
-use Text::Wrap;
+use Text::Wrap qw(wrap);
 
 use constant CIPHER_NAME_DES        => 'DES';
 use constant CIPHER_NAME_DES_EDE    => 'DES_EDE';
@@ -76,13 +76,13 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::PRIVATE);
 
-    $VERSION = '1.02';
+    $VERSION = '1.03';
 
-    # Define private API accessor methods.
+    # Define protected accessor/mutator methods.
     foreach my $prop (qw(
-        _prefix_dir _inc_dir _package _ver_num _ver_str _lib_dir _lib_name
-        _bin_file _cipher_name _cipher_func _cipher_needs_iv _key_len
-        _rc2_key_bits _rc5_rounds _pswd _key
+        prefix_dir inc_dir package ver_num ver_str lib_dir lib_name bin_file
+        cipher_name cipher_func cipher_needs_iv key_len rc2_key_bits rc5_rounds
+        pswd key
     )) {
         no strict 'refs';
         *$prop = sub {
@@ -113,49 +113,49 @@ sub locate_openssl {
 
     print "\n";
 
-    $self->_get_prefix_dir();
+    $self->query_prefix_dir();
     print "\n";
 
-    $self->_locate_inc_dir();
-    $self->_set_inc();
+    $self->locate_inc_dir();
+    $self->set_inc();
 
-    $self->_determine_ver_num();
-    $self->_set_define();
+    $self->determine_ver_num();
+    $self->set_define();
 
-    $self->_locate_lib_dir_and_file();
-    $self->_set_libs();
+    $self->locate_lib_dir_and_file();
+    $self->set_libs();
 
-    $self->_locate_bin_file();
+    $self->locate_bin_file();
     print "\n";
 }
 
 sub configure_cipher {
     my $self = shift;
 
-    my $cipher_config = $self->_opts()->{'cipher-config'};
+    my $cipher_config = $self->opts()->{'cipher-config'};
     if (defined $cipher_config) {
         if (-f $cipher_config) {
-            $self->_show_found_var(
+            $self->show_found_var(
                 'Using specified configuration file', $cipher_config
             );
-            $self->_copy_cipher_config($cipher_config);
+            $self->copy_cipher_config($cipher_config);
         }
         else {
-            $self->_exit_with_error(100,
+            $self->exit_with_error(100,
                 "No such configuration file '%s'", $cipher_config
             );
         }
     }
     else {
-        $self->_get_cipher_name();
+        $self->query_cipher_name();
 
-        my $lc_cipher_name = lc $self->_cipher_name();
-        my $cipher_config_method = "_configure_${lc_cipher_name}_cipher";
+        my $lc_cipher_name = lc $self->cipher_name();
+        my $cipher_config_method = "configure_${lc_cipher_name}_cipher";
         $self->$cipher_config_method();
 
-        $self->_get_pswd_or_key();
+        $self->query_pswd_or_key();
 
-        $self->_write_cipher_config();
+        $self->write_cipher_config();
     }
 }
 
@@ -168,14 +168,14 @@ sub query_build {
         [ BUILD_OPTION_DECRYPT,   'Build Decrypt component only'   ]
     );
 
-    my $build = $self->_opts()->{'build'};
+    my $build = $self->opts()->{'build'};
     if (defined $build) {
         my %build_options = map { $_->[0] => 1 } @build_options;
         if (exists $build_options{$build}) {
-            $self->_show_found_var('Using specified build option', $build);
+            $self->show_found_var('Using specified build option', $build);
         }
         else {
-            $self->_exit_with_error(101,
+            $self->exit_with_error(101,
                 "Invalid 'build' option value '%s'", $build
             );
         }
@@ -185,7 +185,7 @@ sub query_build {
         my $question = 'Which component(s) to you want to build?';
         my $default  = BUILD_OPTION_BOTH;
 
-        $build = $self->_prompt_list(
+        $build = $self->prompt_list(
             $message, \@build_options, $question, $default
         );
     }
@@ -200,55 +200,95 @@ sub query_build {
 }
 
 #===============================================================================
-# PRIVATE API
+# PROTECTED API
 #===============================================================================
 
-sub _get_prefix_dir {
+sub query_prefix_dir {
     my $self = shift;
 
-    my $prefix_dir = $self->_opts()->{'prefix-dir'};
+    my $prefix_dir = $self->opts()->{'prefix-dir'};
     if (defined $prefix_dir) {
         $prefix_dir = canonpath(abs_path($prefix_dir));
         if (-d $prefix_dir) {
-            $self->_show_found_var(
+            $self->show_found_var(
                 'Using specified prefix directory', $prefix_dir
             );
         }
         else {
-            $self->_exit_with_error(102,
+            $self->exit_with_error(102,
                 "No such prefix directory '%s'", $prefix_dir
             );
         }
     }
     else {
         # Look for the main binary executable "openssl" or "ssleay" and use the
-        # parent directory of where that is located, otherwise use the default
+        # parent directory of where that is located; otherwise use the default
         # prefix directory as specified in the latest OpenSSL's own INSTALL
-        # file if it exists, or failing that try the root directory.
-        my($bin_file, $default);
+        # file if it exists.
+        my $bin_file;
         if ($bin_file = $self->can_run('openssl') or
             $bin_file = $self->can_run('ssleay'))
         {
+            if ($self->is_win32()) {
+                # Find out (if we can) which platform this binary was built for.
+                # This information is normally contained in the output of the
+                # binary's "version -a" command, labelled "platform: " (or
+                # "Platform:" before 0.9.2).
+                my $bin_cmd = "$bin_file version -a 2>&1";
+
+                my $bin_output = `$bin_cmd`;
+                my $bin_rc = $? >> 8;
+
+                if ($bin_rc) {
+                    $self->exit_with_error(133,
+                        "Could not get OpenSSL/SSLeay version information " .
+                        "(%d):\n%s", $bin_rc, $bin_output
+                    );
+                }
+
+                if ((my $platform) = $bin_output =~ /platform: ?(.*)$/imo) {
+                    # If we have found a Cygwin binary then we had better not
+                    # try to use it with our Win32 perl.
+                    if ($platform =~ /^Cygwin/io) {
+                        warn("Warning: Ignoring Cygwin OpenSSL/SSLeay binary " .
+                             "'$bin_file' on Win32\n");
+                        $bin_file = undef;
+                    }
+                }
+            }
+        }
+
+        my $default;
+        if (defined $bin_file) {
             # The binaries are normally located in a sub-directory (bin/,
             # out32/, out32dll/, out32.dbg/, out32dll.dbg or out/) of the prefix
-            # directory.  See _locate_bin_file().
+            # directory.  See locate_bin_file().
             my $bin_dir = dirname($bin_file);
             $default = canonpath(abs_path(catdir($bin_dir, updir())));
         }
         else {
             $default = $self->is_win32() ? 'C:\\openssl' : '/usr/local/ssl';
-            $default = '' unless -d $default;
+            unless (-d $default) {
+                if ($self->use_default_response()) {
+                    $self->exit_with_error(132,
+                        'No prefix directory found for OpenSSL or SSLeay'
+                    );
+                }
+                else {
+                    $default = '';
+                }
+            }
         }
 
         my $question = 'Where is your OpenSSL or SSLeay?';
 
-        $prefix_dir = $self->_prompt_dir($question, $default);
+        $prefix_dir = $self->prompt_dir($question, $default);
     }
 
-    $self->_prefix_dir($prefix_dir)
+    $self->prefix_dir($prefix_dir)
 }
 
-sub _locate_inc_dir {
+sub locate_inc_dir {
     my $self = shift;
 
     # The headers are normally located in the include/ sub-directory of the
@@ -256,13 +296,14 @@ sub _locate_inc_dir {
     # Again, build directories on "native" Windows platforms may have the files
     # in a different sub-directory, in this case inc32/ (0.9.0 onwards) or out/
     # (up to and including 0.8.1b), or even outinc/ for MinGW builds.  (Beware
-    # of version 0.6.0 build directories which contain an include/ sub-directory
-    # containing "Shortcuts" to the real header files in the out/ sub-directory.
-    # Check for the presence of the "cyrypto.h" header file to be sure we find
-    # the correct sub-directory.  The header files are now located in the
-    # openssl/ sub-directory of the include directory (0.9.3 onwards), but were
-    # located in the include directory itself (up to and including 0.8.1b).)
-    my $prefix_dir = $self->_prefix_dir();
+    # of version 0.6.0 build directories, which contain an include/ sub-
+    # directory containing "Shortcuts" to the real header files in the out/ sub-
+    # directory.  Check for the presence of the "cyrypto.h" header file to be
+    # sure we find the correct sub-directory.  The header files are now located
+    # in the openssl/ sub-directory of the include directory (0.9.3 onwards),
+    # but were located in the include directory itself (up to and including
+    # 0.8.1b).)
+    my $prefix_dir = $self->prefix_dir();
     my($dir, $inc_dir);
     if (-d ($dir = catdir($prefix_dir, 'include')) and
         (-f catfile($dir, 'openssl', 'crypto.h') or
@@ -291,28 +332,28 @@ sub _locate_inc_dir {
     }
 
     if (defined $inc_dir) {
-        $self->_show_found_var('Found include directory', $inc_dir);
-        $self->_inc_dir($inc_dir)
+        $self->show_found_var('Found include directory', $inc_dir);
+        $self->inc_dir($inc_dir)
     }
     else {
-        $self->_exit_with_error(103, 'No include directory found');
+        $self->exit_with_error(103, 'No include directory found');
     }
 }
 
-sub _set_inc {
+sub set_inc {
     my $self = shift;
 
-    my $inc_dir = $self->_inc_dir();
+    my $inc_dir = $self->inc_dir();
     $self->inc("-I$inc_dir");
 }
 
-sub _determine_ver_num {
+sub determine_ver_num {
     my $self = shift;
 
     # The header files are now located in the openssl/ sub-directory of the
     # include directory (0.9.3 onwards), but were located in the include
     # directory itself (up to and including 0.8.1b).
-    my $inc_dir = $self->_inc_dir();
+    my $inc_dir = $self->inc_dir();
     my($dir, $inc_files_dir);
     if (-d ($dir = catdir($inc_dir, 'openssl'))) {
         $inc_files_dir = $dir;
@@ -324,14 +365,14 @@ sub _determine_ver_num {
     # The version number is now specified by an OPENSSL_VERSION_NUMBER #define
     # in the opensslv.h header file (0.9.2 onwards).  That #define was in the
     # crypto.h header file (0.9.1's), and was called SSLEAY_VERSION_NUMBER (from
-    # 0.6.0 to 0.9.0b inclusive).  Earlier versions don't seem to have a version
-    # number defined in this way, but we don't support anything earlier anyway.
-    # The version number is specified as a hexadecimal integer of the form
-    # MNNFFPPS (major, minor, fix, patch, status [0 for dev, 1 to 14 for betas,
-    # and f for release) (0.9.5a onwards, but with the highest bit set in the
-    # patch byte for the 0.9.5's), or of the form MNNFFRBB (major, minor, fix,
-    # release, patch or beta) (0.9.3's, 0.9.4's and 0.9.5), or of the form MNFP
-    # (major, minor, fix, patch) (up to and including 0.9.2b).
+    # 0.6.0 to 0.9.0b inclusive).  Earlier versions do not seem to have a
+    # version number defined in this way, but we do not support anything earlier
+    # anyway.  The version number is specified as a hexadecimal integer of the
+    # form MNNFFPPS (major, minor, fix, patch, status [0 for dev, 1 to 14 for
+    # betas, and f for release) (0.9.5a onwards, but with the highest bit set in
+    # the patch byte for the 0.9.5's), or of the form MNNFFRBB (major, minor,
+    # fix, release, patch or beta) (0.9.3's, 0.9.4's and 0.9.5), or of the form
+    # MNFP (major, minor, fix, patch) (up to and including 0.9.2b).
     my($file, $ver_file);
     if (-f ($file = catfile($inc_files_dir, 'opensslv.h'))) {
         $ver_file = $file;
@@ -340,7 +381,7 @@ sub _determine_ver_num {
         $ver_file = $file;
     }
     else {
-        $self->_exit_with_error(104, 'No version number header file found');
+        $self->exit_with_error(104, 'No version number header file found');
     }
 
     my $ver_define;
@@ -356,7 +397,7 @@ sub _determine_ver_num {
         close $ver_fh;
     }
     else {
-        $self->_exit_with_error(105,
+        $self->exit_with_error(105,
             "Could not open version number header file '%s' for reading: %s",
             $ver_file, $!
         );
@@ -416,13 +457,13 @@ sub _determine_ver_num {
             $status_str = '';
         }
         else {
-            $self->_exit_with_error(106,
+            $self->exit_with_error(106,
                 'Unrecognized version number found (%s)', $ver_define
             );
         }
     }
     else {
-        $self->_exit_with_error(107, 'No version number found');
+        $self->exit_with_error(107, 'No version number found');
     }
 
     my $ver_num = $major * 1000000 + $minor * 10000 + $fix * 100 + $patch;
@@ -431,18 +472,18 @@ sub _determine_ver_num {
     $ver_str .= $status_str;
 
     my $package = $ver_num >= 90100 ? 'OpenSSL' : 'SSLeay';
-    $self->_show_found_var("Found $package version", $ver_str);
-    $self->_package($package);
-    $self->_ver_str($ver_str);
-    $self->_ver_num($ver_num);
+    $self->show_found_var("Found $package version", $ver_str);
+    $self->package($package);
+    $self->ver_str($ver_str);
+    $self->ver_num($ver_num);
 }
 
-sub _set_define {
+sub set_define {
     my $self = shift;
 
-    my $ver_num = $self->_ver_num();
-    my $unsafe_mode = exists $self->_opts()->{'unsafe-mode'};
-    my $debug_mode  = exists $self->_opts()->{'debug-mode'};
+    my $ver_num = $self->ver_num();
+    my $unsafe_mode = exists $self->opts()->{'unsafe-mode'};
+    my $debug_mode  = exists $self->opts()->{'debug-mode'};
 
     my $define =  "-DFILTER_CRYPTO_OPENSSL_VERSION=$ver_num";
     $define   .= ' -DFILTER_CRYPTO_UNSAFE_MODE' if $unsafe_mode;
@@ -451,7 +492,7 @@ sub _set_define {
     $self->define($define);
 }
 
-sub _locate_lib_dir_and_file {
+sub locate_lib_dir_and_file {
     my $self = shift;
 
     # The libraries are normally located in the lib/ sub-directory of the prefix
@@ -462,57 +503,57 @@ sub _locate_lib_dir_and_file {
     # or out32dll.dbg/ (0.9.0 onwards, depending on whether static or dynamic
     # libraries were built and whether they were built in release or debug mode)
     # or out/ (up to and including 0.8.1b).
-    my $prefix_dir = $self->_prefix_dir();
+    my $prefix_dir = $self->prefix_dir();
     my($dir, $lib_dir, $lib_file, $lib_name);
     if (-d ($dir = catdir($prefix_dir, 'lib64')) and
-        ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+        ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
     {
         $lib_dir = $dir;
     }
     elsif (-d ($dir = catdir($prefix_dir, 'lib')) and
-           ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+           ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
     {
         $lib_dir = $dir;
     }
     elsif ($self->is_win32()) {
         if (-d ($dir = catdir($prefix_dir, 'out32')) and
-            ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+            ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
             $lib_dir = $dir;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'out32dll')) and
-               ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
             $lib_dir = $dir;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'out32.dbg')) and
-               ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
             $lib_dir = $dir;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'out32dll.dbg')) and
-               ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
             $lib_dir = $dir;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'out')) and
-               ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
             $lib_dir = $dir;
         }
     }
 
     if (defined $lib_dir) {
-        $self->_show_found_var('Found crypto library', $lib_file);
-        $self->_lib_dir($lib_dir);
-        $self->_lib_name($lib_name);
+        $self->show_found_var('Found crypto library', $lib_file);
+        $self->lib_dir($lib_dir);
+        $self->lib_name($lib_name);
     }
     else {
-        $self->_exit_with_error(109, 'No crypto library found');
+        $self->exit_with_error(109, 'No crypto library found');
     }
 }
 
-sub _probe_for_lib_file {
+sub probe_for_lib_file {
     my $self = shift;
     my $candidate_lib_dir = shift;
 
@@ -527,8 +568,8 @@ sub _probe_for_lib_file {
     # inclusive), or ssl.lib and crypto.lib, specified as -lssl and -lcrypto
     # (0.5.2 and 0.5.2a).
     # It is also possible to produce "native" Windows builds using GCC (i.e.
-    # binaries and libraries that are linked against the Microsoft C runtime
-    # library msvcrt.dll rather than Cygwin's POSIX C runtime library
+    # binaries and libraries that are linked against the Microsoft C run-time
+    # library msvcrt.dll rather than Cygwin's POSIX C run-time library
     # cygwin1.dll) via MinGW (gcc).  In that case, the OpenSSL libraries are
     # called either libssl.a and libcrypto.a (for static builds) or libssl32.a
     # and libeay32.a [sic] (for dynamic builds).  They are specified as on UNIX-
@@ -570,15 +611,15 @@ sub _probe_for_lib_file {
     return $lib_file ? ($lib_file, $lib_name) : ();
 }
 
-sub _set_libs {
+sub set_libs {
     my $self = shift;
 
-    my $lib_dir  = $self->_lib_dir();
-    my $lib_name = $self->_lib_name();
+    my $lib_dir  = $self->lib_dir();
+    my $lib_name = $self->lib_name();
     $self->libs("-L$lib_dir -l$lib_name");
 }
 
-sub _locate_bin_file {
+sub locate_bin_file {
     my $self = shift;
 
     # The binaries are normally located in the bin/ sub-directory of the prefix
@@ -589,52 +630,52 @@ sub _locate_bin_file {
     # out32/, out32dll/, out32.dbg/ or out32dll.dbg/ (0.9.0 onwards, depending
     # on whether static or dynamic libraries were built and whether they were
     # built in release or debug mode) or out/ (up to and including 0.8.1b).
-    my $prefix_dir = $self->_prefix_dir();
+    my $prefix_dir = $self->prefix_dir();
     my($dir, $bin_file);
     my $found = 0;
     if (-d ($dir = catdir($prefix_dir, 'bin')) and
-        defined($bin_file = $self->_probe_for_bin_file($dir)))
+        defined($bin_file = $self->probe_for_bin_file($dir)))
     {
         $found = 1;
     }
     elsif ($self->is_win32()) {
         if (-d ($dir = catdir($prefix_dir, 'out32')) and
-            defined($bin_file = $self->_probe_for_bin_file($dir)))
+            defined($bin_file = $self->probe_for_bin_file($dir)))
         {
             $found = 1;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'out32dll')) and
-               defined($bin_file = $self->_probe_for_bin_file($dir)))
+               defined($bin_file = $self->probe_for_bin_file($dir)))
         {
             $found = 1;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'out32.dbg')) and
-               defined($bin_file = $self->_probe_for_bin_file($dir)))
+               defined($bin_file = $self->probe_for_bin_file($dir)))
         {
             $found = 1;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'out32dll.dbg')) and
-               defined($bin_file = $self->_probe_for_bin_file($dir)))
+               defined($bin_file = $self->probe_for_bin_file($dir)))
         {
             $found = 1;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'out')) and
-               defined($bin_file = $self->_probe_for_bin_file($dir)))
+               defined($bin_file = $self->probe_for_bin_file($dir)))
         {
             $found = 1;
         }
     }
 
     if ($found) {
-        $self->_show_found_var('Found binary executable', $bin_file);
-        $self->_bin_file($bin_file)
+        $self->show_found_var('Found binary executable', $bin_file);
+        $self->bin_file($bin_file)
     }
     else {
-        $self->_exit_with_error(111, 'No binary executable found');
+        $self->exit_with_error(111, 'No binary executable found');
     }
 }
 
-sub _probe_for_bin_file {
+sub probe_for_bin_file {
     my $self = shift;
     my $candidate_bin_dir = shift;
 
@@ -651,34 +692,34 @@ sub _probe_for_bin_file {
     return $bin_file;
 }
 
-sub _get_cipher_name {
+sub query_cipher_name {
     my $self = shift;
 
-    my $ver_num = $self->_ver_num();
+    my $ver_num = $self->ver_num();
 
     # Find out (as best as we can) which ciphers, if any, have been disabled in
     # the particular crypto library that we are using.  Ciphers can be disabled
     # at build time via "-DOPENSSL_NO_<cipher_name>" (or "-DNO_<cipher_name>"
-    # prior to 0.9.7), where <cipher_name> can be one of: "DES", "RC4", "IDEA",
-    # "RC2", "BF" (or "BLOWFISH" prior to 0.9.3), "RC5", "CAST" or "AES".  This
+    # before 0.9.7), where <cipher_name> can be one of: "DES", "RC4", "IDEA",
+    # "RC2", "BF" (or "BLOWFISH" before 0.9.3), "RC5", "CAST" or "AES".  This
     # information is normally contained in the output of the main binary
     # executable's "version -a" command, labelled "compiler: " (or "C flags:"
-    # prior to 0.9.2) and not always on a line of its own.
-    my $bin_file = $self->_bin_file();
+    # before 0.9.2) and not always on a line of its own.
+    my $bin_file = $self->bin_file();
     my $bin_cmd = "$bin_file version -a 2>&1";
 
     my $bin_output = `$bin_cmd`;
     my $bin_rc = $? >> 8;
 
     if ($bin_rc) {
-        $self->_exit_with_error(112,
+        $self->exit_with_error(112,
             "Could not get %s version information (%d):\n%s",
-            $self->_package(), $bin_rc, $bin_output
+            $self->package(), $bin_rc, $bin_output
         );
     }
 
     my %disabled = ();
-    if ((my $compiler) = $bin_output =~ /(?:C flags|compiler): ?(.*)$/mo) {
+    if ((my $compiler) = $bin_output =~ /(?:C flags|compiler): ?(.*)$/imo) {
         %disabled = map { $_ => 1 }
                     $compiler =~ m|[-/]D ?"?(?:OPENSSL_)?NO_(\w+)"?|go;
     }
@@ -758,14 +799,14 @@ sub _get_cipher_name {
         );
     }
 
-    my $cipher_name = $self->_opts()->{'cipher-name'};
+    my $cipher_name = $self->opts()->{'cipher-name'};
     if (defined $cipher_name) {
         my %lc_cipher_names = map { lc $_->[0] => 1 } @cipher_names;
         if (exists $lc_cipher_names{lc $cipher_name}) {
-            $self->_show_found_var('Using specified cipher name', $cipher_name);
+            $self->show_found_var('Using specified cipher name', $cipher_name);
         }
         else {
-            $self->_exit_with_error(113,
+            $self->exit_with_error(113,
                 "No such cipher name '%s'", $cipher_name
             );
         }
@@ -785,16 +826,16 @@ sub _get_cipher_name {
             $default = $cipher_names[$#cipher_names][0];
         }
 
-        $cipher_name = $self->_prompt_list(
+        $cipher_name = $self->prompt_list(
             $message, \@cipher_names, $question, $default
         );
     }
     print "\n";
 
-    $self->_cipher_name($cipher_name);
+    $self->cipher_name($cipher_name);
 }
 
-sub _get_cipher_mode {
+sub query_cipher_mode {
     my $self = shift;
 
     my @cipher_modes = (
@@ -804,15 +845,15 @@ sub _get_cipher_mode {
         [ CIPHER_MODE_OFB, 'OFB (64-Bit Output Feedback Mode)' ]
     );
 
-    my $cipher_mode = $self->_opts()->{'cipher-mode'};
+    my $cipher_mode = $self->opts()->{'cipher-mode'};
     if (defined $cipher_mode) {
         my %lc_cipher_modes = map { lc $_->[0] => $_->[0] } @cipher_modes;
         if (exists $lc_cipher_modes{lc $cipher_mode}) {
-            $self->_show_found_var('Using specified cipher mode', $cipher_mode);
+            $self->show_found_var('Using specified cipher mode', $cipher_mode);
             $cipher_mode = $lc_cipher_modes{lc $cipher_mode};
         }
         else {
-            $self->_exit_with_error(114,
+            $self->exit_with_error(114,
                 "No such cipher mode '%s'", $cipher_mode
             );
         }
@@ -822,7 +863,7 @@ sub _get_cipher_mode {
         my $question = 'Which mode of operation do you want to use?';
         my $default  = CIPHER_MODE_CBC;
 
-        $cipher_mode = $self->_prompt_list(
+        $cipher_mode = $self->prompt_list(
             $message, \@cipher_modes, $question, $default
         );
     }
@@ -831,21 +872,21 @@ sub _get_cipher_mode {
     return $cipher_mode;
 }
 
-sub _get_key_len {
+sub query_key_len {
     my $self = shift;
     my %args = @_;
 
-    my $ver_num = $self->_ver_num();
+    my $ver_num = $self->ver_num();
 
     my $validate;
     if (exists $args{-fixed}) {
         $validate = sub { $_[0] eq $args{-fixed} };
     }
     elsif ($ver_num < 90600) {
-        # Prior to 0.9.6 there was no facility in the EVP library API for
-        # setting the key length for variable key lengths ciphers so we can only
-        # use the default value.  This should have been specified in the %args,
-        # but we provide a default default value of 16 just in case.
+        # Before 0.9.6 there was no facility in the EVP library API for setting
+        # the key length for variable key lengths ciphers so we can only use the
+        # default value.  This should have been specified in the %args, but we
+        # provide a default default value of 16 just in case.
         $args{-default} = 16 unless exists $args{-default};
         $validate = sub { $_[0] eq $args{-default} };
     }
@@ -866,32 +907,32 @@ sub _get_key_len {
         };
     }
 
-    my $key_len = $self->_opts()->{'key-len'};
-    my $key = $self->_opts()->{key};
+    my $key_len = $self->opts()->{'key-len'};
+    my $key = $self->opts()->{key};
     if (defined $key_len) {
         if ($validate->($key_len)) {
-            $self->_show_found_var('Using specified key length', $key_len);
+            $self->show_found_var('Using specified key length', $key_len);
         }
         else {
-            $self->_exit_with_error(115, "Invalid key length '%d'", $key_len);
+            $self->exit_with_error(115, "Invalid key length '%d'", $key_len);
         }
     }
     elsif (defined $key and $key ne RAND_OPTION_STR) {
         $key_len = length($key) / 2;
         if ($validate->($key_len)) {
-            $self->_show_found_var('Using inferred key length', $key_len);
+            $self->show_found_var('Using inferred key length', $key_len);
         }
         else {
-            $self->_exit_with_error(116, "Invalid length key (%d)", $key_len);
+            $self->exit_with_error(116, "Invalid length key (%d)", $key_len);
         }
     }
     elsif (exists $args{-fixed}) {
         $key_len = $args{-fixed};
-        $self->_show_found_var('Using fixed key length', $key_len);
+        $self->show_found_var('Using fixed key length', $key_len);
     }
     elsif ($ver_num < 90600) {
         $key_len = $args{-default};
-        $self->_show_found_var('Using default key length', $key_len);
+        $self->show_found_var('Using default key length', $key_len);
     }
     else {
         my $message = "This is a variable key length algorithm.\n";
@@ -911,7 +952,7 @@ sub _get_key_len {
 
         my $question = 'What key length (in bytes) do you want to use?';
 
-        $key_len = $self->_prompt_validate(
+        $key_len = $self->prompt_validate(
             -message  => $message,
             -question => $question,
             -default  => $args{-default},
@@ -920,23 +961,23 @@ sub _get_key_len {
     }
     print "\n";
 
-    $self->_key_len($key_len);
+    $self->key_len($key_len);
 }
 
-sub _get_rc2_key_bits {
+sub query_rc2_key_bits {
     my $self = shift;
 
     # The "effective key bits" parameter can be from 1 to 1024 bits: see RFC
     # 2268.
     my %args = (-min => 1, -max => 1024, -default => 128);
 
-    my $ver_num = $self->_ver_num();
+    my $ver_num = $self->ver_num();
 
     my $validate;
     if ($ver_num < 90600) {
-        # Prior to 0.9.6 there was no facility in the EVP library API for
-        # setting the effective key bits for the RC2 cipher so we can only use
-        # the default value.
+        # Before 0.9.6 there was no facility in the EVP library API for setting
+        # the effective key bits for the RC2 cipher so we can only use the
+        # default value.
         $validate = sub { $_[0] eq $args{-default} };
     }
     else {
@@ -946,22 +987,22 @@ sub _get_rc2_key_bits {
         };
     }
 
-    my $rc2_key_bits = $self->_opts()->{'rc2-key-bits'};
+    my $rc2_key_bits = $self->opts()->{'rc2-key-bits'};
     if (defined $rc2_key_bits) {
         if ($validate->($rc2_key_bits)) {
-            $self->_show_found_var(
+            $self->show_found_var(
                 'Using specified RC2 key bits', $rc2_key_bits
             );
         }
         else {
-            $self->_exit_with_error(117,
+            $self->exit_with_error(117,
                 "Invalid RC2 key bits '%d'", $rc2_key_bits
             );
         }
     }
     elsif ($ver_num < 90600) {
         $rc2_key_bits = $args{-default};
-        $self->_show_found_var('Using default RC2 key bits', $rc2_key_bits);
+        $self->show_found_var('Using default RC2 key bits', $rc2_key_bits);
     }
     else {
         my $message = "This algorithm also has an 'effective key bits' (EKB) " .
@@ -974,7 +1015,7 @@ sub _get_rc2_key_bits {
 
         my $question = 'What EKB value (in bits) do you want to use?';
 
-        $rc2_key_bits = $self->_prompt_validate(
+        $rc2_key_bits = $self->prompt_validate(
             -message  => $message,
             -question => $question,
             -default  => $args{-default},
@@ -983,10 +1024,10 @@ sub _get_rc2_key_bits {
     }
     print "\n";
 
-    $self->_rc2_key_bits($rc2_key_bits);
+    $self->rc2_key_bits($rc2_key_bits);
 }
 
-sub _get_rc5_rounds {
+sub query_rc5_rounds {
     my $self = shift;
 
     # The "number of rounds" parameter can be from 0 to 255: see RFC 2040.
@@ -994,13 +1035,13 @@ sub _get_rc5_rounds {
     # OpenSSL: see EVP_EncryptInit.pod in recent OpenSSL distributions.
     my %args = (-valid => [8, 12, 16], -default => 12);
 
-    my $ver_num = $self->_ver_num();
+    my $ver_num = $self->ver_num();
 
     my $validate;
     if ($ver_num < 90600) {
-        # Prior to 0.9.6 there was no facility in the EVP library API for
-        # setting the number of rounds for the RC5 cipher so we can only use the
-        # default value.
+        # Before 0.9.6 there was no facility in the EVP library API for setting
+        # the number of rounds for the RC5 cipher so we can only use the default
+        # value.
         $validate = sub { $_[0] eq $args{-default} };
     }
     else {
@@ -1008,20 +1049,20 @@ sub _get_rc5_rounds {
         $validate = sub { exists $valid{$_[0]} };
     }
 
-    my $rc5_rounds = $self->_opts()->{'rc5-rounds'};
+    my $rc5_rounds = $self->opts()->{'rc5-rounds'};
     if (defined $rc5_rounds) {
         if ($validate->($rc5_rounds)) {
-            $self->_show_found_var('Using specified RC5 rounds', $rc5_rounds);
+            $self->show_found_var('Using specified RC5 rounds', $rc5_rounds);
         }
         else {
-            $self->_exit_with_error(118,
+            $self->exit_with_error(118,
                 "Invalid RC5 rounds '%d'", $rc5_rounds
             );
         }
     }
     elsif ($ver_num < 90600) {
         $rc5_rounds = $args{-default};
-        $self->_show_found_var('Using default RC5 rounds', $rc5_rounds);
+        $self->show_found_var('Using default RC5 rounds', $rc5_rounds);
     }
     else {
         my $message = "This algorithm also has a 'number of rounds' " .
@@ -1034,7 +1075,7 @@ sub _get_rc5_rounds {
 
         my $question = 'What number of rounds do you want to use?';
 
-        $rc5_rounds = $self->_prompt_validate(
+        $rc5_rounds = $self->prompt_validate(
             -message  => $message,
             -question => $question,
             -default  => $args{-default},
@@ -1043,16 +1084,16 @@ sub _get_rc5_rounds {
     }
     print "\n";
 
-    $self->_rc5_rounds($rc5_rounds);
+    $self->rc5_rounds($rc5_rounds);
 }
 
-sub _get_pswd_or_key {
+sub query_pswd_or_key {
     my $self = shift;
 
-    my $key_len = $self->_key_len();
+    my $key_len = $self->key_len();
 
     if ($key_len == 0) {
-        $self->_key('');
+        $self->key('');
         return;
     }
 
@@ -1064,38 +1105,38 @@ sub _get_pswd_or_key {
         $_[0] =~ /^[0-9a-f]*$/io and length $_[0] == 2 * $key_len
     };
 
-    my $pswd = $self->_opts()->{pswd};
-    my $key  = $self->_opts()->{key};
+    my $pswd = $self->opts()->{pswd};
+    my $key  = $self->opts()->{key};
     if (defined $pswd) {
         if (lc $pswd eq lc RAND_OPTION_STR) {
-            $pswd = $self->_get_rand_pswd();
+            $pswd = $self->generate_rand_pswd();
             print "\n";
 
-            $self->_show_found_var('Using randomly generated password', $pswd);
-            $self->_pswd($pswd);
+            $self->show_found_var('Using randomly generated password', $pswd);
+            $self->pswd($pswd);
         }
         elsif ($validate_pswd->($pswd)) {
-            $self->_show_found_var('Using specified password', $pswd);
-            $self->_pswd(unpack 'H*', $pswd);
+            $self->show_found_var('Using specified password', $pswd);
+            $self->pswd(unpack 'H*', $pswd);
         }
         else {
-            $self->_exit_with_error(119, "Invalid password '%s'", $pswd);
+            $self->exit_with_error(119, "Invalid password '%s'", $pswd);
         }
     }
     elsif (defined $key) {
         if (lc $key eq lc RAND_OPTION_STR) {
-            $key = $self->_get_rand_key();
+            $key = $self->generate_rand_key();
             print "\n";
 
-            $self->_show_found_var('Using randomly generated key', $key);
-            $self->_key($key);
+            $self->show_found_var('Using randomly generated key', $key);
+            $self->key($key);
         }
         elsif ($validate_key->($key)) {
-            $self->_show_found_var('Using specified key', $key);
-            $self->_key($key);
+            $self->show_found_var('Using specified key', $key);
+            $self->key($key);
         }
         else {
-            $self->_exit_with_error(120, "Invalid key '%s'", $key);
+            $self->exit_with_error(120, "Invalid key '%s'", $key);
         }
     }
     else {
@@ -1116,7 +1157,7 @@ sub _get_pswd_or_key {
         my $question = 'How do you want to specify or derive the key?';
         my $default  = CIPHER_KEY_RANDOM_PSWD;
 
-        my $cipher_key_source = $self->_prompt_list(
+        my $cipher_key_source = $self->prompt_list(
             $message, \@cipher_key_sources, $question, $default
         );
     
@@ -1127,18 +1168,18 @@ sub _get_pswd_or_key {
             $question = 'Password?';
             $default  = '';
 
-            $pswd = $self->_prompt_validate(
+            $pswd = $self->prompt_validate(
                 -message  => $message,
                 -question => $question,
                 -default  => $default,
                 -validate => $validate_pswd
             );
 
-            $self->_pswd(unpack 'H*', $pswd);
+            $self->pswd(unpack 'H*', $pswd);
         }
         elsif ($cipher_key_source == CIPHER_KEY_RANDOM_PSWD) {
-            $pswd = $self->_get_rand_pswd();
-            $self->_pswd($pswd);
+            $pswd = $self->generate_rand_pswd();
+            $self->pswd($pswd);
         }
         elsif ($cipher_key_source == CIPHER_KEY_GIVEN) {
             $message  = "Enter your ${key_len}-byte key with each byte " .
@@ -1147,21 +1188,21 @@ sub _get_pswd_or_key {
             $question = 'Key?';
             $default  = '';
 
-            $key = $self->_prompt_validate(
+            $key = $self->prompt_validate(
                 -message  => $message,
                 -question => $question,
                 -default  => $default,
                 -validate => $validate_key
             );
 
-            $self->_key($key);
+            $self->key($key);
         }
         elsif ($cipher_key_source == CIPHER_KEY_RANDOM) {
-            $key = $self->_get_rand_key();
-            $self->_key($key);
+            $key = $self->generate_rand_key();
+            $self->key($key);
         }
         else {
-            $self->_exit_with_error(121,
+            $self->exit_with_error(121,
                 "Unknown key source '%s'", $cipher_key_source
             );
         }
@@ -1170,21 +1211,21 @@ sub _get_pswd_or_key {
     print "\n";
 }
 
-sub _get_rand_key {
+sub generate_rand_key {
     my $self = shift;
-    return $self->_get_rand_octets_hex($self->_key_len());
+    return $self->generate_rand_octets_hex($self->key_len());
 }
 
-sub _get_rand_pswd {
+sub generate_rand_pswd {
     my $self = shift;
-    return $self->_get_rand_octets_hex(RAND_PSWD_LEN);
+    return $self->generate_rand_octets_hex(RAND_PSWD_LEN);
 }
 
-sub _get_rand_octets_hex {
+sub generate_rand_octets_hex {
     my $self = shift;
     my $num_octets = shift;
 
-    my $rng = $self->_get_rng();
+    my $rng = $self->query_rng();
 
     my $octets;
     if (lc $rng eq lc RNG_PERL_RAND) {
@@ -1198,11 +1239,11 @@ sub _get_rand_octets_hex {
         # it is not a standard module.
         eval {
             require Crypt::Random;
-            Crypt::Random->import('makerandom_octet');
+            Crypt::Random->import(qw(makerandom_octet));
         };
 
         if ($@) {
-            $self->_exit_with_error(122,
+            $self->exit_with_error(122,
                 "Can't load Crypt::Random module for random number generation"
             );
         }
@@ -1218,11 +1259,11 @@ sub _get_rand_octets_hex {
         # it is not a standard module.
         eval {
             require Math::Random;
-            Math::Random->import('random_uniform_integer');
+            Math::Random->import(qw(random_uniform_integer));
         };
 
         if ($@) {
-            $self->_exit_with_error(123,
+            $self->exit_with_error(123,
                 "Can't load Math::Random module for random number generation"
             );
         }
@@ -1231,7 +1272,7 @@ sub _get_rand_octets_hex {
                        map { chr } random_uniform_integer($num_octets, 0, 255);
     }
     elsif (lc $rng eq lc RNG_OPENSSL_RAND) {
-        my $bin_file = $self->_bin_file();
+        my $bin_file = $self->bin_file();
         my $out_filename = 'rand.out';
 
         my $bin_cmd = "$bin_file rand -out $out_filename $num_octets 2>&1";
@@ -1240,27 +1281,27 @@ sub _get_rand_octets_hex {
         my $bin_rc = $? >> 8;
 
         if ($bin_rc) {
-            $self->_exit_with_error(124,
+            $self->exit_with_error(124,
                 "Could not generate %d random bytes (%d):\n%s",
                 $num_octets, $bin_rc, $bin_output
             );
         }
 
         sysopen my $out_fh, $out_filename, O_RDONLY | O_BINARY or
-            $self->_exit_with_error(125,
+            $self->exit_with_error(125,
                 "Could not open random bytes output file '%s' for reading: %s",
                 $out_filename, $!
             );
 
         my $num_octets_read = sysread $out_fh, $octets, $num_octets;
         if (not defined $num_octets_read) {
-            $self->_exit_with_error(126,
+            $self->exit_with_error(126,
                 "Could not read random bytes from output file '%s': %s",
                 $out_filename, $!
             );
         }
         elsif ($num_octets_read != $num_octets) {
-            $self->_exit_with_error(127,
+            $self->exit_with_error(127,
                 "Could not read random bytes from output file '%s': %d bytes " .
                 "read, %d bytes expected",
                 $out_filename, $num_octets_read, $num_octets
@@ -1271,7 +1312,7 @@ sub _get_rand_octets_hex {
         unlink $out_filename;
     }
     else {
-        $self->_exit_with_error(128,
+        $self->exit_with_error(128,
             "Unknown random number generator '%s'", $rng
         );
     }
@@ -1279,11 +1320,11 @@ sub _get_rand_octets_hex {
     return unpack 'H*', $octets;
 }
 
-sub _get_rng {
+sub query_rng {
     my $self = shift;
 
-    my $ver_num = $self->_ver_num();
-    my $package = $self->_package();
+    my $ver_num = $self->ver_num();
+    my $package = $self->package();
 
     my @rngs = (
         [ RNG_PERL_RAND, "Perl's built-in rand() function" ]
@@ -1308,15 +1349,15 @@ sub _get_rng {
         );
     }
 
-    my $rng = $self->_opts()->{rng};
+    my $rng = $self->opts()->{rng};
     if (defined $rng) {
         my %lc_rngs = map { lc $_->[0] => $_->[0] } @rngs;
         if (exists $lc_rngs{lc $rng}) {
-            $self->_show_found_var('Using specified RNG', $rng);
+            $self->show_found_var('Using specified RNG', $rng);
             $rng = $lc_rngs{lc $rng};
         }
         else {
-            $self->_exit_with_error(129,
+            $self->exit_with_error(129,
                 "Invalid random number generator '%s'", $rng
             );
         }
@@ -1326,7 +1367,7 @@ sub _get_rng {
         my $question = 'Which RNG do you want to use?';
         my $default  = $rngs[$#rngs][0];
 
-        $rng = $self->_prompt_list(
+        $rng = $self->prompt_list(
             $message, \@rngs, $question, $default
         );
     }
@@ -1334,7 +1375,7 @@ sub _get_rng {
     return $rng;
 }
 
-sub _configure_des_cipher {
+sub configure_des_cipher {
     my $self = shift;
 
     my %cipher_funcs = (
@@ -1343,19 +1384,19 @@ sub _configure_des_cipher {
         CIPHER_MODE_CFB, 'EVP_des_cfb()',
         CIPHER_MODE_OFB, 'EVP_des_ofb()'
     );
-    my $cipher_mode = $self->_get_cipher_mode();
-    $self->_cipher_func($cipher_funcs{$cipher_mode});
-    $self->_cipher_needs_iv(1);
+    my $cipher_mode = $self->query_cipher_mode();
+    $self->cipher_func($cipher_funcs{$cipher_mode});
+    $self->cipher_needs_iv(1);
 
     # The DES cipher can only use an 8 byte key (of which only 7 bytes are
     # actually used by the algorithm): see FIPS PUB 46-3.
-    $self->_get_key_len(-fixed => 8);
+    $self->query_key_len(-fixed => 8);
 }
 
-sub _configure_des_ede_cipher {
+sub configure_des_ede_cipher {
     my $self = shift;
 
-    my $ver_num = $self->_ver_num();
+    my $ver_num = $self->ver_num();
     my %cipher_funcs = (
         CIPHER_MODE_ECB, ($ver_num < 90700
                           ? 'EVP_des_ede()' : 'EVP_des_ede_ecb()'),
@@ -1363,21 +1404,21 @@ sub _configure_des_ede_cipher {
         CIPHER_MODE_CFB, 'EVP_des_ede_cfb()',
         CIPHER_MODE_OFB, 'EVP_des_ede_ofb()'
     );
-    my $cipher_mode = $self->_get_cipher_mode();
-    $self->_cipher_func($cipher_funcs{$cipher_mode});
-    $self->_cipher_needs_iv(1);
+    my $cipher_mode = $self->query_cipher_mode();
+    $self->cipher_func($cipher_funcs{$cipher_mode});
+    $self->cipher_needs_iv(1);
 
     # The DES-EDE cipher is two-key triple-DES (i.e. in which an encrypt
     # operation is encrypt with key 1, decrypt with key 2, encrypt with key 1),
     # and therefore requires a key length equivalent to two DES keys, i.e. 16
     # bytes (of which only 14 are used).
-    $self->_get_key_len(-fixed => 16);
+    $self->query_key_len(-fixed => 16);
 }
 
-sub _configure_des_ede3_cipher {
+sub configure_des_ede3_cipher {
     my $self = shift;
 
-    my $ver_num = $self->_ver_num();
+    my $ver_num = $self->ver_num();
     my %cipher_funcs = (
         CIPHER_MODE_ECB, ($ver_num < 90700
                           ? 'EVP_des_ede3()' : 'EVP_des_ede3_ecb()'),
@@ -1385,29 +1426,29 @@ sub _configure_des_ede3_cipher {
         CIPHER_MODE_CFB, 'EVP_des_ede3_cfb()',
         CIPHER_MODE_OFB, 'EVP_des_ede3_ofb()'
     );
-    my $cipher_mode = $self->_get_cipher_mode();
-    $self->_cipher_func($cipher_funcs{$cipher_mode});
-    $self->_cipher_needs_iv(1);
+    my $cipher_mode = $self->query_cipher_mode();
+    $self->cipher_func($cipher_funcs{$cipher_mode});
+    $self->cipher_needs_iv(1);
 
     # The DES-EDE3 cipher is three-key triple-DES (i.e. in which an encrypt
     # operation is encrypt with key 1, decrypt with key 2, encrypt with key 3),
     # and therefore requires a key length equivalent to two DES keys, i.e. 24
     # bytes (of which only 21 are used).
-    $self->_get_key_len(-fixed => 24);
+    $self->query_key_len(-fixed => 24);
 }
 
-sub _configure_rc4_cipher {
+sub configure_rc4_cipher {
     my $self = shift;
 
-    $self->_cipher_func('EVP_rc4()');
-    $self->_cipher_needs_iv(0);
+    $self->cipher_func('EVP_rc4()');
+    $self->cipher_needs_iv(0);
 
     # The RC4 cipher can use any key length: see rc4.doc in old SSLeay
     # distributions.
-    $self->_get_key_len(-min => 1, -default => 16);
+    $self->query_key_len(-min => 1, -default => 16);
 }
 
-sub _configure_idea_cipher {
+sub configure_idea_cipher {
     my $self = shift;
 
     my %cipher_funcs = (
@@ -1416,16 +1457,16 @@ sub _configure_idea_cipher {
         CIPHER_MODE_CFB, 'EVP_idea_cfb()',
         CIPHER_MODE_OFB, 'EVP_idea_ofb()'
     );
-    my $cipher_mode = $self->_get_cipher_mode();
-    $self->_cipher_func($cipher_funcs{$cipher_mode});
-    $self->_cipher_needs_iv(1);
+    my $cipher_mode = $self->query_cipher_mode();
+    $self->cipher_func($cipher_funcs{$cipher_mode});
+    $self->cipher_needs_iv(1);
 
     # The IDEA cipher can only use a 16 byte key: see idea.doc in old SSLeay
     # distributions.
-    $self->_get_key_len(-fixed => 16);
+    $self->query_key_len(-fixed => 16);
 }
 
-sub _configure_rc2_cipher {
+sub configure_rc2_cipher {
     my $self = shift;
 
     my %cipher_funcs = (
@@ -1434,29 +1475,29 @@ sub _configure_rc2_cipher {
         CIPHER_MODE_CFB, 'EVP_rc2_cfb()',
         CIPHER_MODE_OFB, 'EVP_rc2_ofb()'
     );
-    my $cipher_mode = $self->_get_cipher_mode();
-    $self->_cipher_func($cipher_funcs{$cipher_mode});
-    $self->_cipher_needs_iv(1);
+    my $cipher_mode = $self->query_cipher_mode();
+    $self->cipher_func($cipher_funcs{$cipher_mode});
+    $self->cipher_needs_iv(1);
 
     # The RC2 cipher can use any key length from 1 to 128 bytes: see RFC 2268.
-    $self->_get_key_len(-min => 1, -max => 128, -default => 16);
+    $self->query_key_len(-min => 1, -max => 128, -default => 16);
 
     # The RC2 cipher also has a parameter called "effective key bits".
-    $self->_get_rc2_key_bits();
+    $self->query_rc2_key_bits();
 }
 
-sub _configure_desx_cipher {
+sub configure_desx_cipher {
     my $self = shift;
 
-    $self->_cipher_func('EVP_desx_cbc()');
-    $self->_cipher_needs_iv(1);
+    $self->cipher_func('EVP_desx_cbc()');
+    $self->cipher_needs_iv(1);
 
     # The DESX cipher can only use a 24 byte key: see des.pod in recent OpenSSL
     # distributions.
-    $self->_get_key_len(-fixed => 24);
+    $self->query_key_len(-fixed => 24);
 }
 
-sub _configure_blowfish_cipher {
+sub configure_blowfish_cipher {
     my $self = shift;
 
     my %cipher_funcs = (
@@ -1465,26 +1506,26 @@ sub _configure_blowfish_cipher {
         CIPHER_MODE_CFB, 'EVP_bf_cfb()',
         CIPHER_MODE_OFB, 'EVP_bf_ofb()'
     );
-    my $cipher_mode = $self->_get_cipher_mode();
-    $self->_cipher_func($cipher_funcs{$cipher_mode});
-    $self->_cipher_needs_iv(1);
+    my $cipher_mode = $self->query_cipher_mode();
+    $self->cipher_func($cipher_funcs{$cipher_mode});
+    $self->cipher_needs_iv(1);
 
     # The Blowfish cipher can use any key length up to 72 bytes: see
     # blowfish.doc in old SSLeay distributions.
-    $self->_get_key_len(-min => 1, -max => 72, -default => 16);
+    $self->query_key_len(-min => 1, -max => 72, -default => 16);
 }
 
-sub _configure_null_cipher {
+sub configure_null_cipher {
     my $self = shift;
 
-    $self->_cipher_func('EVP_enc_null()');
-    $self->_cipher_needs_iv(0);
+    $self->cipher_func('EVP_enc_null()');
+    $self->cipher_needs_iv(0);
 
     # The null cipher does not require a key: it does nothing.
-    $self->_get_key_len(-fixed => 0);
+    $self->query_key_len(-fixed => 0);
 }
 
-sub _configure_rc5_cipher {
+sub configure_rc5_cipher {
     my $self = shift;
 
     my %cipher_funcs = (
@@ -1493,18 +1534,18 @@ sub _configure_rc5_cipher {
         CIPHER_MODE_CFB, 'EVP_rc5_32_12_16_cfb()',
         CIPHER_MODE_OFB, 'EVP_rc5_32_12_16_ofb()'
     );
-    my $cipher_mode = $self->_get_cipher_mode();
-    $self->_cipher_func($cipher_funcs{$cipher_mode});
-    $self->_cipher_needs_iv(1);
+    my $cipher_mode = $self->query_cipher_mode();
+    $self->cipher_func($cipher_funcs{$cipher_mode});
+    $self->cipher_needs_iv(1);
 
     # The RC5 cipher can use any key length from 0 to 255 bytes: see RFC 2040.
-    $self->_get_key_len(-min => 0, -max => 255, -default => 16);
+    $self->query_key_len(-min => 0, -max => 255, -default => 16);
 
     # The RC5 cipher also has a parameter called "number of rounds".
-    $self->_get_rc5_rounds();
+    $self->query_rc5_rounds();
 }
 
-sub _configure_cast5_cipher {
+sub configure_cast5_cipher {
     my $self = shift;
 
     my %cipher_funcs = (
@@ -1513,15 +1554,15 @@ sub _configure_cast5_cipher {
         CIPHER_MODE_CFB, 'EVP_cast5_cfb()',
         CIPHER_MODE_OFB, 'EVP_cast5_ofb()'
     );
-    my $cipher_mode = $self->_get_cipher_mode();
-    $self->_cipher_func($cipher_funcs{$cipher_mode});
-    $self->_cipher_needs_iv(1);
+    my $cipher_mode = $self->query_cipher_mode();
+    $self->cipher_func($cipher_funcs{$cipher_mode});
+    $self->cipher_needs_iv(1);
 
     # The CAST5 cipher can use any key length from 5 to 16 bytes: see RFC 2144.
-    $self->_get_key_len(-min => 5, -max => 16, -default => 16);
+    $self->query_key_len(-min => 5, -max => 16, -default => 16);
 }
 
-sub _configure_aes_cipher {
+sub configure_aes_cipher {
     my $self = shift;
 
     my %cipher_funcs = (
@@ -1530,39 +1571,40 @@ sub _configure_aes_cipher {
         CIPHER_MODE_CFB, 'EVP_aes_cfb()',
         CIPHER_MODE_OFB, 'EVP_aes_ofb()'
     );
-    my $cipher_mode = $self->_get_cipher_mode();
+    my $cipher_mode = $self->query_cipher_mode();
     my $cipher_func = $cipher_funcs{$cipher_mode};
 
     # The AES cipher can only use a 16, 24 or 32 byte key: see FIPS PUB 197.  Do
-    # not offer the choice of 24 or 32 byte keys for 0.9.7 because they don't
-    # seem to work.  Don't know why, and the problem doesn't seem to occur with
-    # debug OpenSSL builds, which doesn't make it very easy to find out why.
-    my $ver_num = $self->_ver_num();
+    # not offer the choice of 24 or 32 byte keys for 0.9.7 because they do not
+    # seem to work.  I do not know why, and the problem does not seem to occur
+    # with debug OpenSSL builds, which does not make it very easy to find out
+    # why.
+    my $ver_num = $self->ver_num();
     if ($ver_num == 90700) {
-        $self->_get_key_len(-fixed => 16);
+        $self->query_key_len(-fixed => 16);
     }
     else {
-        $self->_get_key_len(-valid => [16, 24, 32], -default => 32);
+        $self->query_key_len(-valid => [16, 24, 32], -default => 32);
     }
 
-    my $key_len_bits = $self->_key_len() * 8;
+    my $key_len_bits = $self->key_len() * 8;
     $cipher_func =~ s/_aes_/_aes_${key_len_bits}_/;
-    $self->_cipher_func($cipher_func);
-    $self->_cipher_needs_iv(1);
+    $self->cipher_func($cipher_func);
+    $self->cipher_needs_iv(1);
 }
 
-sub _write_cipher_config {
+sub write_cipher_config {
     my $self = shift;
 
     open my $cfg_fh, '>', CIPHER_CONFIG_FILENAME or
-        $self->_exit_with_error(130,
+        $self->exit_with_error(130,
             "Could not open configuration file '%s' for writing: %s",
             CIPHER_CONFIG_FILENAME, $!
         );
 
-    my $package    = $self->_package();
-    my $prefix_dir = $self->_prefix_dir();
-    my $ver_str    = $self->_ver_str();
+    my $package    = $self->package();
+    my $prefix_dir = $self->prefix_dir();
+    my $ver_str    = $self->ver_str();
 
     print $cfg_fh <<"EOT";
 /*============================================================================
@@ -1588,21 +1630,21 @@ sub _write_cipher_config {
 
 EOT
 
-    my $cipher_func = $self->_cipher_func();
+    my $cipher_func = $self->cipher_func();
     print $cfg_fh "#define FILTER_CRYPTO_CIPHER_FUNC  $cipher_func\n";
 
-    if ($self->_cipher_needs_iv()) {
+    if ($self->cipher_needs_iv()) {
         print $cfg_fh "#define FILTER_CRYPTO_NEED_IV      1\n";
     }
     else {
         print $cfg_fh "#define FILTER_CRYPTO_NEED_IV      0\n";
     }
 
-    my $key_len = $self->_key_len();
+    my $key_len = $self->key_len();
     print $cfg_fh "#define FILTER_CRYPTO_KEY_LEN      $key_len\n";
 
-    my $rc2_key_bits = $self->_rc2_key_bits();
-    my $rc5_rounds   = $self->_rc5_rounds();
+    my $rc2_key_bits = $self->rc2_key_bits();
+    my $rc5_rounds   = $self->rc5_rounds();
     if (defined $rc2_key_bits) {
         print $cfg_fh "#define FILTER_CRYPTO_RC2_KEY_BITS $rc2_key_bits\n";
     }
@@ -1616,11 +1658,11 @@ EOT
         $var = 'static const unsigned char *filter_crypto_key = NULL;';
     }
     else {
-        my $pswd = $self->_pswd();
+        my $pswd = $self->pswd();
         if (defined $pswd) {
             $def = '#define FILTER_CRYPTO_USING_PBE    1';
-            $pswd = $self->_format_chars($pswd);
-            my $ver_num = $self->_ver_num();
+            $pswd = $self->format_chars($pswd);
+            my $ver_num = $self->ver_num();
             if ($ver_num < 90400) {
                 $var = "static unsigned char filter_crypto_pswd[] = {\n" .
                        "$pswd\n" .
@@ -1634,8 +1676,8 @@ EOT
         }
         else {
             $def = '#define FILTER_CRYPTO_USING_PBE    0';
-            my $key = $self->_key();
-            $key = $self->_format_chars($key);
+            my $key = $self->key();
+            $key = $self->format_chars($key);
             $var = "static const unsigned char filter_crypto_key[] = {\n" .
                    "$key\n" .
                    "};";
@@ -1659,7 +1701,7 @@ EOT
     ), "\n\n";
 }
 
-sub _format_chars {
+sub format_chars {
     my $self = shift;
     my $chars = shift;
 
@@ -1673,13 +1715,13 @@ sub _format_chars {
     return $chars;
 }
 
-sub _copy_cipher_config {
+sub copy_cipher_config {
     my $self = shift;
     my $cipher_config_file = shift;
 
     if ($cipher_config_file ne CIPHER_CONFIG_FILENAME) {
         copy($cipher_config_file, CIPHER_CONFIG_FILENAME) or
-            $self->_exit_with_error(131,
+            $self->exit_with_error(131,
                 "Could not copy configuration file '%s' to '%s': %s",
                 $cipher_config_file, CIPHER_CONFIG_FILENAME, $!
             );

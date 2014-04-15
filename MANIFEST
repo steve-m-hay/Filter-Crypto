@@ -10,6 +10,7 @@ MANIFEST
 MANIFEST.SKIP
 META.yml
 README
+ppport.h
 CryptFile/CryptFile.xs
 CryptFile/Makefile.PL
 CryptFile/typemap
@@ -19,7 +20,7 @@ CryptFile/lib/Filter/Crypto/CryptFile.pm
 Decrypt/Decrypt.xs
 Decrypt/Makefile.PL
 Decrypt/lib/Filter/Crypto/Decrypt.pm
-inc/ExtUtils/AutoInstall.pm
+inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
 inc/Module/Install/Base.pm

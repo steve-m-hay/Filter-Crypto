@@ -7,7 +7,7 @@
 #   Test script to check POD.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -39,7 +39,7 @@ MAIN: {
         plan skip_all => 'Test::Pod 1.00 or higher required to test POD';
     }
     else {
-        all_pod_files_ok('Makefile.PL', all_pod_files());
+        all_pod_files_ok('Makefile.PL', Test::Pod::all_pod_files());
     }
 }
 

@@ -7,7 +7,7 @@
 #   been encrypted via Filter::Crypto::CryptFile.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -31,7 +31,7 @@ use XSLoader qw();
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.11';
+    $VERSION = '1.12';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -72,8 +72,8 @@ code filters work.
 
 =head2 Warnings and Error Messages
 
-The following diagnostic messages may be produced by this module.  They are
-classified as follows (a la L<perldiag>):
+This module may produce the following diagnostic messages.  They are classified
+as follows (a la L<perldiag>):
 
     (W) A warning (optional).
     (F) A fatal error (trappable).
@@ -145,24 +145,24 @@ message from the decryption code is also given.
 =item Found wrong MAGIC in decryption filter's SV: No valid mg_ptr
 
 (F) The MAGIC found in the SV used by the source code decryption filter to
-maintain state was not the correct MAGIC since it didn't contain a valid
+maintain state was not the correct MAGIC since it did not contain a valid
 C<mg_ptr> member.
 
 =item Found wrong MAGIC in decryption filter's SV: Wrong mg_ptr "signature"
 
 (F) The MAGIC found in the SV used by the source code decryption filter to
-maintain state was not the correct MAGIC since it didn't contain the correct
+maintain state was not the correct MAGIC since it did not contain the correct
 "signature" in its C<mg_ptr> member.
 
 =item No such package '%s'
 
 (F) This module's bootstrap function was called on the specified package, which
-doesn't exist.
+does not exist.
 
 =item Unknown crypto context mode '%d'
 
 (I) The crypto context structure used internally when performing decryption has
-been setup with a crypt mode that it does not recognize.
+been set-up with a crypt mode that it does not recognize.
 
 =back
 
@@ -199,7 +199,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -209,11 +209,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.11
+Version 1.12
 
 =head1 DATE
 
-03 Mar 2005
+14 Feb 2006
 
 =head1 HISTORY
 

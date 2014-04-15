@@ -7,7 +7,7 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -26,10 +26,10 @@ use inc::Module::Install;
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 {
     no warnings 'once';
-    our $YEAR = '2004-2005';
+    our $YEAR = '2004-2006';
 }
 
 #===============================================================================
@@ -38,11 +38,7 @@ our $VERSION = '1.03';
 
 MAIN: {
     name           ('Filter-Crypto');
-    abstract_from  ('lib/Filter/Crypto.pm');
-    version_from   ('lib/Filter/Crypto.pm');
-    author         ('Steve Hay <shay@cpan.org>');
-    license        ('perl');
-    perl_version   (5.006000);
+    all_from       ('lib/Filter/Crypto.pm');
     build_requires ('Test::More');
     features       ('crypt_file -e tempfile support' => [
         -default   => 0,
@@ -57,7 +53,6 @@ MAIN: {
         -default   => 0,
         recommends ('Test::Pod' => '1.00')
     ]);
-    include        ('ExtUtils::AutoInstall');
     clean_files    ('CipherConfig.h');
 
     my $obj = get_filter_crypto_private_obj();
@@ -108,7 +103,7 @@ MAIN: {
         dist => {
             DIST_CP  => 'cp',
             PREOP    => 'chmod -R a+w $(DISTVNAME) && ' .
-                        '\\cygwin\\bin\\find $(DISTVNAME) -type f ' .
+                        'C:\\cygwin\\bin\\find $(DISTVNAME) -type f ' .
                         '-exec dos2unix {} ; && ' .
                         'chmod -R a-x+rwX,go-w $(DISTVNAME) && ' .
                         'chmod a+x $(DISTVNAME)/script/*',
@@ -184,14 +179,13 @@ variable as usual.
 
 =head1 OPTIONS
 
-Any standard ExtUtils::AutoInstall command-line options may be specified.  These
-can also be given in the PERL_EXTUTILS_AUTOINSTALL environment variable as
-usual.
+Any standard Module::AutoInstall command-line options may be specified.  These
+can also be given in the PERL_AUTOINSTALL environment variable as usual.
 
 In addition, the build process for this distribution requires the answers to
 various questions regarding (amongst other things) the location of OpenSSL or
 SSLeay, which cipher algorithm to use, what password or key to use and whether
-or not to install a script.
+to install a script.
 
 The command-line options detailed below can be used to provide the answers to
 these questions.
@@ -229,9 +223,9 @@ file will be assumed, namely F</usr/local/ssl>, or F<C:\openssl> on "native"
 
 =item B<-c E<lt>fileE<gt>>, B<--cipher-config=E<lt>fileE<gt>>
 
-Specify the cipher configuration file to build with.  This should be a file
-written by a previous run of B<Makefile.PL> containing the answers to all the
-cipher configuration questions, which therefore will not be asked this time.
+Specify the cipher configuration file with which to build.  This should be a
+file written by a previous run of B<Makefile.PL> containing the answers to all
+the cipher configuration questions, which therefore will not be asked this time.
 Any cipher configuration options specified along with this option will be
 ignored.
 
@@ -245,7 +239,7 @@ Filter::Crypto::Decrypt module, as described under the B<--build> option above.
 
 Specify the name of the cipher algorithm to use.  The ciphers available will be
 a subset of the following (depending on which version of OpenSSL or SSLeay you
-are using and whether or not any of them were disabled when it was built):
+are using and whether any of them were disabled when it was built):
 
     DES      (A block cipher with fixed key length)
     DES_EDE  (A block cipher with fixed key length)
@@ -371,7 +365,7 @@ above.  Valid key lengths are as follows:
     CAST5    - From 5 bytes up to 16 bytes
     AES      - Either 16, 24 or 32 bytes
 
-The default key length is 16 bytes for each cipher except AES which defaults to
+The default key length is 16 bytes for each cipher except AES, which defaults to
 32 bytes, unless a key is specified using the B<--key> option above in which
 case the key length is inferred from that.
 
@@ -403,12 +397,12 @@ The default value is 128 bits.
 Note that, as for the B<--key-len> option above, this option can only be used to
 change the default value if you have OpenSSL 0.9.6 or later.
 
-This option is silently ignored if the RC2 cipher ws not chosen.
+This option is silently ignored if the RC2 cipher was not chosen.
 
 =item B<--rc5-rounds=E<lt>numE<gt>>
 
 Specify the number of rounds if the RC5 cipher was chosen above.  Valid values
-are either 8, 12 or 16.
+are 8, 12 and 16.
 
 The default value is 12 rounds.
 
@@ -430,7 +424,7 @@ installing the script).
 
 Specify which component ("CryptFile", "Decrypt" or "both") to build.  This
 determines which of the two C extension modules (Filter::Crypto::CryptFile,
-Filter::Crypto::Decrypt or both) gets built.
+Filter::Crypto::Decrypt or both) is built.
 
 By default, both components are built.
 
@@ -442,11 +436,11 @@ so that they can be run but not easily decrypted.  (Well, not I<very> easily,
 anyway.  Please see the L<Filter::Crypto/"WARNING"> regarding the level of
 security provided for your source code by this software.)
 
-If you are going to setup two such Perl installations then clearly you will need
-to ensure that the components of this distribution installed into each one were
-built with the same cipher configuration options, otherwise the files encrypted
-by one cannot be decrypted by the other.  The B<--cipher-config> option below
-may assist in this.
+If you are going to set-up two such Perl installations then clearly you will
+need to ensure that the components of this distribution installed into each one
+were built with the same cipher configuration options, otherwise the files
+encrypted by one cannot be decrypted by the other.  The B<--cipher-config>
+option below may assist in this.
 
 =item B<-u>, B<--unsafe-mode>
 
@@ -454,8 +448,8 @@ Specify that the "Decrypt" component should be built in an "unsafe" mode in
 which the Perl compiler backend modules are allowed to be loaded.
 
 By default, the "Decrypt" component contains a check to try to disallow running
-under the Perl compiler backend which works by simply checking whether or not
-any of the relevant modules have been loaded.
+under the Perl compiler backend, which works by simply checking whether any of
+the relevant modules have been loaded.
 
 Unfortunately, that logic can be unhelpful in certain cases where those modules
 are quite legitimately loaded.  One example is when code is running in a
@@ -517,8 +511,8 @@ may be stopped at any point in the command-line by inserting a double dash.
 
 =head2 Warnings and Error Messages
 
-The following diagnostic messages may be produced by this script.  They are
-classified as follows (a la L<perldiag>):
+This script may produce the following diagnostic messages.  They are classified
+as follows (a la L<perldiag>):
 
     (W) A warning (optional).
     (F) A fatal error (trappable).
@@ -578,15 +572,15 @@ standard C library C<errno> variable is also given.
 =item Could not open random bytes output file '%s' for reading: %s
 
 (F) The specified file containing the random bytes generated by the OpenSSL
-binary executable for use as the password or key could not be opened to read the
-bytes from.  The system error message corresponding to the standard C library
+binary executable for use as the password or key could not be opened for
+reading.  The system error message corresponding to the standard C library
 C<errno> variable is also given.
 
 =item Could not open version number header file '%s' for reading: %s
 
-(F) The specified OpenSSL or SSLeay header file could not be opened to read the
-package's version number from.  The system error message corresponding to the
-standard C library C<errno> variable is also given.
+(F) The specified OpenSSL or SSLeay header file containing the package's version
+number could not be opened for reading.  The system error message corresponding
+to the standard C library C<errno> variable is also given.
 
 =item Could not read random bytes from output file '%s': %s
 
@@ -613,7 +607,7 @@ default response that was not valid itself.
 
 =item Invalid 'install_script' option value '%s'
 
-(I) The method called internally to determine whether or not to install the
+(I) The method called internally to determine whether to install the
 B<crypt_file> script was passed an option value that it did not recognize.
 
 =item Invalid key '%s'
@@ -672,6 +666,13 @@ the prefix directory.
 (F) The OpenSSL or SSLeay include directory could not be located.  Ensure that
 there is a full installation of OpenSSL or SSLeay in the location specified by
 the prefix directory.
+
+=item No prefix directory found for OpenSSL or SSLeay
+
+(F) The OpenSSL or SSLeay prefix directory could not be located.  This error is
+only produced when running non-interactively.  (In interactive mode the user
+will be prompted for the prefix directory if it was not given by the
+B<--prefix-dir> option.)
 
 =item No such cipher mode '%s'
 
@@ -738,6 +739,21 @@ have ExtUtils::MakeMaker version 5.48_01 or later, without which these options
 have no effect.  The user will therefore be prompted for responses as usual
 instead.
 
+=item Warning: Ignoring Cygwin OpenSSL/SSLeay binary '%s' on Win32
+
+(W) The main OpenSSL or SSLeay binary executable found in the PATH when trying
+to locate the OpenSSL or SSLeay to use turned out to be a Cygwin binary, which
+is of no use with the Win32 perl that is being used and will therefore be
+ignored.
+
+=item Warning: Wrong compiler version ('%s'; Perl was built with version '%s'):
+      please see INSTALL file for details
+
+(W) A different version of the compiler that was used to build Perl is being
+used to build this module.  This is not recommended since it may cause breakages
+with some combinations of compilers.  If possible, please use the same compiler
+to build this module as was used to build Perl itself.
+
 =item Wrong compiler version ('%s'; Perl was built with version '%s'): please
       see INSTALL file for details
 
@@ -789,7 +805,7 @@ This will use the DES cipher instead of the default AES (or DES_EDE3) cipher,
 but is otherwise a default configuration with no questions asked.
 
 Note that this style of accepting all default values except for specifically
-overriden ones applies equally well to the prefix directory option, so creating
+overridden ones applies equally well to the prefix directory option, so creating
 a default configuration with a non-standard OpenSSL installation location can be
 easily handled, e.g.
 
@@ -810,15 +826,15 @@ B<-d> option as shown in the previous examples too.
 
 =head1 ENVIRONMENT
 
-Any standard ExtUtils::AutoInstall and ExtUtils::MakeMaker environment variables
+Any standard Module::AutoInstall and ExtUtils::MakeMaker environment variables
 may be used, namely:
 
 =over 4
 
-=item PERL_EXTUTILS_AUTOINSTALL
+=item PERL_AUTOINSTALL
 
-Specify ExtUtils::AutoInstall command-line options to be postpended to the list
-of command-line options before its option processing takes place.
+Specify Module::AutoInstall command-line options to be postpended to the list of
+command-line options before its option processing takes place.
 
 =item PERL_MM_OPT
 
@@ -830,12 +846,12 @@ value is not interpreted in the same way as the Bourne shell would interpret the
 corresponding command-line.  Instead, it is simply split on whitespace before
 being processed.
 
-Also bear in mind the caveat regarding the use of ExtUtils::MakeMaker command-
+Also, bear in mind the caveat regarding the use of ExtUtils::MakeMaker command-
 line arguments under L<"ARGUMENTS"> above.
 
 =item PERL_MM_USE_DEFAULT
 
-If set to a true value, then the default value (indicated under L<"OPTIONS">
+If set to a true value then the default value (indicated under L<"OPTIONS">
 above) of each option that is not specified on the command-line will be used
 instead of prompting the user for a response.
 
@@ -848,9 +864,9 @@ to have any effect.
 
 The F<INSTALL> file;
 
-L<ExtUtils::AutoInstall>;
+L<ExtUtils::MakeMaker>;
 
-L<ExtUtils::MakeMaker>.
+L<Module::AutoInstall>.
 
 =head1 ACKNOWLEDGEMENTS
 
@@ -875,7 +891,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -885,11 +901,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.03
+Version 1.04
 
 =head1 DATE
 
-02 Sep 2005
+14 Feb 2006
 
 =head1 HISTORY
 

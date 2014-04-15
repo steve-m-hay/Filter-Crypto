@@ -8,7 +8,7 @@
 #   use in creating PAR archives in which the Perl files are encrypted.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -23,11 +23,11 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Carp;
+use Carp qw(carp croak);
 use Fcntl qw(:seek);
 use File::Temp qw(tempfile);
 use Filter::Crypto::CryptFile qw(:DEFAULT $ErrStr);
-use PAR::Filter;
+use PAR::Filter qw();
 
 #===============================================================================
 # CLASS INITIALIZATION
@@ -38,7 +38,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(PAR::Filter);
 
-    $VERSION = '1.01';
+    $VERSION = '1.02';
 }
 
 #===============================================================================
@@ -58,7 +58,7 @@ sub apply {
     # Write the source code to be encrypted to the temporary filehandle.
     print $fh $$ref;
 
-    # Rewind the filehandle so that the encryption knows where to start from.
+    # Rewind the filehandle so that the encryption knows where to begin.
     seek $fh, 0, SEEK_SET or
         croak("Can't rewind temporary filehandle before encryption: $!");
 
@@ -130,7 +130,7 @@ Of course, you must not include the Filter::Crypto::CryptFile module as well,
 otherwise people to whom you distribute your PAR archive will have the means to
 easily decrypt the encrypted Perl script within it!
 
-Also note that the script is encrypted by reading its entire contents into
+Also, note that the script is encrypted by reading its entire contents into
 memory, encrypting it in memory, and then writing it out to disk.  This should
 be safe for most purposes given that Perl scripts are typically not very large,
 but other methods should be considered instead if this is likely to cause
@@ -148,7 +148,7 @@ the code referred to by $ref with the encrypted code.  Thus, the code in $$ref
 gets encrypted "in-place".
 
 Returns 1 on success, or C<croak()>'s on failure (since the usual caller,
-PAR::Filter::apply(), doesn't bother checking the return value (as of
+PAR::Filter::apply(), does not bother checking the return value (as of
 PAR::Filter version 0.02, at least)).
 
 =back
@@ -157,8 +157,8 @@ PAR::Filter version 0.02, at least)).
 
 =head2 Warnings and Error Messages
 
-The following diagnostic messages may be produced by this module.  They are
-classified as follows (a la L<perldiag>):
+This module may produce the following diagnostic messages.  They are classified
+as follows (a la L<perldiag>):
 
     (W) A warning (optional).
     (F) A fatal error (trappable).
@@ -217,7 +217,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -227,11 +227,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.01
+Version 1.02
 
 =head1 DATE
 
-03 Mar 2005
+14 Feb 2006
 
 =head1 HISTORY
 

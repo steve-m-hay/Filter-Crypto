@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::CryptFile module.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -35,8 +35,8 @@ typedef enum {
 } FILTER_CRYPTO_MODE_EX;
 
 /* The crypt modes are exported to Perl with different names.  We need #define
- * definitions of the names to be exported anyway otherwise the #ifdef tests
- * done in constant() don't work.  Make the definitions *before* we pull in
+ * definitions of the names to be exported anyway, otherwise the #ifdef tests
+ * done in constant() do not work.  Make the definitions *before* we pull in
  * "const-c.inc" below. */
 #define CRYPT_MODE_AUTO      FILTER_CRYPTO_MODE_EX_AUTO
 #define CRYPT_MODE_DECRYPT   FILTER_CRYPTO_MODE_EX_DECRYPT
@@ -46,8 +46,8 @@ typedef enum {
 
 #include "const-c.inc"
 
-/* Prior to Perl 5.8.7 PerlLIO_chsize() was defined as chsize() even on systems
- * that don't have chsize().  Therefore, in those situations we define chsize()
+/* Before Perl 5.8.7 PerlLIO_chsize() was defined as chsize() even on systems
+ * that do not have chsize().  Therefore, in those situations we define chsize()
  * to be ftruncate() if that's available instead, or else Perl_my_chsize() if
  * F_FREESP is defined (see the my_chsize() and pp_truncate() functions in Perl
  * for details).  Failing that we just have to croak() via a macro with a
@@ -64,7 +64,7 @@ typedef enum {
 #endif
 
 /* On Win32 PerlLIO_chsize() is defined as win32_chsize(), but unfortunately
- * that was mistakenly not exported from the Perl library prior to Perl 5.8.5.
+ * that was mistakenly not exported from the Perl library before Perl 5.8.5.
  * Therefore, in that situation we have to fall back on the standard Microsoft C
  * library function chsize(), referred to by its Microsoft-specific name
  * _chsize() since chsize() is also defined as win32_chsize(). */
@@ -109,8 +109,8 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
     bool have_in_text = FALSE;
     FILTER_CRYPTO_CCTX *ctx;
     FILTER_CRYPTO_MODE crypt_mode;
-    SV *in_sv  = sv_2mortal(NEWSV(0, BUFSIZ));
-    SV *out_sv = sv_2mortal(NEWSV(0, BUFSIZ));
+    SV *in_sv  = sv_2mortal(newSV(BUFSIZ));
+    SV *out_sv = sv_2mortal(newSV(BUFSIZ));
     SV *buf_sv;
     int in_len;
     int buf_len;
@@ -124,14 +124,14 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
 
     /* If there is no output filehandle supplied then we are in "update mode",
      * and need to create a temporary output buffer. */
-    if (out_fh == NULL) {
+    if (out_fh == Nullfp) {
         update_mode = TRUE;
-        buf_sv = sv_2mortal(NEWSV(0, BUFSIZ));
+        buf_sv = sv_2mortal(newSV(BUFSIZ));
         SvPOK_only(buf_sv);
     }
 
     /* Read as many bytes from the input filehandle as the header line would be
-     * if the file were already encrypted.  Compare what we've read with the
+     * if the file were already encrypted.  Compare what we have read with the
      * header line itself: If they match then the input is probably already
      * encrypted. */
     if ((in_len = PerlIO_read(in_fh, in_text, use_len)) < 0) {
@@ -245,7 +245,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
             }
 
             /* Remember that we have input data in in_text that still needs to
-             * be encrypted or decrypted and output. */
+             * be encrypted and output. */
             have_in_text = TRUE;
 
             break;
@@ -275,9 +275,9 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
 
             have_in_text = FALSE;
 
-            /* We've read a new block of data from the input filehandle into the
-             * input SV, so set the input length in the input SV and process it
-             * into the output SV. */
+            /* We have read a new block of data from the input filehandle into
+             * the input SV, so set the input length in the input SV and process
+             * it into the output SV. */
             FilterCrypto_SvSetCUR(in_sv, in_len);
 
             if (!FilterCrypto_CryptoUpdate(aTHX_ ctx, in_sv, out_sv)) {
@@ -295,7 +295,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
             }
         }
         else if (in_len == 0) {
-            /* We didn't read any data from the input stream, and have now
+            /* We did not read any data from the input stream, and have now
              * reached EOF, so break out of the "for" loop and finalize the
              * crypto context. */
 #ifdef FILTER_CRYPTO_DEBUG_MODE
@@ -431,7 +431,7 @@ _crypt_fh(fh, crypt_mode_ex);
 
     PPCODE:
     {
-        if (FilterCrypto_CryptFh(aTHX_ fh, NULL, crypt_mode_ex))
+        if (FilterCrypto_CryptFh(aTHX_ fh, Nullfp, crypt_mode_ex))
             XSRETURN_YES;
         else
             XSRETURN_EMPTY;

@@ -7,7 +7,7 @@
 #   which they can be run via Filter::Crypto::Decrypt.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -22,7 +22,7 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Carp;
+use Carp qw(carp croak);
 use Exporter qw();
 use Fcntl qw(:DEFAULT :flock);
 use UNIVERSAL qw(isa);
@@ -55,7 +55,7 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '1.12';
+    $VERSION = '1.13';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -373,7 +373,7 @@ rarely, if ever, sufficiently large to cause any trouble in this regard.
 
 Note that the filehandle being written to when encrypting and the filehandle
 being read from when decrypting I<must> be opened in "binary" mode on those
-platforms where it makes a difference (notably Win32) otherwise the encrypted
+platforms where it makes a difference (notably Win32), otherwise the encrypted
 "binary" data being written or read may become corrupted by CR-LF translations.
 It will also be necessary to open the other filehandle (which the Perl source
 code itself is being read from or written to) in "binary" mode too if the Perl
@@ -439,7 +439,7 @@ the input data already begins with the statement
 
     use Filter::Crypto::Decrypt;
 
-Thus, unencrypted data will get encrypted, while encrypted data will not get
+Thus, unencrypted data will be encrypted, while encrypted data will not be
 encrypted a second time.
 
 =item C<CRYPT_MODE_DECRYPTED>
@@ -449,7 +449,7 @@ the input data does not begin with the statement
 
     use Filter::Crypto::Decrypt;
 
-Thus, encrypted data will get decrypted, while unencrypted data will not get
+Thus, encrypted data will be decrypted, while unencrypted data will not be
 decrypted a second time.
 
 =back
@@ -480,8 +480,8 @@ required: in these cases a message to this effect will be set in $ErrStr.
 
 =head2 Warnings and Error Messages
 
-The following diagnostic messages may be produced by this module.  They are
-classified as follows (a la L<perldiag>):
+This module may produce the following diagnostic messages.  They are classified
+as follows (a la L<perldiag>):
 
     (W) A warning (optional).
     (F) A fatal error (trappable).
@@ -553,20 +553,20 @@ Perhaps you are attempting to decrypt data when you meant to be encrypting it?
 
 =item %s is not a filehandle or a file name
 
-(F) The first parmater for C<crypt_file()> must be either a valid (open)
+(F) The first parameter for C<crypt_file()> must be either a valid (open)
 filehandle or a file name, but the argument passed was neither of these things.
 
 =item %s is not a valid crypt mode
 
-(F) The third parmater for C<crypt_file()> must be either C<undef> or the null
+(F) The third parameter for C<crypt_file()> must be either C<undef> or the null
 string (meaning determine the crypt mode automatically), or a valid crypt mode
 (i.e. one of the C<CRYPT_MODE_*> flags), but the argument passed was neither of
 these things.
 
 =item %s is not a valid crypt mode or a filehandle or a file name
 
-(F) The second parmater for C<crypt_file()> must be one of: C<undef> or the null
-string (meaning determine the crypt mode automatically), a valid crypt mode
+(F) The second parameter for C<crypt_file()> must be one of: C<undef> or the
+null string (meaning determine the crypt mode automatically), a valid crypt mode
 (i.e. one of the C<CRYPT_MODE_*> flags), or a valid (open) filehandle or a file
 name, but the argument passed was none of these things.
 
@@ -578,22 +578,22 @@ Filter::Crypto::CryptFile module, but that constant is unknown to this module.
 =item No such package '%s'
 
 (F) This module's bootstrap function was called on the specified package, which
-doesn't exist.
+does not exist.
 
 =item Random IV may not be cryptographically strong
 
 (W) libcrypto's random number generator failed to generate cryptographically
 strong pseudo-random bytes for use as the initialization vector (IV) in the
-encryption.  A weaker sequence of pseudo-random bytes was used instead which is
+encryption.  A weaker sequence of pseudo-random bytes was used instead, which is
 not necessarily unpredictable and may not be suitable for this purpose.
 
 =item Random salt may not be cryptographically strong
 
 (W) libcrypto's random number generator failed to generate cryptographically
 strong pseudo-random bytes for use as the salt when performing the key
-derivation prior to encryption.  A weaker sequence of pseudo-random bytes was
-used instead which is not necessarily unpredictable and may not be suitable for
-this purpose.
+derivation before encryption.  A weaker sequence of pseudo-random bytes was used
+instead, which is not necessarily unpredictable and may not be suitable for this
+purpose.
 
 =item Unexpected error in AUTOLOAD(): constant() is not defined
 
@@ -617,7 +617,7 @@ decryption.
 =item Unknown crypto context mode '%d'
 
 (I) The crypto context structure used internally when performing encryption or
-decryption has been setup with a crypt mode that it does not recognize.
+decryption has been set-up with a crypt mode that it does not recognize.
 
 =item Your vendor has not defined Filter::Crypto::CryptFile macro %s
 
@@ -685,9 +685,9 @@ The last error message from libcrypto is also given.
 
 The cipher context structure used to perform the encryption or decryption could
 not be initialized in the specified crypt mode.  This is the first stage of the
-cipher context structure initialization, performed prior to setting the key
-length and modifying other cipher parameters.  The last error message from
-libcrypto is also given.
+cipher context structure initialization, performed before setting the key length
+and modifying other cipher parameters.  The last error message from libcrypto is
+also given.
 
 =item Can't initialize cipher context in crypt mode '%d' using %d-byte key: %s
 
@@ -709,9 +709,9 @@ corresponding to the standard C library C<errno> variable is also given.
 
 =item Can't open input file '%s' for reading: %s
 
-The specified file could not be opened by C<crypt_file()> for reading data from.
-The system error message corresponding to the standard C library C<errno>
-variable is also given.
+The specified file from which to read data could not be opened for reading by
+C<crypt_file()>.  The system error message corresponding to the standard C
+library C<errno> variable is also given.
 
 =item Can't open output file '%s' for writing: %s
 
@@ -891,7 +891,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -901,11 +901,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.12
+Version 1.13
 
 =head1 DATE
 
-01 Jun 2005
+14 Feb 2006
 
 =head1 HISTORY
 

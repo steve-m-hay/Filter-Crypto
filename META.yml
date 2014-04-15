@@ -1,19 +1,19 @@
-name: Filter-Crypto
-version: 1.16
 abstract: Create runnable Perl files encrypted with OpenSSL libcrypto
 author: Steve Hay <shay@cpan.org>
-license: perl
-distribution_type: module
 build_requires:
   Test::More: 0
-requires:
-  perl: 5.6.0
-recommends:
-  File::Temp: 0
-  PAR::Filter: 0
-  File::Temp: 0
-  Test::Pod: 1.00
+distribution_type: module
+generated_by: Module::Install version 0.56
+license: perl
+name: Filter-Crypto
 no_index:
   directory:
     - inc
-generated_by: Module::Install version 0.37
+    - t
+recommends:
+  File::Temp: 0
+  PAR::Filter: 0
+  Test::Pod: 1.00
+requires:
+  perl: 5.6.0
+version: 1.17

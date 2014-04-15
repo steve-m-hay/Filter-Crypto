@@ -1,9 +1,70 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.16
+                          Filter::Crypto, Version 1.17
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.17 14 Feb 2006
+
+    - Fixed two off-by-one errors in the call to ninstr() in the
+      Filter::Crypto::Decrypt code as per perl change #26509.
+
+      This code was only working due to a bug in how ninstr() treated empty
+      search strings.  However, that bug was fixed in perl change #26510 so the
+      call to ninstr() must be fixed for Perls that contain that change.
+
+    - Changed the handling of the salt and the initialization vector in the
+      encryption/decryption code so that it does not rely on perl allocating
+      exactly the amount of memory requested.
+
+      This was an unsafe assumption to have made, and, in fact, as of perl
+      change #24665, is no longer true.  Perl has always been at liberty to
+      allocate more memory than was requested if it thinks that would be a good
+      idea, and that is exactly what it now does in order to reduce the number
+      of realloc()'s that might be required.
+
+    - Changed all Newz() and NEWSV() calls to the cleaner Newxz() and newSV()
+      respectively, as per perl changes #25101 and #26901, and included ppport.h
+      from version 3.08 of the Devel::PPPort distribution to make this possible.
+
+    - Simplified the definition and initialization of the magic virtual table
+      used by the decryption filter in the light of perl change #26735.
+
+    - Changed various "use MODULE;" lines to be explicit about what is being
+      imported, and in particular to not import things that are not required.
+
+    - Changed the last test in t/03_script.t to not use -T in the PERLDOC
+      environment variable since it is not supported before Pod-Perldoc-3.04
+      (first shipped in Perl 5.8.1).
+
+    - Fixed a typo in t/04_par.t in which the wrong number of tests were being
+      skipped in the case where Archive::Zip is unavailable.
+
+    - Changed t/06_pod.t to use the fully-qualified name of all_pod_files()
+      since it was (erroneously) not exported before Test-Pod-1.18.
+
+    - Improved OpenSSL/SSLeay detection on Win32 so that if a Cygwin version is
+      found then it is ignored since it will not be of any use.
+
+    - Updated Module::Install::PRIVATE to version 1.04 for Makefile.PL
+      improvements:
+
+      * Fixed the handling of user-input relative directory paths so that they
+        are converted to absolute paths before use in case the Makefile.PL has
+        changed to another directory in the meantime.
+
+      * Renamed lots of methods for a better naming convention.
+
+    - Updated Module::Install components from version 0.56 of that distribution
+      (together with one minor change, commented in the code, in order to work
+      with the new proxy constant subroutines in Perl 5.9.3 and later).
+      This includes Module::AutoInstall, which supersedes ExtUtils::AutoInstall.
+      Changed Makefile.PL appropriately to take advantage of the new features.
+
+    - Corrected spelling mistakes and improved the grammar in some of the
+      documentation.
 _________________
 
 v1.16 06 Sep 2005
@@ -20,7 +81,7 @@ v1.15 02 Sep 2005
 
     - Improved crypto library detection so that the library is now correctly
       located on 64-bit systems that have both $PREFIX/lib and $PREFIX/lib64.
-      (Fixes cpan #14397.  Thanks to <COSIMO@cpan.org> for assistance with
+      (Fixes [cpan #14397].  Thanks to <COSIMO@cpan.org> for assistance with
       this.)
 
       Also improved the binary executable detection along the same lines.
@@ -33,15 +94,15 @@ v1.15 02 Sep 2005
 
       * Relaxed the compiler version checking so that only the major version
         numbers have to match (and also the minor version numbers for VC++ 7 and
-        later which use CRT DLL's named msvcr70.dll, msvcr71.dll, etc);
+        later, which use CRT DLL's named msvcr70.dll, msvcr71.dll, etc);
         
         (Thanks to Sisyphus <sisyphus1@optusnet.com.au> for drawing attention to
         this problem via the PAR mailing list (par@perl.org).)
 
-      * Fixed the parsing of bcc32's output as per perl #24855.
+      * Fixed the parsing of bcc32's output as per perl change #24855.
 
     - Dropped the use of I<> for Perl variables in POD, in line with changes
-      made (some time ago) to the perlpod manpage (perl #12542).
+      made (some time ago) to the perlpod manpage (perl change #12542).
 
     - Corrected spelling mistake: INITIALISATION should be INITIALIZATION.
 
@@ -58,15 +119,15 @@ v1.14 01 Jun 2005
     - Added a --debug-mode option to Makefile.PL to specify that the modules
       should be built in "debug" mode.
 
-    - Perl 5.8.7 contains a fix for PerlLIO_chsize() for those systems that
-      don't have chsize() so there is no need for the workaround in
+    - Perl 5.8.7 contains a fix for PerlLIO_chsize() for those systems that do
+      not have chsize() so there is no need for the workaround in
       CryptFile/CryptFile.xs from Perl 5.8.7 onwards.
 
     - Updated Module::Install::PRIVATE to version 1.02 for Makefile.PL
       improvements:
 
       * ExtUtils::AutoInstall command-line options are now better supported,
-        fixing problems with custom option handling that didn't recognize them;
+        fixing problems with custom option handling that did not recognize them;
 
       * Errors now croak() rather than die() so that the error messages look a
         little more friendly;
@@ -82,7 +143,7 @@ _________________
 
 v1.13 14 Mar 2005
 
-    - The previous fix to t/03_script.t didn't do the job for the original bug
+    - The previous fix to t/03_script.t did not do the job for the original bug
       reporter, so try a different approach: rather than trying to cope with the
       various format outputs produced by "perldoc" on different OS's, use the
       PERLDOC environment variable to ask for plain text output (-t).  We can
@@ -109,7 +170,7 @@ v1.11 03 Mar 2005
 
     - Fixed crypt_file so that it no longer tries to flock() STDIN or STDOUT
       when they are some other program's STDOUT or STDIN respectively because
-      this doesn't work on Win32 (at least).  All of the following commands
+      this does not work on Win32 (at least).  All of the following commands
       should now work:
 
           crypt_file                    STDIN from keyboard
@@ -127,7 +188,7 @@ v1.11 03 Mar 2005
 
           qq["$^X" -e print(1) | "$^X" -ne print];
 
-      (used in the new tests) don't work under Perl 5.6.0 on Win32 (at least)
+      (used in the new tests) do not work under Perl 5.6.0 on Win32 (at least)
       with the double-quotes included.  (These tests will therefore still fail
       in cases where $^X does contain a space, but that's not an ideal
       configuration anyway.)
@@ -138,7 +199,7 @@ v1.11 03 Mar 2005
       * Added code to try to check that on Win32 the same compiler is being used
         to build these modules as was used to build Perl itself to avoid
         problems with binaries built by different compiler versions loading
-        different C runtime DLL's.
+        different C run-time DLL's.
 
     - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
       building these modules.
@@ -150,16 +211,16 @@ _________________
 
 v1.10 12 Dec 2004
 
-    - Fix for running encrypted scripts in a mod_perl Apache::Registry setup.
+    - Fix for running encrypted scripts in a mod_perl Apache::Registry set-up.
 
-      In such a setup the END subroutine in the CryptoCommon-xs.inc file, which
+      In such a set-up the END subroutine in the CryptoCommon-xs.inc file, which
       free()'s memory allocated in the BOOT: XSUB, gets runs at the end of each
       request (unless the script being filtered was preloaded by the parent
-      server process) which caused multiple free()'s of memory that was only
+      server process), which caused multiple free()'s of memory that was only
       allocated once (at boot time, in the BOOT: XSUB).
 
       Instead, we now create a dummy object, blessed into the package concerned,
-      which persists throughout the process' lifetime.  When the process exits,
+      that persists throughout the process' lifetime.  When the process exits,
       the object's DESTROY method gets invoked, which is where we now do our
       cleanup.
 

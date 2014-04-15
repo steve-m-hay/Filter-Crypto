@@ -6,7 +6,7 @@
 #   Common XS code for Filter::Crypto modules.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -24,7 +24,7 @@ BOOT:
     SV *rv;
     HV *stash;
 
-    /* We need to have an indented line here otherwise xsubpp gets confused. */
+    /* We need to have an indented line here, otherwise xsubpp gets confused. */
 #ifdef FILTER_CRYPTO_DEBUG_MODE
     if (items > 1)
         warn("Initializing %s (Version %.2"NVff")\n", package, SvNV(ST(1)));
@@ -34,9 +34,9 @@ BOOT:
 
     /* Allocate and initialize the relevant Perl module's $ErrStr variable name.
      * Note that the value returned by the sizeof() operator includes the NUL
-     * terminator, which we must also include when calling Newz(). */
-    Newz(0, filter_crypto_errstr_var,
-         package_len + sizeof(FILTER_CRYPTO_ERRSTR_VARIABLE), char);
+     * terminator, which we must also include when calling Newxz(). */
+    Newxz(filter_crypto_errstr_var,
+          package_len + sizeof(FILTER_CRYPTO_ERRSTR_VARIABLE), char);
     strcpy(filter_crypto_errstr_var, package);
     strcat(filter_crypto_errstr_var, FILTER_CRYPTO_ERRSTR_VARIABLE);
 
@@ -46,14 +46,14 @@ BOOT:
     /* Create an object blessed into our invocant class so that we can run some
      * cleanup code when the process exits, namely via the object's destructor.
      * Normally we would use an END subroutine instead of a DESTROY method, but
-     * in a mod_perl Apache::Registry setup END subroutines are run at the end
+     * in a mod_perl Apache::Registry set-up END subroutines are run at the end
      * of each request (unless the script being filtered was preloaded by
-     * the parent server process) which would cause multiple free()'s of memory
-     * that was only allocated once (at boot time, by the Newz() above).
+     * the parent server process), which would cause multiple free()'s of memory
+     * that was only allocated once (at boot time, by the Newxz() above).
      * Thanks to Joost on PerlMonks for this idea. */
-    sv = NEWSV(0, 0);
+    sv = newSV(0);
     rv = newRV_noinc(sv);
-    if ((stash = gv_stashpvn(package, package_len, 0)) == NULL)
+    if ((stash = gv_stashpvn(package, package_len, 0)) == Nullhv)
         croak("No such package '%s'", package);
     sv_bless(rv, stash);
 }
@@ -73,7 +73,7 @@ DESTROY(self)
 
         /* Free the current thread's error queue and all previously loaded error
          * strings.  ERR_remove_state() was introduced in SSLeay 0.6.1, but
-         * seems to crash prior to 0.6.4. */
+         * seems to crash before 0.6.4. */
 #if FILTER_CRYPTO_OPENSSL_VERSION >= 60400
         ERR_remove_state(0);
 #endif

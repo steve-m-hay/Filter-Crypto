@@ -7,7 +7,7 @@
 #   Test script to check crypt_file() function (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -22,17 +22,17 @@ use warnings;
 
 use Cwd qw(abs_path);
 use File::Spec::Functions qw(canonpath catdir catfile updir);
-use FindBin;
+use FindBin qw($Bin);
 use Test::More;
 
 #===============================================================================
 # INITIALIZATION
 #===============================================================================
 
-my $have_decrypt;
+my($have_decrypt);
 
 BEGIN {
-    my $top_dir = canonpath(abs_path(catdir($FindBin::Bin, updir())));
+    my $top_dir = canonpath(abs_path(catdir($Bin, updir())));
     my $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     if (-f catfile($lib_dir, 'CryptFile.pm')) {
@@ -63,7 +63,7 @@ MAIN: {
     my $perl;
     my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
     if ($] < 5.007003) {
-        # Prior to 5.7.3, -Mblib emitted a "Using ..." message on STDERR which
+        # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which
         # looks ugly when we spawn a child perl process.
         $perl = qq[$perl_exe -Iblib/arch -Iblib/lib];
     }

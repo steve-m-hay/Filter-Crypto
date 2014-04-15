@@ -7,7 +7,7 @@
 #   Test script to check PAR::Filter::Crypto module (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -20,20 +20,20 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Config;
+use Config qw(%Config);
 use Cwd qw(abs_path);
 use File::Spec::Functions qw(canonpath catdir catfile updir);
-use FindBin;
+use FindBin qw($Bin);
 use Test::More;
 
 #===============================================================================
 # INITIALIZATION
 #===============================================================================
 
-my $pp;
+my($pp);
 
 BEGIN {
-    my $top_dir = canonpath(abs_path(catdir($FindBin::Bin, updir())));
+    my $top_dir = canonpath(abs_path(catdir($Bin, updir())));
     my $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     unless (-f catfile($lib_dir, 'CryptFile.pm')) {
@@ -83,7 +83,7 @@ MAIN: {
     my $perl;
     my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
     if ($] < 5.007003) {
-        # Prior to 5.7.3, -Mblib emitted a "Using ..." message on STDERR which
+        # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which
         # looks ugly when we spawn a child perl process.
         $perl = qq[$perl_exe -Iblib/arch -Iblib/lib];
     }
@@ -107,7 +107,7 @@ MAIN: {
     cmp_ok(-s $ofile, '>', 0, '... and created a non-zero size PAR archive');
 
     SKIP: {
-        skip 'Archive::Zip required to inspect PAR archive', 2
+        skip 'Archive::Zip required to inspect PAR archive', 3
             unless $have_archive_zip;
 
         my $zip = Archive::Zip->new() or die "Can't create new Archive::Zip\n";

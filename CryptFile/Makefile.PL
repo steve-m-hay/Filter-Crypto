@@ -7,7 +7,7 @@
 #   Makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004, 2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -20,7 +20,8 @@ use 5.006000;
 use strict;
 use warnings;
 
-use ExtUtils::MakeMaker;
+use ExtUtils::MakeMaker qw(WriteMakefile);
+use File::Copy qw(copy);
 use File::Spec::Functions qw(catfile updir);
 
 #===============================================================================
@@ -69,12 +70,9 @@ MAIN: {
         );
     }
     else {
-        require File::Copy;
-        require File::Spec;
-
         foreach my $file ('const-c.inc', 'const-xs.inc') {
-            my $fallback_file = File::Spec->catfile('fallback', $file);
-            File::Copy::copy($fallback_file, $file) or
+            my $fallback_file = catfile('fallback', $file);
+            copy($fallback_file, $file) or
                 die "Can't copy '$fallback_file' to '$file': $!.\n";
         }
     }

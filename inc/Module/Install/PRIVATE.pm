@@ -7,7 +7,7 @@
 #   SHAY (Steve Hay).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -22,14 +22,14 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Carp;
-use Config;
-use ExtUtils::Liblist;
-use File::Basename;
-use File::Spec::Functions qw(catfile);
-use Getopt::Long;
-use Pod::Usage;
-use Text::Wrap;
+use Carp qw(croak);
+use Config qw(%Config);
+use Cwd qw(abs_path);
+use File::Basename qw(basename);
+use File::Spec::Functions qw(canonpath catfile);
+use Getopt::Long qw(GetOptions);
+use Pod::Usage qw(pod2usage);
+use Text::Wrap qw(wrap);
 
 #===============================================================================
 # CLASS INITIALIZATION
@@ -40,10 +40,10 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::Base);
 
-    $VERSION = '1.03';
+    $VERSION = '1.04';
 
-    # Define public and private API accessor methods.
-    foreach my $prop (qw(define inc libs _opts)) {
+    # Define protected accessor/mutator methods.
+    foreach my $prop (qw(define inc libs opts)) {
         no strict 'refs';
         *$prop = sub {
             use strict 'refs';
@@ -54,7 +54,7 @@ BEGIN {
     }
 }
 
-# Indentation for _show_found_var() method.
+# Indentation for show_found_var() method.
 our $Show_Found_Var_Indent = 37;
 
 #===============================================================================
@@ -84,9 +84,9 @@ sub process_opts {
     my $opt_def = 0;
     my %opts = (
         'defaults' => sub { $ENV{PERL_MM_USE_DEFAULT} = 1; $opt_def = 1 },
-        'version'  => sub { $self->_exit_with_version()   },
-        'help'     => sub { $self->_exit_with_help()      },
-        'manpage'  => sub { $self->_exit_with_manpage()   }
+        'version'  => sub { $self->exit_with_version()   },
+        'help'     => sub { $self->exit_with_help()      },
+        'manpage'  => sub { $self->exit_with_manpage()   }
     );
 
     # Make sure that '-v' and '-h' unambiguously mean '--version' and '--help'
@@ -100,11 +100,11 @@ sub process_opts {
         'manpage|doc'
     );
 
-    # Include the ExtUtils::AutoInstall options if requested.  Also save @ARGV
-    # so that it can be temporarily restored for auto_install() later.
+    # Include the Module::AutoInstall options if requested.  Also save @ARGV so
+    # that it can be temporarily restored for auto_install() later.
     my @SAVARGV = ();
     if ($with_auto_install) {
-        # These options are specified in ExtUtils::AutoInstall::_init().
+        # These options are specified in Module::AutoInstall::_init().
         push @opt_specs, (
             'config:s',
             'installdeps|install:s',
@@ -118,7 +118,7 @@ sub process_opts {
     }
 
     GetOptions(\%opts, @opt_specs) or
-        $self->_exit_with_usage();
+        $self->exit_with_usage();
 
     if ($with_auto_install) {
         # Temporarily restore the original @ARGV for auto_install() since its
@@ -126,11 +126,11 @@ sub process_opts {
         local @ARGV = @SAVARGV;
         $self->auto_install();
 
-        # We aren't using ExtUtils::AutoInstall's Write() so we have to check
-        # for "check only" mode and exit ourselves if it is set.
+        # We are not using Module::AutoInstall's Write() so we have to check for
+        # "check only" mode and exit ourselves if it is set.
         if ( exists $opts{'checkdeps'} or
-            (exists $ENV{PERL_EXTUTILS_AUTOINSTALL} and
-             " $ENV{PERL_EXTUTILS_AUTOINSTALL} " =~ /\s--check(?:deps)?\s/o))
+            (exists $ENV{PERL_AUTOINSTALL} and
+             " $ENV{PERL_AUTOINSTALL} " =~ /\s--check(?:deps)?\s/o))
         {
             warn("*** Makefile not written in check-only mode.\n");
             exit 0;
@@ -157,70 +157,7 @@ sub process_opts {
         )) . "\n\n");
     }
 
-    $self->_opts(\%opts);
-}
-
-sub query_scripts {
-    my($self, $script_specs) = @_;
-
-    my($install_scripts, $multi);
-    if (@$script_specs == 1) {
-        $install_scripts = $self->_opts()->{'install-script'};
-        $multi = 0;
-    }
-    else {
-        $install_scripts = $self->_opts()->{'install-scripts'};
-        $multi = 1;
-    }
-
-    if (defined $install_scripts) {
-        if ($install_scripts =~ /^(?:y|n$)/) {
-            $self->_show_found_var(
-                sprintf('Using specified script%s option', $multi ? 's' : ''),
-                $install_scripts
-            );
-        }
-        else {
-            $self->_exit_with_error(3,
-                "Invalid 'install_script%s' option value '%s'",
-                $multi ? 's' : '', $install_scripts
-            );
-        }
-    }
-
-    foreach my $script_spec (@$script_specs) {
-        my($script_name, $default) = $script_spec =~ /^([^=]+)(?:=(y|n))?$/io;
-        my $answer;
-        if (defined $install_scripts) {
-            $answer = $install_scripts eq 'y' ? 1 : 0;
-        }
-        else {
-            $default = 'y' unless defined $default;
-            my $question = "Do you want to install '$script_name'?";
-            $answer = $self->_prompt_yes_no($question, $default);
-        }
-
-        $self->install_script(catfile('script', $script_name)) if $answer;
-    }
-    print "\n";
-}
-
-# Method to store the build options in this process' environment so that they
-# are available to the sub-directories' Makefile.PL's when they are run.  Note
-# that ExtUtils::MakeMaker's PASTHRU macro is not good enough because that only
-# passes things through when "make Makefile" is run, which is too late for the
-# processing of the LIBS option which Makefile.PL itself handles.
-
-sub setup_env {
-    my $self = shift;
-
-    $ENV{__SHAY_PRIVATE_DEFINE} = $self->define();
-    $ENV{__SHAY_PRIVATE_INC}    = $self->inc();
-    $ENV{__SHAY_PRIVATE_LIBS}   = $self->libs();
-}
-
-sub is_win32 {
-    return $^O =~ /MSWin32/io;
+    $self->opts(\%opts);
 }
 
 # Method to perform a rudimentary check that a compatible compiler is being used
@@ -230,7 +167,7 @@ sub is_win32 {
 # It is good enough, however, to catch the currently rather common situation in
 # which a Win32 user is building this module with the Visual C++ Toolkit 2003
 # for use with any ActivePerl, which are known currently to be built with Visual
-# Studio 98.  This combination generally doesn't work; see the INSTALL file for
+# Studio 98.  This combination generally does not work; see the INSTALL file for
 # details.
 
 # This method is based on code taken from the get_avail_w32compilers() function
@@ -242,12 +179,12 @@ sub check_compiler {
     my $cc;
     unless ($cc = $self->can_cc()) {
         if ($Config{cc} ne '') {
-            $self->_exit_with_error(8,
+            $self->exit_with_error(8,
                 'Compiler not found: please see INSTALL file for details'
             );
         }
         else {
-            $self->_exit_with_error(9,
+            $self->exit_with_error(9,
                 'Compiler not specified: please see INSTALL file for details'
             );
         }
@@ -259,7 +196,7 @@ sub check_compiler {
     my $fmt = "Wrong compiler version ('%s'; Perl was built with version " .
               "'%s'): please see INSTALL file for details";
     my $msg = '';
-    # Perl version 5.6.0 didn't have $Config{ccversion} at all on Win32.
+    # Perl version 5.6.0 did not have $Config{ccversion} at all on Win32.
     if (exists $Config{ccversion} and $Config{ccversion} ne '') {
         my $ccversion;
         if ($cc =~ /cl(?:\.exe)?"?$/io) {
@@ -338,7 +275,7 @@ sub check_compiler {
 
     if ($msg) {
         if ($exit_on_error) {
-            $self->_exit_with_error(10, $msg);
+            $self->exit_with_error(10, $msg);
         }
         else {
             warn("Warning: $msg\n");
@@ -346,21 +283,77 @@ sub check_compiler {
     }
 }
 
-#===============================================================================
-# PRIVATE API
-#===============================================================================
+sub query_scripts {
+    my($self, $script_specs) = @_;
 
-sub _unindent_text {
-    my($self, $text) = @_;
-    my($indent) = $text =~ /^(\s+)/;
-    $text =~ s/^$indent//gm;
-    return $text;
+    my($install_scripts, $multi);
+    if (@$script_specs == 1) {
+        $install_scripts = $self->opts()->{'install-script'};
+        $multi = 0;
+    }
+    else {
+        $install_scripts = $self->opts()->{'install-scripts'};
+        $multi = 1;
+    }
+
+    if (defined $install_scripts) {
+        if ($install_scripts =~ /^(?:y|n$)/) {
+            $self->show_found_var(
+                sprintf('Using specified script%s option', $multi ? 's' : ''),
+                $install_scripts
+            );
+        }
+        else {
+            $self->exit_with_error(3,
+                "Invalid 'install_script%s' option value '%s'",
+                $multi ? 's' : '', $install_scripts
+            );
+        }
+    }
+
+    foreach my $script_spec (@$script_specs) {
+        my($script_name, $default) = $script_spec =~ /^([^=]+)(?:=(y|n))?$/io;
+        my $answer;
+        if (defined $install_scripts) {
+            $answer = $install_scripts eq 'y' ? 1 : 0;
+        }
+        else {
+            $default = 'y' unless defined $default;
+            my $question = "Do you want to install '$script_name'?";
+            $answer = $self->prompt_yes_no($question, $default);
+        }
+
+        $self->install_script(catfile('script', $script_name)) if $answer;
+    }
+    print "\n";
 }
 
-sub _prompt_yes_no {
+# Method to store the build options in this process' environment so that they
+# are available to the sub-directories' Makefile.PL's when they are run.  Note
+# that ExtUtils::MakeMaker's PASTHRU macro is not good enough because that only
+# passes things through when "make Makefile" is run, which is too late for the
+# processing of the LIBS option that Makefile.PL itself handles.
+
+sub setup_env {
+    my $self = shift;
+
+    $ENV{__SHAY_PRIVATE_DEFINE} = $self->define();
+    $ENV{__SHAY_PRIVATE_INC}    = $self->inc();
+    $ENV{__SHAY_PRIVATE_LIBS}   = $self->libs();
+}
+
+#===============================================================================
+# PROTECTED API
+#===============================================================================
+
+sub is_win32 {
+    return $^O =~ /MSWin32/io;
+}
+
+sub prompt_yes_no {
     my($self, $question, $default) = @_;
 
-    my $answer = $self->_prompt_validate(
+    my $answer = $self->prompt_validate(
         -question => $question,
         -default  => $default,
         -validate => sub { $_[0] =~ /^(?:y(?:es)?|no?)$/io }
@@ -369,18 +362,20 @@ sub _prompt_yes_no {
     return $answer =~ /y/io ? 1 : 0;
 }
 
-sub _prompt_dir {
+sub prompt_dir {
     my($self, $question, $default) = @_;
 
-    return $self->_prompt_validate(
+    my $dir = $self->prompt_validate(
         -question => $question,
         -default  => $default,
         -validate => sub { -d $_[0] },
         -errmsg   => 'No such directory'
     );
+
+    return canonpath(abs_path($dir));
 }
 
-sub _prompt_list {
+sub prompt_list {
     my($self, $message, $options, $question, $default) = @_;
 
     my $num_options = scalar @$options;
@@ -389,7 +384,7 @@ sub _prompt_list {
     my %options = map { $_->[0] => 1 } @$options;
     my $num_unique_options = scalar keys %options;
     if ($num_unique_options != $num_options) {
-        $self->_exit_with_error(4, 'Options in list are not unique');
+        $self->exit_with_error(4, 'Options in list are not unique');
     }
 
     my $default_num = 0;
@@ -399,10 +394,10 @@ sub _prompt_list {
     }
 
     if ($default_num == 0) {
-        $self->_exit_with_error(5, "Invalid default response '%s'", $default);
+        $self->exit_with_error(5, "Invalid default response '%s'", $default);
     }
 
-    my $answer_num = $self->_prompt_validate(
+    my $answer_num = $self->prompt_validate(
         -message  => $message,
         -question => $question,
         -default  => $default_num,
@@ -422,18 +417,10 @@ sub _prompt_list {
         -errmsg   => 'Invalid response'
     );
     
-    sub _prompt_validate {
+    sub prompt_validate {
         my $self = shift;
         my %args = (%defaults, @_);
 
-        if (defined $args{-default} and $args{-default} ne '' and
-            not $args{-validate}->($args{-default}))
-        {
-            $self->_exit_with_error(6,
-                "Invalid default response '%s'", $args{-default}
-            );
-        }
-    
         if (exists $args{-message}) {
             print wrap('', '', $args{-message}), "\n";
         }
@@ -442,13 +429,13 @@ sub _prompt_list {
         until (defined $input) {
             $input = $self->prompt($args{-question}, $args{-default});
             unless ($args{-validate}->($input)) {
-                if ($self->_use_default_response()) {
-                    $self->_exit_with_error(7,
+                if ($self->use_default_response()) {
+                    $self->exit_with_error(7,
                         "Invalid default response '%s'", $args{-default}
                     );
                 }
                 else {
-                    warn "$args{-errmsg}\n";
+                    print wrap('', '', $args{-errmsg}), "\n";
                     $input = undef;
                 }
             }
@@ -458,23 +445,7 @@ sub _prompt_list {
     }
 }
 
-# This method is based on code taken from the prompt() function in the standard
-# library module ExtUtils::MakeMaker (version 6.17).
-
-sub _use_default_response {
-    my $self = shift;
-    return($ENV{PERL_MM_USE_DEFAULT} or (not $self->_isa_tty() and eof STDIN));
-}
-
-# This method is based on code taken from the prompt() function in the standard
-# library module ExtUtils::MakeMaker (version 6.17).
-
-sub _isa_tty {
-    my $self = shift;
-    return(-t STDIN and (-t STDOUT or not (-f STDOUT or -c STDOUT)));
-}
-
-sub _show_found_var {
+sub show_found_var {
     my($self, $msg, $var) = @_;
     local $Text::Wrap::break = qr{\s|(?<=[\\\\/]).{0}};
     print wrap('', ' ' x $Show_Found_Var_Indent,
@@ -482,10 +453,11 @@ sub _show_found_var {
     ), "\n";
 }
 
-sub _exit_with_version {
+sub exit_with_version {
     my $self = shift;
-    printf "This is %s %s (using Module::Install::PRIVATE %s).\n\n",
-           basename($0), $main::VERSION, $VERSION;
+
+    printf "This is %s v%s (using %s v%s).\n\n",
+           basename($0), $main::VERSION, ref $self, $self->VERSION();
 
     print "Copyright (C) $main::YEAR Steve Hay.  All rights reserved.\n\n";
 
@@ -499,7 +471,7 @@ sub _exit_with_version {
     exit 1;
 }
 
-sub _exit_with_help {
+sub exit_with_help {
     my $self = shift;
     pod2usage(
         -exitval => 1,
@@ -507,7 +479,7 @@ sub _exit_with_help {
     );
 }
 
-sub _exit_with_manpage {
+sub exit_with_manpage {
     my $self = shift;
     pod2usage(
         -exitval => 1,
@@ -515,7 +487,7 @@ sub _exit_with_manpage {
     );
 }
 
-sub _exit_with_usage {
+sub exit_with_usage {
     my $self = shift;
     pod2usage(
         -exitval => 2,
@@ -523,14 +495,34 @@ sub _exit_with_usage {
     );
 }
 
-sub _exit_with_error {
+sub exit_with_error {
     my($self, $num, $msg) = splice @_, 0, 3;
     $msg = sprintf $msg, @_ if @_;
-    # Load Carp::Heavy now otherwise (prior to Perl 5.8.7) croak() clobbers $!
+    # Load Carp::Heavy now, otherwise (before Perl 5.8.7) croak() clobbers $!
     # when loading it.
     require Carp::Heavy;
     $! = $num;
     croak("Error ($num): $msg");
+}
+
+# This method is based on code taken from the prompt() function in the standard
+# library module ExtUtils::MakeMaker (version 6.17).
+
+sub use_default_response {
+    my $self = shift;
+    return($ENV{PERL_MM_USE_DEFAULT} or (not $self->_isa_tty() and eof STDIN));
+}
+
+#===============================================================================
+# PRIVATE API
+#===============================================================================
+
+# This method is based on code taken from the prompt() function in the standard
+# library module ExtUtils::MakeMaker (version 6.17).
+
+sub _isa_tty {
+    my $self = shift;
+    return(-t STDIN and (-t STDOUT or not (-f STDOUT or -c STDOUT)));
 }
 
 1;

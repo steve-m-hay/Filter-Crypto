@@ -7,7 +7,7 @@
 #   Test script to check crypt_file script (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -21,9 +21,9 @@ use strict;
 use warnings;
 
 use Cwd qw(abs_path cwd);
-use File::Copy;
+use File::Copy qw(copy);
 use File::Spec::Functions qw(canonpath catdir catfile devnull rel2abs updir);
-use FindBin;
+use FindBin qw($Bin);
 use Test::More;
 
 #===============================================================================
@@ -34,17 +34,17 @@ my($top_dir, $lib_dir);
 
 BEGIN {
     if ($] < 5.006001) {
-        # Prior to 5.6.0, Cwd::abs_path() didn't correctly clean-up Win32 paths
-        # like C:\Temp\.. which breaks the -d/-r/-t tests, so do it the hard way
-        # instead.  Do it for all OS's just in case.
+        # Before 5.6.0, Cwd::abs_path() did not correctly clean-up Win32 paths
+        # like C:\Temp\.., which breaks the -d/-r/-t tests, so do it the hard
+        # way instead.  Do it for all OS's just in case.
         my $cwd = cwd();
-        chdir $FindBin::Bin or die "Can't cd to test script directory: $!\n";
+        chdir $Bin or die "Can't cd to test script directory: $!\n";
         chdir updir() or die "Can't cd to parent directory: $!\n";
         $top_dir = canonpath(cwd());
         chdir $cwd or die "Can't cd to original directory: $!\n";
     }
     else {
-        $top_dir = canonpath(abs_path(catdir($FindBin::Bin, updir())));
+        $top_dir = canonpath(abs_path(catdir($Bin, updir())));
     }
     $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
@@ -83,7 +83,7 @@ MAIN: {
     my $perl;
     my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
     if ($] < 5.007003) {
-        # Prior to 5.7.3, -Mblib emitted a "Using ..." message on STDERR which
+        # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which
         # looks ugly when we spawn a child perl process and breaks the --silent
         # test.
         $perl = qq[$perl_exe -Iblib/arch -Iblib/lib];
@@ -144,8 +144,8 @@ MAIN: {
     unlink $ofile;
 
     # Explicitly terminate crypt_file's (empty) options list with a "--" since
-    # Getopt::Long's handling of a lone "-" is broken prior to version 2.25
-    # which was first distributed in Perl 5.6.1.
+    # Getopt::Long's handling of a lone "-" is broken before version 2.25, which
+    # was first distributed in Perl 5.6.1.
     qx{$perl $cat <$ifile | $perl $crypt_file -- - 2>$null | $perl $cat >$ofile};
     is($?, 0, 'crypt_file ran OK when using STD handle pipelines');
 
@@ -596,7 +596,7 @@ MAIN: {
          '-h option works');
 
     {
-        local $ENV{PERLDOC} = '-t -T';
+        local $ENV{PERLDOC} = '-t';
         chomp($data = qx{$perl $crypt_file -m});
         like($data, qr/^ NAME         .*?
                        ^ SYNOPSIS     .*?

@@ -7,7 +7,7 @@
 #   distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -29,7 +29,7 @@ use warnings;
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.16';
+    $VERSION = '1.17';
 }
 
 1;
@@ -66,11 +66,11 @@ into an encrypted, yet still runnable, format to hide the source code from
 casual prying eyes.
 
 This is achieved using a Perl source code filter.  The encrypted files, produced
-using the L<Filter::Crypto::CryptFile|Filter::Crypto::CryptFile> module
-automatically have one (unencrypted) line added to the start of them which loads
+using the L<Filter::Crypto::CryptFile|Filter::Crypto::CryptFile> module,
+automatically have one (unencrypted) line added to the start of them that loads
 the L<Filter::Crypto::Decrypt|Filter::Crypto::Decrypt> module.  The latter is a
-Perl source code filter which decrypts the remaining (encrypted) part of the
-Perl file on-the-fly when it is run.  See L<perlfilter> if you want to know more
+Perl source code filter that decrypts the remaining (encrypted) part of the Perl
+file on the fly when it is run.  See L<perlfilter> if you want to know more
 about how Perl source code filters work.
 
 Encrypted files can also be produced more conveniently using the B<crypt_file>
@@ -99,7 +99,7 @@ commercial Perl software are uneasy about distributing the source code in easily
 accessible form for anyone to see, and want to take more practical action than
 involving intellectual property rights lawyers.
 
-That's where software like this comes in, but a word of warning is in order
+That is where software like this comes in, but a word of warning is in order
 regarding the security provided by this (and, indeed, any other) source code
 decryption filter.
 
@@ -113,19 +113,19 @@ code, especially when it is being run in an environment that you have no control
 over, and even more so when the software running it (Perl) is open source
 itself.
 
-This techinique can I<never> completely hide the original unencrypted source
-code from people sufficiently determined to get it.  The most it can hope for is
-to hide it from casual prying eyes, and to outdo everyone who is using a
-precompiled Perl (at least from "regular" sources) and everyone who isn't
+This technique can I<never> completely hide the original unencrypted source code
+from people sufficiently determined to get it.  The most it can hope for is to
+hide it from casual prying eyes, and to outdo everyone who is using a
+precompiled Perl (at least from "regular" sources) and everyone who is not
 knowledgeable enough to suitably modify the Perl source code before compiling
 their own.
 
 Perl source code decryption filters work by intercepting the source stream (read
 from the encrypted file) and modifying it (in this case, decrypting it) before
 it reaches the Perl parser.  Clearly, by the time the source reaches the parser
-it must be decrypted, otherwise the script cannot be run.  This means that every
-part of the script must at some stage be held in memory in an unencrypted state,
-so anyone with the appropriate debugging skills will be able to get it.
+it must be decrypted, otherwise the script cannot be run.  This means that at
+some stage every part of the script must be held in memory in an unencrypted
+state, so anyone with the appropriate debugging skills will be able to get it.
 
 If Perl was built with DEBUGGING then running the script with the Perl's B<-Dp>
 command-line option makes this much easier.  Even without a DEBUGGING Perl, the
@@ -182,7 +182,7 @@ version of the Perl executable can certainly be produced since Perl is open
 source itself.
 
 In fact, it is not difficult for suitably experienced hackers to produce a
-modified Perl executable which makes it absolutely trivial for them to retrieve
+modified Perl executable that makes it absolutely trivial for them to retrieve
 the I<original> unencrypted source code with comments, whitespace and all (i.e.
 not just a deparsed reconstruction of it).  One example that was mentioned in
 the perl5-porters thread cited above is to modify the Perl executable to simply
@@ -190,7 +190,7 @@ print each line of the decrypted source stream that is fed to the parser, rather
 than parsing and running it!
 
 A typical hacker's opinion of all this is perhaps the following delightful
-message which I received off-list during that perl5-porters thread from someone
+message that I received off-list during that perl5-porters thread from someone
 who shall remain anonymous:
 
     "If you don't want anybody to see your source code, why don't you
@@ -199,7 +199,7 @@ who shall remain anonymous:
 
 =head1 FEEDBACK
 
-Patches, bug reports, suggestions or any other feedback are welcome.
+Patches, bug reports, suggestions or any other feedback is welcome.
 
 Bugs can be reported on the CPAN Request Tracker at
 F<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Filter-Crypto>.
@@ -253,7 +253,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -263,11 +263,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.16
+Version 1.17
 
 =head1 DATE
 
-06 Sep 2005
+14 Feb 2006
 
 =head1 HISTORY
 

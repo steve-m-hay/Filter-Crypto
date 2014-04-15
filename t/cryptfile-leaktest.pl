@@ -18,7 +18,7 @@
 #   from the top-level directory.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -34,14 +34,14 @@ use warnings;
 use Cwd qw(abs_path);
 use Fcntl qw(:seek);
 use File::Spec::Functions qw(canonpath catdir catfile updir);
-use FindBin;
+use FindBin qw($Bin);
 
 #===============================================================================
 # INITIALIZATION
 #===============================================================================
 
 BEGIN {
-    my $top_dir = canonpath(abs_path(catdir($FindBin::Bin, updir())));
+    my $top_dir = canonpath(abs_path(catdir($Bin, updir())));
     my $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     if (-f catfile($lib_dir, 'CryptFile.pm')) {
@@ -78,8 +78,8 @@ MAIN: {
 
     $SIG{INT} = sub {
         print "Caught SIGINT. Terminating.\n";
-        # Don't exit here because crypt_file() could have the file open, and we
-        # can't delete an open file on Win32.
+        # Do not exit here because crypt_file() could have the file open, and we
+        # cannot delete an open file on Win32.
         $interrupted = 1;
     };
 

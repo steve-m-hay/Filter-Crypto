@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.16
+                          Filter::Crypto, Version 1.17
 ________________________________________________________________________________
 
 NAME
@@ -25,14 +25,14 @@ DESCRIPTION
     prying eyes.
 
     This is achieved using a Perl source code filter.  The encrypted files,
-    produced using the Filter::Crypto::CryptFile module automatically have one
-    (unencrypted) line added to the start of them which loads the
+    produced using the Filter::Crypto::CryptFile module, automatically have one
+    (unencrypted) line added to the start of them that loads the
     Filter::Crypto::Decrypt module.  The latter is a Perl source code filter
-    which decrypts the remaining (encrypted) part of the Perl file on-the-fly
+    that decrypts the remaining (encrypted) part of the Perl file on-the-fly
     when it is run.
 
     These two modules can be built and installed separately, so it is possible
-    to setup two separate Perl installations: one containing the
+    to set-up two separate Perl installations: one containing the
     Filter::Crypto::CryptFile module to be used for encrypting your Perl files,
     and another containing only the Filter::Crypto::Decrypt module for
     distributing with your encrypted Perl files so that they can be run but not
@@ -75,7 +75,7 @@ INSTALLATION
 
 COPYRIGHT
 
-    Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+    Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 
 LICENCE
 
