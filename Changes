@@ -1,9 +1,17 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.32
+                          Filter::Crypto, Version 1.33
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.33 29 Feb 2012
+
+    - Reverted changes made in version 1.32 which accidentally unconditionally
+      used the Module::ScanDeps module.  (It is a prerequisite of the PAR-Packer
+      distribution which contains PAR::Filter, but PAR::Filter is only a
+      recommendation, not a prerequisite, of this distribution.)
 _________________
 
 v1.32 28 Feb 2012
@@ -14,7 +22,7 @@ v1.32 28 Feb 2012
       generated PAR archive to fail to run due to its restriction on not running
       with the Perl compiler backend enabled.  The problem was introduced in
       Carp 1.18 by perl change #bf236c8ee5 and fixed in Carp 1.21 by perl change
-      #1a6d530815.
+      #1a6d530815.  (Fixes [cpan #67516].)
 
     - Removed documentation of a formerly known failure in t/04_par.t when using
       Module::ScanDeps version 0.75 since the failing test(s) have been skipped

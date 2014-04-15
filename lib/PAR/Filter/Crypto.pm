@@ -27,7 +27,6 @@ use Carp qw(carp croak);
 use Fcntl qw(:seek);
 use File::Temp qw(tempfile);
 use Filter::Crypto::CryptFile qw(:DEFAULT $ErrStr);
-use Module::ScanDeps qw();
 use PAR::Filter qw();
 
 #===============================================================================
@@ -39,7 +38,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(PAR::Filter);
 
-    $VERSION = '1.05';
+    $VERSION = '1.06';
 }
 
 #===============================================================================
@@ -63,7 +62,9 @@ sub apply {
               "correctly with " . __PACKAGE__);
     }
 
-    if ($Module::ScanDeps::VERSION eq '0.75') {
+    if (eval { require Module::ScanDeps; 1 } and
+        $Module::ScanDeps::VERSION eq '0.75')
+    {
         carp('Detected Module::ScanDeps version 0.75, which may not work ' .
              'correctly with ' . __PACKAGE__);
     }
@@ -280,11 +281,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.05
+Version 1.06
 
 =head1 DATE
 
-24 Feb 2012
+29 Feb 2012
 
 =head1 HISTORY
 

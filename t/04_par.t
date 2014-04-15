@@ -25,7 +25,6 @@ use Config qw(%Config);
 use Cwd qw(abs_path);
 use File::Spec::Functions qw(canonpath catdir catfile curdir updir);
 use FindBin qw($Bin);
-use Module::ScanDeps qw();
 use Test::More;
 
 #===============================================================================
@@ -101,7 +100,10 @@ MAIN: {
     my $perl = qq[$perl_exe -M$mbname];
 
     my $have_archive_zip = eval { require Archive::Zip; 1 };
-    my $have_broken_module_scandeps = ($Module::ScanDeps::VERSION eq '0.75');
+    my $have_broken_module_scandeps;
+    if (eval { require Module::ScanDeps; 1 }) {
+        $have_broken_module_scandeps = ($Module::ScanDeps::VERSION eq '0.75');
+    }
 
     my($line, $cur_ofile);
 
