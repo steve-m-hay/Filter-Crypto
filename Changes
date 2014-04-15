@@ -1,9 +1,18 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.11
+                          Filter::Crypto, Version 1.12
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.12 09 Mar 2005
+
+    - Fixed t/03_script.t test 99 to account for different format output
+      produced by "perldoc" on some OS's.
+
+      Thanks to <cpan@calaquendi.net> for drawing attention to this problem via
+      CPAN Testers (http://testers.cpan.org/).
 _________________
 
 v1.11 03 Mar 2005
