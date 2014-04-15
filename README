@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.36
+                          Filter::Crypto, Version 2.00
 ________________________________________________________________________________
 
 NAME
@@ -68,6 +68,24 @@ WARNING
     Do keep a copy of the configuration options chosen when building these
     modules, and most importantly make sure you KEEP A BACKUP COPY OF YOUR
     ORIGINAL UNENCRYPTED FILES.
+
+COMPATIBILITY
+
+    Before version 2.00 of this distribution, encrypted source code was simply
+    the raw output of the chosen encryption algorithm, which is typically
+    "binary" data and therefore susceptible to breakage caused by perl reading
+    source files in "text" mode, which has become the default on Windows since
+    Perl 5.13.11 (specifically, perl change #270ca148cf).
+
+    As of version 2.00 of this distribution, each byte of encrypted source code
+    is now output as a pair of hexadecimal digits and therefore no longer
+    susceptible to such breakage.
+
+    THIS IS AN INCOMPATIBLE CHANGE.  CURRENT VERSIONS OF THESE MODULES WILL NOT
+    BE ABLE TO DECRYPT FILES ENCRYPTED WITH VERSIONS OF THESE MODULES PRIOR TO
+    VERSION 2.00 OF THIS DISTRIBUTION, EVEN WHEN BUILT WITH THE SAME
+    CONFIGURATION OPTIONS.  EXISTING ENCRYPTED FILES WILL NEED TO BE
+    RE-ENCRYPTED.
 
 INSTALLATION
 

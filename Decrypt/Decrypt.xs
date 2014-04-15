@@ -219,9 +219,10 @@ static int FilterCrypto_FilterSvMgFree(pTHX_ SV *sv, MAGIC *mg) {
 
 /*
  * Function to perform the source code decryption filtering.  Data is first read
- * from the input stream into an "encrypt" buffer.  It is then decrypted into a
- * decrypt buffer within the filter context, and is finally written to the
- * output stream buffer (which is the buf_sv argument).
+ * from the input stream into an encode buffer containing a plain ASCII encoding
+ * of the encrypted data, and then decoded into an encrypt buffer.  It is then
+ * decrypted into a decrypt buffer within the filter context, and is finally
+ * written to the output stream buffer (which is the buf_sv argument).
  * Returns the number of bytes written to the output stream buffer, or 0 if EOF
  * was reached before anything was written, or croak()s on failure.
  * The filter is deleted when the decryption is finished or an error occurs.
@@ -239,7 +240,8 @@ static int FilterCrypto_FilterSvMgFree(pTHX_ SV *sv, MAGIC *mg) {
 static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
     FILTER_CRYPTO_FCTX *ctx;
     SV *filter_sv = FILTER_DATA(idx);
-    SV *in_sv = sv_2mortal(newSV(BUFSIZ));
+    SV *encode_sv = sv_2mortal(newSV(BUFSIZ * 2));
+    SV *encrypt_sv = sv_2mortal(newSV(BUFSIZ));
     MAGIC *mg;
     I32 m;
     I32 n;
@@ -248,7 +250,8 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
     const char *nl = "\n";
     char *p;
 
-    SvPOK_only(in_sv);
+    SvPOK_only(encode_sv);
+    SvPOK_only(encrypt_sv);
 
     /* Recover the filter context pointer that is held within the MAGIC of the
      * filter's SV, and verify that we have found the correct MAGIC. */
@@ -283,9 +286,9 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
     }
 
     while (1) {
-        /* If there is anything currently in the decryption buffer then write
-         * (part of) it to the output stream buffer.  How much we write depends
-         * on what Perl has asked for. */
+        /* If there is anything currently in the decrypt buffer then write (part
+         * of) it to the output stream buffer.  How much we write depends on
+         * what Perl has asked for. */
         if ((m = SvCUR(ctx->decrypt_sv)) > 0) {
             out_ptr = (const unsigned char *)SvPVX_const(ctx->decrypt_sv);
 
@@ -303,7 +306,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 #endif
 
                 /* Chop the number of bytes that we have just written from the
-                 * start of the decryption buffer. */
+                 * start of the decrypt buffer. */
                 sv_chop(ctx->decrypt_sv, (char *)out_ptr + num_bytes);
 
                 /* We have written up to max_len bytes to the output stream
@@ -312,15 +315,15 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
             }
             else {
                 /* Perl has asked for a complete line of source code.  We must
-                 * not return here if the decryption buffer does not hold at
-                 * least one complete line because Perl compiles each line as it
-                 * is returned and hence would generate a syntax error if we
-                 * have written only part of a line to the output stream buffer.
+                 * not return here if the decrypt buffer does not hold at least
+                 * one complete line because Perl compiles each line as it is
+                 * returned and hence would generate a syntax error if we have
+                 * written only part of a line to the output stream buffer.
                  * Instead, we must carry on and read some more data from the
                  * input stream and have another go at completing the line the
                  * next time around. */
                 if ((p = ninstr(out_ptr, out_ptr + m, nl, nl + 1))) {
-                    /* There is a newline character in the decryption buffer, so
+                    /* There is a newline character in the decrypt buffer, so
                      * copy everything up to it to the output stream buffer. */
                     num_bytes = (unsigned char *)p - out_ptr + 1;
 
@@ -334,7 +337,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 #endif
 
                     /* Chop the number of bytes that we have just written from
-                     * the start of the decryption buffer. */
+                     * the start of the decrypt buffer. */
                     sv_chop(ctx->decrypt_sv, (char *)out_ptr + num_bytes);
 
                     /* We have written a complete line to the output stream
@@ -342,8 +345,8 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
                     return SvCUR(buf_sv);
                 }
                 else {
-                    /* There is no newline character in the decryption buffer,
-                     * so copy the whole buffer to the output stream buffer. */
+                    /* There is no newline character in the decrypt buffer, so
+                     * copy the whole buffer to the output stream buffer. */
                     num_bytes = m;
 
                     sv_catpvn(buf_sv, out_ptr, num_bytes);
@@ -356,7 +359,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 #endif
 
                     /* Chop the number of bytes that we have just written from
-                     * the start of the decryption buffer. */
+                     * the start of the decrypt buffer. */
                     sv_chop(ctx->decrypt_sv, (char *)out_ptr + num_bytes);
 
                     /* We have not written a complete line to the output stream
@@ -385,33 +388,45 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
             }
         }
 
-        /* Clear the decryption buffer before we start decrypting data read from
-         * the input stream into it and make sure the OOK flag is turned off too
-         * in case it was set by the use of sv_chop() above.  (Zero the buffer's
-         * current length first to avoid the otherwise wasteful copy of data
-         * back to the start of the buffer.) */
+        /* Clear the decrypt buffer before we start decoding and decrypting data
+         * read from the input stream into it and make sure the OOK flag is
+         * turned off too in case it was set by the use of sv_chop() above.
+         * (Zero the buffer's current length first to avoid the otherwise
+         * wasteful copy of data back to the start of the buffer.) */
         FilterCrypto_SvSetCUR(ctx->decrypt_sv, 0);
         SvOOK_off(ctx->decrypt_sv);
 
-        if ((n = FilterCrypto_ReadBlock(aTHX_ idx + 1, in_sv, BUFSIZ)) > 0) {
+        n = FilterCrypto_ReadBlock(aTHX_ idx + 1, encode_sv, BUFSIZ * 2);
+        if (n > 0) {
             /* We have read a new block of data from the input stream into the
-             * encryption buffer, so set the length of the encryption buffer and
-             * decrypt it into the decryption buffer. */
-            FilterCrypto_SvSetCUR(in_sv, n);
-
-            if (!FilterCrypto_FilterUpdate(aTHX_ ctx, in_sv)) {
+             * encode buffer, so set the length of the encode buffer and decode
+             * it into the encrypt buffer. */
+            FilterCrypto_SvSetCUR(encode_sv, n);
+            if (!FilterCrypto_DecodeSV(aTHX_ encode_sv, encrypt_sv)) {
                 filter_del(FilterCrypto_FilterDecrypt);
                 croak("Can't continue decryption: %s",
                       FilterCrypto_GetErrStr(aTHX));
             }
 
-            /* The decryption succeeded, so zero the encryption buffer's length
-             * ready for the next call to _ReadBlock(). */
-            FilterCrypto_SvSetCUR(in_sv, 0);
+            /* The decoding succeeded, so zero the encode buffer's length ready
+             * for the next call to FilterCrypto_ReadBlock(). */
+            FilterCrypto_SvSetCUR(encode_sv, 0);
+
+            /* We have decoded a new block of data from the encode buffer into
+             * the encrypt buffer, so decrypt it into the decrypt buffer. */
+            if (!FilterCrypto_FilterUpdate(aTHX_ ctx, encrypt_sv)) {
+                filter_del(FilterCrypto_FilterDecrypt);
+                croak("Can't continue decryption: %s",
+                      FilterCrypto_GetErrStr(aTHX));
+            }
+
+            /* The decryption succeeded, so zero the encrypt buffer's length
+             * ready for the next call to FilterCrypto_ReadBlock(). */
+            FilterCrypto_SvSetCUR(encrypt_sv, 0);
         }
         else if (n == 0) {
             /* We did not read any data from the input stream, and have now
-             * reached EOF, so decrypt the final block into the decryption
+             * reached EOF, so decrypt the final block into the decrypt
              * buffer. */
             if (!FilterCrypto_FilterFinal(aTHX_ ctx)) {
                 filter_del(FilterCrypto_FilterDecrypt);
@@ -421,8 +436,8 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 
             /* Set the filter status "finished" to remember that we have now
              * read all the data and finalized the crypt context, with the final
-             * block written to the decryption buffer.  All that remains to be
-             * done is for that to be written to the output stream buffer. */
+             * block written to the decrypt buffer.  All that remains to be done
+             * is for that to be written to the output stream buffer. */
             ctx->filter_status = FILTER_CRYPTO_STATUS_FINISHED;
         }
         else {

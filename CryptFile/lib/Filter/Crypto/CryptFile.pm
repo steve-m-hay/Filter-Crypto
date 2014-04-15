@@ -7,7 +7,7 @@
 #   which they can be run via Filter::Crypto::Decrypt.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -55,7 +55,7 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '1.18';
+    $VERSION = '2.00';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -654,6 +654,19 @@ The cipher context structure used to perform the encryption or decryption could
 not be cleaned up after use.  The last error message from libcrypto is also
 given.
 
+=item Can't decode odd-numbered (%d-byte) length hexadecimal text
+
+The hexadecimal encoding of the encrypted source code, consisting of a pair of
+hexadecimal digits for each byte of data, could not be decoded because an odd
+number of hexadecimal digits were found.
+
+=item Can't decode non-hexadecimal digit (byte %02x at position %d) in
+      hexadecimal text
+
+The hexadecimal encoding of the encrypted source code, consisting of a pair of
+hexadecimal digits for each byte of data, could not be decoded because a byte
+other than a hexadecimal digit was found.
+
 =item Can't derive %d-byte key: %s
 
 libcrypto's PKCS#5 v2.0 compatible key derivation algorithm failed to derive a
@@ -883,7 +896,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -893,11 +906,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.18
+Version 2.00
 
 =head1 DATE
 
-22 Oct 2009
+19 May 2012
 
 =head1 HISTORY
 

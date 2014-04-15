@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::CryptFile module.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -91,8 +91,8 @@ typedef enum {
 
 static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
     FILTER_CRYPTO_MODE_EX crypt_mode_ex);
-static bool FilterCrypto_OutputData(pTHX_ SV *from_sv, bool update_mode,
-    PerlIO *to_fh, SV *to_sv);
+static bool FilterCrypto_OutputData(pTHX_ SV *from_sv, bool encode_mode,
+    bool update_mode, PerlIO *to_fh, SV *to_sv);
 
 static const char *filter_crypto_use_text = "use Filter::Crypto::Decrypt;\n";
 
@@ -105,11 +105,13 @@ static const char *filter_crypto_use_text = "use Filter::Crypto::Decrypt;\n";
 static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
     FILTER_CRYPTO_MODE_EX crypt_mode_ex)
 {
+    bool encode_mode;
     bool update_mode = FALSE;
     bool have_in_text = FALSE;
     FILTER_CRYPTO_CCTX *ctx;
     FILTER_CRYPTO_MODE crypt_mode;
     SV *in_sv  = sv_2mortal(newSV(BUFSIZ));
+    SV *in2_sv = sv_2mortal(newSV(BUFSIZ * 2));
     SV *out_sv = sv_2mortal(newSV(BUFSIZ));
     SV *buf_sv;
     int in_len;
@@ -119,6 +121,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
     const unsigned char *buf_text;
 
     SvPOK_only(in_sv);
+    SvPOK_only(in2_sv);
     SvPOK_only(out_sv);
 
     /* If there is no output filehandle supplied then we are in "update mode",
@@ -211,6 +214,11 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
         case FILTER_CRYPTO_MODE_DECRYPT:
             /* The header line has already been read from the input filehandle,
              * as required.  We can start decrypting the remainder next. */
+
+            /* Set the encode mode to off so that the decrypted data is written
+             * out in plain text form. */
+            encode_mode = FALSE;
+
             break;
 
         case FILTER_CRYPTO_MODE_ENCRYPT:
@@ -247,6 +255,11 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
              * be encrypted and output. */
             have_in_text = TRUE;
 
+            /* Set the encode mode to on so that the encrypted data is written
+             * out in encoded form (for safe reading back on systems with "text
+             * mode" input). */
+            encode_mode = TRUE;
+
             break;
 
         default:
@@ -280,7 +293,20 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
              * it into the output SV. */
             FilterCrypto_SvSetCUR(in_sv, in_len);
 
-            if (!FilterCrypto_CryptoUpdate(aTHX_ ctx, in_sv, out_sv)) {
+            /* If we are decrypting then decode the input SV into the secondary
+             * input SV prior to decryption; otherwise just copy it. */
+            if (crypt_mode == FILTER_CRYPTO_MODE_DECRYPT) {
+                if (!FilterCrypto_DecodeSV(aTHX_ in_sv, in2_sv)) {
+                    FilterCrypto_CryptoFree(aTHX_ ctx);
+                    ctx = NULL;
+                    return FALSE;
+                }
+            }
+            else {
+                SvSetSV_nosteal(in2_sv, in_sv);
+            }
+
+            if (!FilterCrypto_CryptoUpdate(aTHX_ ctx, in2_sv, out_sv)) {
                 FilterCrypto_CryptoFree(aTHX_ ctx);
                 ctx = NULL;
                 return FALSE;
@@ -288,8 +314,8 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
 
             /* Write the output to the temporary output buffer or output
              * filehandle as appropriate. */
-            if (!FilterCrypto_OutputData(aTHX_ out_sv, update_mode, out_fh,
-                    buf_sv))
+            if (!FilterCrypto_OutputData(aTHX_ out_sv, encode_mode, update_mode,
+                    out_fh, buf_sv))
             {
                 FilterCrypto_CryptoFree(aTHX_ ctx);
                 ctx = NULL;
@@ -327,7 +353,9 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
 
     /* Write the final block of output to the temporary output buffer or output
      * filehandle as appropriate. */
-    if (!FilterCrypto_OutputData(aTHX_ out_sv, update_mode, out_fh, buf_sv)) {
+    if (!FilterCrypto_OutputData(aTHX_ out_sv, encode_mode, update_mode, out_fh,
+            buf_sv))
+    {
         FilterCrypto_CryptoFree(aTHX_ ctx);
         ctx = NULL;
         return FALSE;
@@ -369,29 +397,42 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
 
 /*
  * Function to output data from a given SV to either a filehandle or to another
- * SV.
+ * SV.  The output bytes can be optionally encoded as pairs of hexadecimal
+ * digits.  Zeroes the length of the given SV after output.
  * Returns a bool to indicate success or failure.
  */
 
-static bool FilterCrypto_OutputData(pTHX_ SV *from_sv, bool update_mode,
-    PerlIO *to_fh, SV *to_sv)
+static bool FilterCrypto_OutputData(pTHX_ SV *from_sv, bool encode_mode,
+    bool update_mode, PerlIO *to_fh, SV *to_sv)
 {
+    SV *from2_sv = sv_2mortal(newSV(BUFSIZ * 2));
+    SvPOK_only(from2_sv);
+
+    /* If we are encoding then encode the from SV into the secondary from SV
+     * prior to output; otherwise just copy it. */
+    if (encode_mode) {
+        FilterCrypto_EncodeSV(aTHX_ from_sv, from2_sv);
+    }
+    else {
+        SvSetSV_nosteal(from2_sv, from_sv);
+    }
+
     if (update_mode) {
-        sv_catsv(to_sv, from_sv);
+        sv_catsv(to_sv, from2_sv);
 
 #ifdef FILTER_CRYPTO_DEBUG_MODE
-        FilterCrypto_HexDumpSV(aTHX_ from_sv,
-            "Appended %d bytes to output buffer", SvCUR(from_sv)
+        FilterCrypto_HexDumpSV(aTHX_ from2_sv,
+            "Appended %d bytes to output buffer", SvCUR(from2_sv)
         );
 #endif
     }
     else {
         /* Get the data and length to output. */
-        const unsigned char *from_text =
-            (const unsigned char *)SvPVX_const(from_sv);
-        int from_len = SvCUR(from_sv);
+        const unsigned char *from2_text =
+            (const unsigned char *)SvPVX_const(from2_sv);
+        int from2_len = SvCUR(from2_sv);
 
-        if (PerlIO_write(to_fh, from_text, from_len) < from_len) {
+        if (PerlIO_write(to_fh, from2_text, from2_len) < from2_len) {
             FilterCrypto_SetErrStr(aTHX_
                 "Can't write to output filehandle: %s",
                 FILTER_CRYPTO_SYS_ERR_STR
@@ -400,8 +441,8 @@ static bool FilterCrypto_OutputData(pTHX_ SV *from_sv, bool update_mode,
         }
 
 #ifdef FILTER_CRYPTO_DEBUG_MODE
-        FilterCrypto_HexDump(aTHX_ from_text, from_len,
-            "Wrote %d bytes to output stream", from_len
+        FilterCrypto_HexDump(aTHX_ from2_text, from2_len,
+            "Wrote %d bytes to output stream", from2_len
         );
 #endif
     }

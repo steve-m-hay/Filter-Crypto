@@ -6,7 +6,7 @@
  *   Common C code for Filter::Crypto modules.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -88,7 +88,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#define NEED_sv_2pv_flags               /* For SvPV_{nolen_}const().          */
+#define NEED_sv_2pv_flags               /* For SvPV{X}_{nolen_}const().       */
 #define NEED_PL_parser                  /* For PL_rsfp_filters.               */
 #include "ppport.h"
 
@@ -190,6 +190,8 @@ static bool FilterCrypto_PRNGInit(pTHX);
 static int FilterCrypto_GetRandNum(pTHX_ int min, int max);
 static unsigned long FilterCrypto_GetLastSSLError(void);
 static void FilterCrypto_SetErrStr(pTHX_ const char *value, ...);
+static void FilterCrypto_EncodeSV(pTHX_ const SV *in_sv, SV *out_sv);
+static bool FilterCrypto_DecodeSV(pTHX_ const SV *in_sv, SV *out_sv);
 #ifdef FILTER_CRYPTO_DEBUG_MODE
 static void FilterCrypto_vHexDump(pTHX_ const unsigned char *data,
     unsigned int len, const char *title, va_list args);
@@ -987,6 +989,97 @@ static void FilterCrypto_SetErrStr(pTHX_ const char *value, ...) {
     va_end(args);
 }
 
+/*
+ * Function to encode the text from one SV into another SV.  Each byte is
+ * encoded as a pair of hexadecimal digits.
+ */
+
+static void FilterCrypto_EncodeSV(pTHX_ const SV *in_sv, SV *out_sv)
+{
+    const unsigned char *in_text;
+    unsigned char *out_text;
+    STRLEN in_len;
+    STRLEN out_len;
+    unsigned int i;
+
+    /* Clear the output SV before encoding into it. */
+    FilterCrypto_SvSetCUR(out_sv, 0);
+
+    in_text = (const unsigned char *)SvPVX_const(in_sv);
+    out_text = (unsigned char *)SvPVX(out_sv);
+    in_len = SvCUR(in_sv);
+    out_len = SvCUR(out_sv);
+
+    for (i = 0; i < in_len; i++) {
+        sprintf(out_text + 2 * i, "%02x", in_text[i]);
+        out_len += 2;
+    }
+
+#ifdef FILTER_CRYPTO_DEBUG_MODE
+    FilterCrypto_HexDump(aTHX_ out_text, out_len,
+        "Encoded %d bytes to %d bytes", in_len, out_len
+    );
+#endif
+
+    /* Set the output length in the output SV. */
+    FilterCrypto_SvSetCUR(out_sv, out_len);
+}
+
+/*
+ * Function to decode the text from one SV into another SV.  Inverse function
+ * of FilterCrypto_EncodeSV().
+ */
+
+static bool FilterCrypto_DecodeSV(pTHX_ const SV *in_sv, SV *out_sv) {
+    const unsigned char *in_text;
+    unsigned char *out_text;
+    STRLEN in_len;
+    STRLEN out_len;
+    unsigned int i;
+
+    /* Clear the output SV before decoding into it. */
+    FilterCrypto_SvSetCUR(out_sv, 0);
+
+    in_text = (const unsigned char *)SvPVX_const(in_sv);
+    out_text = (unsigned char *)SvPVX(out_sv);
+    in_len = SvCUR(in_sv);
+    out_len = SvCUR(out_sv);
+
+    if (in_len % 2) {
+        FilterCrypto_SetErrStr(aTHX_
+            "Can't decode odd-numbered (%d-byte) length hexadecimal text",
+            in_len
+        );
+        return FALSE;
+    }
+
+    for (i = 0; i < in_len; i++) {
+        if (!isXDIGIT(in_text[i])) {
+            FilterCrypto_SetErrStr(aTHX_
+                "Can't decode non-hexadecimal digit (byte %02x at position %d) "
+                "in hexadecimal text", in_text[i], i + 1
+            );
+            return FALSE;
+        }
+    }
+
+    for (i = 0; i < in_len; i += 2) {
+        sscanf(in_text + i, "%02x", &out_text[i / 2]);
+        out_len++;
+    }
+
+#ifdef FILTER_CRYPTO_DEBUG_MODE
+    FilterCrypto_HexDump(aTHX_ out_text, out_len,
+        "Decoded %d bytes to %d bytes", in_len, out_len
+    );
+#endif
+
+    /* Set the output length in the output SV. */
+    FilterCrypto_SvSetCUR(out_sv, out_len);
+
+    return TRUE;
+}
+
 #ifdef FILTER_CRYPTO_DEBUG_MODE
 /*
  * Function to print a dump of the given data.  Each character (octet) is shown
@@ -1042,7 +1135,8 @@ static void FilterCrypto_HexDumpSV(pTHX_ const SV *sv, const char *title, ...) {
     const unsigned char *data;
     va_list args;
 
-    data = (const unsigned char *)SvPV_const((SV *)sv, len);
+    data = (const unsigned char *)SvPVX_const(sv);
+    len = SvCUR(sv);
     va_start(args, title);
     FilterCrypto_vHexDump(aTHX_ data, len, title, args);
     va_end(args);

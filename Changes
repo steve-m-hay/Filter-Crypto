@@ -1,9 +1,18 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.36
+                          Filter::Crypto, Version 2.00
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v2.00 19 May 2012
+
+    - Changed the formatting of encrypted source code, with each byte of the
+      typically "binary" data now output as a pair of hexadecimal digits and
+      therefore no longer susceptible to breakage caused by perl reading source
+      files in "text" mode, which has become the default on Windows since Perl
+      5.13.11 (specifically, perl change #270ca148cf).
 _________________
 
 v1.36 20 Mar 2012

@@ -29,7 +29,7 @@ use warnings;
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.36';
+    $VERSION = '2.00';
 }
 
 1;
@@ -197,6 +197,23 @@ who shall remain anonymous:
     STICK IT UP YOUR ASS?!"
         -- Klortho
 
+=head1 COMPATIBILITY
+
+Before version 2.00 of this distribution, encrypted source code was simply the
+raw output of the chosen encryption algorithm, which is typically "binary" data
+and therefore susceptible to breakage caused by perl reading source files in
+"text" mode, which has become the default on Windows since Perl 5.13.11
+(specifically, perl change #270ca148cf).
+
+As of version 2.00 of this distribution, each byte of encrypted source code is
+now output as a pair of hexadecimal digits and therefore no longer susceptible
+to such breakage.
+
+B<THIS IS AN INCOMPATIBLE CHANGE.  CURRENT VERSIONS OF THESE MODULES WILL NOT BE
+ABLE TO DECRYPT FILES ENCRYPTED WITH VERSIONS OF THESE MODULES PRIOR TO VERSION
+2.00 OF THIS DISTRIBUTION, EVEN WHEN BUILT WITH THE SAME CONFIGURATION OPTIONS.
+EXISTING ENCRYPTED FILES WILL NEED TO BE RE-ENCRYPTED.>
+
 =head1 FEEDBACK
 
 Patches, bug reports, suggestions or any other feedback is welcome.
@@ -263,11 +280,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.36
+Version 2.00
 
 =head1 DATE
 
-20 Mar 2012
+19 May 2012
 
 =head1 HISTORY
 
