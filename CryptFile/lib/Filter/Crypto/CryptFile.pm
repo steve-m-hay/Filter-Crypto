@@ -55,13 +55,13 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '1.00';
+    $VERSION = '1.10';
+
+    XSLoader::load(__PACKAGE__, $VERSION);
 }
 
 # Last error message.
 our $ErrStr = '';
-
-XSLoader::load(__PACKAGE__, $VERSION);
 
 #===============================================================================
 # PUBLIC API
@@ -576,6 +576,11 @@ name, but the argument passed was none of these things.
 (F) You attempted to lookup the value of the specified constant in the
 Filter::Crypto::CryptFile module, but that constant is unknown to this module.
 
+=item No such package '%s'
+
+(F) This module's bootstrap function was called on the specified package, which
+doesn't exist.
+
 =item Random IV may not be cryptographically strong
 
 (W) libcrypto's random number generator failed to generate cryptographically
@@ -897,11 +902,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.00
+Version 1.10
 
 =head1 DATE
 
-01 Nov 2004
+12 Dec 2004
 
 =head1 HISTORY
 

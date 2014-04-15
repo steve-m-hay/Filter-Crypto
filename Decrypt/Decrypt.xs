@@ -18,8 +18,6 @@
  * C CODE SECTION
  *============================================================================*/
 
-#define FILTER_CRYPTO_PACKAGE_NAME "Filter::Crypto::Decrypt"
-
 #include "../CryptoCommon-c.inc"
 
                                         /* PERL_MAGIC_ext was added in Perl   */

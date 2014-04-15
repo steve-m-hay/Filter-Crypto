@@ -1,9 +1,34 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.00
+                          Filter::Crypto, Version 1.10
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.10 12 Dec 2004
+
+    - Fix for running encrypted scripts in a mod_perl Apache::Registry setup.
+
+      In such a setup the END subroutine in the CryptoCommon-xs.inc file, which
+      free()'s memory allocated in the BOOT: XSUB, gets runs at the end of each
+      request (unless the script being filtered was preloaded by the parent
+      server process) which caused multiple free()'s of memory that was only
+      allocated once (at boot time, in the BOOT: XSUB).
+
+      Instead, we now create a dummy object, blessed into the package concerned,
+      which persists throughout the process' lifetime.  When the process exits,
+      the object's DESTROY method gets invoked, which is where we now do our
+      cleanup.
+
+    - Moved XSLoader::load() calls inside BEGIN subroutines as recommended by
+      the XSLoader manpage.  This means that the XSUB's are now installed before
+      the rest of the Perl module is compiled, and hence their prototypes are
+      now known, and can be checked, during the remaining compilation.
+
+    - Modified t/*-leaktest.pl to output the PID of the perl process running
+      them so that it is easier to see which process to watch the memory usage
+      of.
 _________________
 
 v1.00 01 Nov 2004

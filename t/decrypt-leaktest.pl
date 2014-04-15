@@ -87,7 +87,9 @@ MAIN: {
     crypt_file($file2) or die "crypt_file($file2) failed\n";
 
     print "Running decryption filter indefinitely.\n" .
-          "Watch your memory usage, and press Ctrl+C to quit.\n\n";
+          "Watch your memory usage (PID $$), and press Ctrl+C to quit.\n" .
+          "Press RETURN to begin...\n";
+    <STDIN>;
 
     $interrupted = 0;
 

@@ -70,7 +70,9 @@ MAIN: {
     close $fh;
 
     print "Running crypt_file() indefinitely.\n" .
-          "Watch your memory usage, and press Ctrl+C to quit.\n\n";
+          "Watch your memory usage (PID $$), and press Ctrl+C to quit.\n" .
+          "Press RETURN to begin...\n";
+    <STDIN>;
 
     $interrupted = 0;
 

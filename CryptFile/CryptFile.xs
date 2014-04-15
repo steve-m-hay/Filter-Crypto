@@ -21,8 +21,6 @@
 #include <stdlib.h>                     /* For errno.                         */
 #include <string.h>                     /* For strerror().                    */
 
-#define FILTER_CRYPTO_PACKAGE_NAME "Filter::Crypto::CryptFile"
-
 #include "../CryptoCommon-c.inc"
 
 /* Define some extra crypt modes.  The decrypt mode and encrypt mode values
