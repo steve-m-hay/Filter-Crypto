@@ -7,7 +7,7 @@
 #   Test script to check crypt_file() function (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2009 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -52,6 +52,9 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
+    my $fh;
+    my $mbfile = 'myblib.pm';
+    my $mbname = 'myblib';
     my $ifile  = 'test.pl';
     my $ofile  = 'test.enc.pl';
     my $iofile = $ifile;
@@ -60,18 +63,16 @@ MAIN: {
     my $head   = 'use Filter::Crypto::Decrypt;';
     my $qrhead = qr/^\Q$head\E/;
 
-    my $perl;
-    my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
-    if ($] < 5.007003) {
-        # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which
-        # looks ugly when we spawn a child perl process.
-        $perl = qq[$perl_exe -Iblib/arch -Iblib/lib];
-    }
-    else {
-        $perl = qq[$perl_exe -Mblib];
-    }
+    # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which looks
+    # ugly when we spawn a child perl process and breaks the --silent test.
+    open $fh, ">$mbfile" or die "Can't create file '$mbfile': $!\n";
+    print $fh qq[local \$SIG{__WARN__} = sub { };\neval 'use blib';\n1;\n];
+    close $fh;
 
-    my($fh, $ifh, $ofh, $iofh, $contents, $saved_contents, $line, $i, $n);
+    my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
+    my $perl = qq[$perl_exe -M$mbname];
+
+    my($ifh, $ofh, $iofh, $contents, $saved_contents, $line, $i, $n);
 
     unlink $ifile or die "Can't delete file '$ifile': $!\n" if -e $ifile;
     unlink $ofile or die "Can't delete file '$ofile': $!\n" if -e $ofile;
@@ -704,6 +705,7 @@ MAIN: {
         is($line, $str, '... and encrypted file runs OK');
     }
 
+    unlink $mbfile;
     unlink $ifile;
     unlink $ofile;
 }

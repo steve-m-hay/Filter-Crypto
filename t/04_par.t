@@ -7,7 +7,7 @@
 #   Test script to check PAR::Filter::Crypto module (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2008 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2008-2009 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -74,22 +74,23 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-    my $ifile = 'test.pl';
-    my $ofile = "test$Config{_exe}";
-    my $str   = 'Hello, world.';
-    my $prog  = qq[use strict; print "$str\\n";\n];
-    my $head  = 'use Filter::Crypto::Decrypt;';
+    my $fh;
+    my $mbfile = 'myblib.pm';
+    my $mbname = 'myblib';
+    my $ifile  = 'test.pl';
+    my $ofile  = "test$Config{_exe}";
+    my $str    = 'Hello, world.';
+    my $prog   = qq[use strict; print "$str\\n";\n];
+    my $head   = 'use Filter::Crypto::Decrypt;';
 
-    my $perl;
+    # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which looks
+    # ugly when we spawn a child perl process and breaks the --silent test.
+    open $fh, ">$mbfile" or die "Can't create file '$mbfile': $!\n";
+    print $fh qq[local \$SIG{__WARN__} = sub { };\neval 'use blib';\n1;\n];
+    close $fh;
+
     my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
-    if ($] < 5.007003) {
-        # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which
-        # looks ugly when we spawn a child perl process.
-        $perl = qq[$perl_exe -Iblib/arch -Iblib/lib];
-    }
-    else {
-        $perl = qq[$perl_exe -Mblib];
-    }
+    my $perl = qq[$perl_exe -M$mbname];
 
     my $have_archive_zip = eval { require Archive::Zip; 1 };
     my $have_broken_module_scandeps;
@@ -97,7 +98,7 @@ MAIN: {
         $have_broken_module_scandeps = ($Module::ScanDeps::VERSION eq '0.75');
     }
 
-    my($fh, $line, $cur_ofile);
+    my($line, $cur_ofile);
 
     unlink $ifile or die "Can't delete file '$ifile': $!\n" if -e $ifile;
     unlink $ofile or die "Can't delete file '$ofile': $!\n" if -e $ofile;
@@ -170,6 +171,7 @@ MAIN: {
         is($line, $str, 'Running the PAR archive produces the expected output');
     }
 
+    unlink $mbfile;
     unlink $ifile;
     unlink $ofile;
 }

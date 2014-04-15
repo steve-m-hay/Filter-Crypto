@@ -8,7 +8,7 @@
 #   Filter-Crypto distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2008 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2008-2009 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -77,7 +77,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::PRIVATE);
 
-    $VERSION = '1.06';
+    $VERSION = '1.07';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(
@@ -107,6 +107,27 @@ BEGIN {
 
 sub get_filter_crypto_private_obj {
     return shift;
+}
+
+# Method to check the Perl being used isn't a "debug" mode build, unless
+# Makefile.PL was invoked with the "--debug-mode" command-line option, in which
+# case it is okay.
+# Only check whether the DEBUGGING symbol is defined in Perl's C compiler flags
+# here. This is sufficient to catch all normal cases. Fuller checks are
+# performed in Decrypt.xs's "BOOT" code (the check is only relevant when the
+# Decrypt component is built).
+
+sub check_perl {
+    my $self = shift;
+
+    return if exists $self->opts()->{'debug-mode'};
+
+    if ($Config{ccflags} =~ /(?:^|\s)-DDEBUGGING(?:\s|$)/) {
+        $self->exit_with_error(134,
+            'OS unsupported: The "Decrypt" component requires a "release" ' .
+            'mode build of Perl (i.e. one built without DEBUGGING)'
+        );
+    }
 }
 
 sub locate_openssl {

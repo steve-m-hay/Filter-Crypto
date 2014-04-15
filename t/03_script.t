@@ -7,7 +7,7 @@
 #   Test script to check crypt_file script (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2007, 2009 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -34,7 +34,7 @@ my($top_dir, $lib_dir);
 
 BEGIN {
     if ($] < 5.006001) {
-        # Before 5.6.0, Cwd::abs_path() did not correctly clean-up Win32 paths
+        # Before 5.6.1, Cwd::abs_path() did not correctly clean-up Win32 paths
         # like C:\Temp\.., which breaks the -d/-r/-t tests, so do it the hard
         # way instead.  Do it for all OS's just in case.
         my $cwd = cwd();
@@ -61,6 +61,9 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
+    my $fh;
+    my $mbfile = 'myblib.pm';
+    my $mbname = 'myblib';
     my $ifile  = 'test.pl';
     my $ofile  = 'test.enc.pl';
     my $iofile = $ifile;
@@ -80,17 +83,14 @@ MAIN: {
     my $q      = $^O =~ /MSWin32/io ? '' : "'";
     my $null   = devnull();
 
-    my $perl;
+    # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which looks
+    # ugly when we spawn a child perl process and breaks the --silent test.
+    open $fh, ">$mbfile" or die "Can't create file '$mbfile': $!\n";
+    print $fh qq[local \$SIG{__WARN__} = sub { };\neval 'use blib';\n1;\n];
+    close $fh;
+
     my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
-    if ($] < 5.007003) {
-        # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which
-        # looks ugly when we spawn a child perl process and breaks the --silent
-        # test.
-        $perl = qq[$perl_exe -Iblib/arch -Iblib/lib];
-    }
-    else {
-        $perl = qq[$perl_exe -Mblib];
-    }
+    my $perl = qq[$perl_exe -M$mbname];
 
     my $have_decrypt   = -f catfile($lib_dir, 'Decrypt.pm');
     my $have_file_temp = eval { require File::Temp; 1 };
@@ -100,7 +100,7 @@ MAIN: {
     require Filter::Crypto::CryptFile;
     my $debug_mode = Filter::Crypto::CryptFile::_debug_mode();
 
-    my($fh, $contents, $line, $dfile, $rdir, $abs_ifile, $cdir, $ddir);
+    my($contents, $line, $dfile, $rdir, $abs_ifile, $cdir, $ddir);
     my($dir3, $dir4, $dir5, $expected, $file, $data);
 
     unlink $ifile or die "Can't delete file '$ifile': $!\n" if -e $ifile;
@@ -625,6 +625,7 @@ MAIN: {
              '-m option works');
     }
 
+    unlink $mbfile;
     unlink $ifile;
     unlink $ofile;
     unlink $lfile;

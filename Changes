@@ -1,21 +1,45 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.25
+                          Filter::Crypto, Version 1.26
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
 _________________
 
+v1.26 18 Oct 2009
+
+    - Declared a minimum version of 1.15 for Pod::Usage.  (In the course of
+      investigating [cpan #50533], which I still haven't resolved as of this
+      writing, I found that t/03_script.t fails test 99 when using a Perl build
+      with an architecture-dependent lib/ folder if Pod[-]Parser is 1.21 or
+      older (which contains Pod::Usage 1.14 or older) due to a bug that was
+      explicitly fixed in PodParser 1.22 (which contains Pod::Usage 1.15).)
+
+    - Added missing declaration of test scripts' dependency on blib.
+
+    - Silenced a warning produced by old versions of blib by installing an empty
+      $SIG{__WARN__} handler when loading it, rather than by not using blib.
+      This ensures that the extra work done by blib compared to the simplistic
+      "perl -Iblib/arch -Iblib/lib ..." approach is not missed, which might have
+      some bearing on some of the CPAN Testers' "FAIL" reports (most of which
+      relate to a sufficiently old Perl version to have the old blib concerned).
+
+    - Added a check for "debug" mode Perl builds in Makefile.PL when building
+      the "Decrypt" component.  This should ensure that CPAN Testers report
+      "N/A" rather than "UNKNOWN" if their Perl builds are "debug" mode.
+_________________
+
 v1.25 11 Oct 2009
 
     - Declare all core module dependencies in the Makefile.PL as well as the
-      existing CPAN module dependencies. (Fixes [cpan #50107]. Thanks to Andreas
-      Koenig <ANDK@cpan.org> for persuading me of the merits of doing this.)
+      existing CPAN module dependencies.  (Fixes [cpan #50107].  Thanks to
+      Andreas Koenig <ANDK@cpan.org> for persuading me of the merits of doing
+      this.)
 _________________
 
 v1.24 06 Sep 2009
 
-    - Use Scalar::Util::reftype() instead of UNIVERSAL::isa(). The latter is
+    - Use Scalar::Util::reftype() instead of UNIVERSAL::isa().  The latter is
       explicitly warned against in the UNIVERSAL documentation, and this also
       avoids a deprecation warning from UNIVERSAL->import() in Perl 5.11.x which
       caused t/03_script.t tests 42 and 47 to fail.
@@ -34,8 +58,8 @@ v1.22 25 Aug 2008
 
     - Fixed PAR::Filter::Crypto so that it doesn't encrypt the
       Filter/Crypto/Decrypt.pm module, otherwise programs created using
-      "pp -F Crypto ..." don't run. Added new tests to check this. (Fixes [cpan
-      #38638].)
+      "pp -F Crypto ..." don't run.  Added new tests to check this.  (Fixes
+      [cpan #38638].)
 
     - Updated Module::Install components from version 0.77 of that distribution.
       (That includes a fix for [cpan #29866], which in turn fixes [cpan #29795]
@@ -77,8 +101,9 @@ _________________
 v1.20 25 Jul 2007
 
     - Fixed the decryption filter code to not crash when there is nothing to
-      decrypt. This allows a file containing just "use Filter::Crypto::Decrypt;"
-      to run exactly as an empty file would be run.
+      decrypt.  This allows a file containing just
+      "use Filter::Crypto::Decrypt;" to run exactly as an empty file would be
+      run.
 
     - Fixed t/03_script.t to skip tests 42 and 47 when built in debug mode since
       they otherwise fail due to the debug output.

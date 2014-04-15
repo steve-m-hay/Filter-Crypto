@@ -26,7 +26,7 @@ use inc::Module::Install;
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.08';
+our $VERSION = '1.09';
 {
     no warnings 'once';
     our $YEAR = '2004-2009';
@@ -52,13 +52,14 @@ MAIN: {
     configure_requires ('File::Spec::Functions');
     configure_requires ('FindBin');
     configure_requires ('Getopt::Long');
-    configure_requires ('Pod::Usage');
+    configure_requires ('Pod::Usage' => '1.15');
     configure_requires ('Text::Wrap');
     configure_requires ('constant');
     configure_requires ('strict');
     configure_requires ('vars');
     configure_requires ('warnings');
     test_requires      ('Test::More');
+    test_requires      ('blib');
     requires           ('Exporter');
     requires           ('Fcntl');
     requires           ('Scalar::Util');
@@ -111,6 +112,10 @@ MAIN: {
     $obj->configure_cipher();
 
     my $build = $obj->query_build();
+
+    if ("@$build" =~ /Decrypt/o) {
+        $obj->check_perl();
+    }
 
     my @script_specs;
     if ("@$build" =~ /CryptFile/o) {
@@ -556,22 +561,6 @@ as follows (a la L<perldiag>):
 as the random number generator (RNG).  Make sure that the module concerned is
 properly installed or use one of the other RNGs instead.
 
-=item OS unsupported: Compiler used to build perl ('%s') not found
-
-(F) The specified compiler that was used to build Perl could not be found and
-therefore could not be used to build this module.
-
-=item OS unsupported: Compiler used to build perl not specified in perl
-configuration
-
-(F) The compiler that was used to build Perl, which can normally be seen by
-running the command:
-
-    perl -V:cc
-
-was not specified in the standard library module Config and therefore could not
-be used to build this module.
-
 =item Could not copy configuration file '%s' to '%s': %s
 
 (F) The specified configuration file (i.e. the file given by the
@@ -694,13 +683,6 @@ the prefix directory.
 there is a full installation of OpenSSL or SSLeay in the location specified by
 the prefix directory.
 
-=item OS unsupported: No prefix directory found for OpenSSL or SSLeay
-
-(F) The OpenSSL or SSLeay prefix directory could not be located.  This error is
-only produced when running non-interactively.  (In interactive mode the user
-will be prompted for the prefix directory if it was not given by the
-B<--prefix-dir> option.)
-
 =item No such cipher mode '%s'
 
 (F) The specified cipher mode (i.e. the mode given by the B<--cipher-mode>
@@ -743,6 +725,44 @@ SSLeay in the location specified by the prefix directory.
 (I) The method called internally to prompt the user for a choice from a list of
 supposedly unique options was passed a list of options that were not all unique.
 
+=item OS unsupported: Compiler used to build perl ('%s') not found
+
+(F) The specified compiler that was used to build Perl could not be found and
+therefore could not be used to build this module.
+
+=item OS unsupported: Compiler used to build perl not specified in perl
+configuration
+
+(F) The compiler that was used to build Perl, which can normally be seen by
+running the command:
+
+    perl -V:cc
+
+was not specified in the standard library module Config and therefore could not
+be used to build this module.
+
+=item OS unsupported: No prefix directory found for OpenSSL or SSLeay
+
+(F) The OpenSSL or SSLeay prefix directory could not be located.  This error is
+only produced when running non-interactively.  (In interactive mode the user
+will be prompted for the prefix directory if it was not given by the
+B<--prefix-dir> option.)
+
+=item OS unsupported: The "Decrypt" component requires a "release" mode build of
+Perl (i.e. one built without DEBUGGING)
+
+(F) The Perl being used was built in "debug" mode, which is not supported by the
+"Decrypt" component unless specifically enabled with the B<--debug-mode>
+command-line option.
+
+=item OS unsupported: Wrong compiler version ('%s'). Perl was built with version
+'%s'. Please see INSTALL file for details
+
+(F) A different version of the compiler that was used to build Perl is being
+used to build this module.  This is not allowed since it is known to cause
+breakages with some combinations of compilers.  Please use the same compiler to
+build this module as was used to build Perl itself.
+
 =item Unknown key source '%s'
 
 (I) The method called internally to prompt the user for a choice of how to
@@ -772,14 +792,6 @@ instead.
 to locate the OpenSSL or SSLeay to use turned out to be a Cygwin binary, which
 is of no use with the Win32 perl that is being used and will therefore be
 ignored.
-
-=item OS unsupported: Wrong compiler version ('%s'). Perl was built with version
-'%s'. Please see INSTALL file for details
-
-(F) A different version of the compiler that was used to build Perl is being
-used to build this module.  This is not allowed since it is known to cause
-breakages with some combinations of compilers.  Please use the same compiler to
-build this module as was used to build Perl itself.
 
 =back
 
@@ -920,11 +932,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.08
+Version 1.09
 
 =head1 DATE
 
-11 Oct 2009
+18 Oct 2009
 
 =head1 HISTORY
 
