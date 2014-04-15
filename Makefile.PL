@@ -23,10 +23,10 @@ use warnings;
 use inc::Module::Install;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 {
     no warnings 'once';
     our $YEAR = '2004-2005';
@@ -43,6 +43,7 @@ MAIN: {
     author         ('Steve Hay <shay@cpan.org>');
     license        ('perl');
     perl_version   (5.006000);
+    build_requires ('Test::More');
     features       ('crypt_file -e tempfile support' => [
         -default   => 0,
         recommends ('File::Temp')
@@ -651,12 +652,6 @@ option) is not valid.
 (W) The response supplied by the user to an interactive prompt was not valid.
 The user will be prompted again until a valid response is supplied.
 
-=item No binary directory found
-
-(F) The OpenSSL or SSLeay binary directory could not be located.  Ensure that
-there is a full installation of OpenSSL or SSLeay in the location specified by
-the prefix directory.
-
 =item No binary executable found
 
 (F) The main OpenSSL or SSLeay binary executable could not be located.  Ensure
@@ -672,12 +667,6 @@ the prefix directory.
 =item No include directory found
 
 (F) The OpenSSL or SSLeay include directory could not be located.  Ensure that
-there is a full installation of OpenSSL or SSLeay in the location specified by
-the prefix directory.
-
-=item No library directory found
-
-(F) The OpenSSL or SSLeay library directory could not be located.  Ensure that
 there is a full installation of OpenSSL or SSLeay in the location specified by
 the prefix directory.
 
@@ -893,11 +882,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.02
+Version 1.03
 
 =head1 DATE
 
-01 Jun 2005
+02 Sep 2005
 
 =head1 HISTORY
 

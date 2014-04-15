@@ -23,29 +23,26 @@ use warnings;
 use Cwd qw(abs_path);
 use File::Spec::Functions qw(canonpath catdir catfile updir);
 use FindBin;
-use Test;
+use Test::More;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
-my($have_cryptfile, $num_tests, $top_dir);
-our($ErrStr);
+my $top_dir;
+our $ErrStr;
 
 BEGIN {
-    $num_tests = 5;
-    plan tests => $num_tests;           # Number of tests to be executed
-
     $top_dir = canonpath(abs_path(catdir($FindBin::Bin, updir())));
     my $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     if (-f catfile($lib_dir, 'CryptFile.pm')) {
         require Filter::Crypto::CryptFile;
         Filter::Crypto::CryptFile->import(qw(:DEFAULT $ErrStr));
-        $have_cryptfile = 1;
+        plan tests => 4;
     }
     else {
-        $have_cryptfile = 0;
+        plan skip_all => 'CryptFile component not built';
     }
 
 }
@@ -55,39 +52,32 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-                                        # Test 1: Did we make it this far OK?
-    ok(1);
-
-    unless ($have_cryptfile) {
-        for (2 .. $num_tests) {
-            skip('Skip CryptFile component not built', 1);
-        }
-        exit;
-    }
-
     my $iofile = 'test.pl';
 
     my $crypt_file = catfile($top_dir, 'blib', 'script', 'crypt_file');
 
     my $fh;
 
-                                        # Tests 2-5: Check CryptFile module
     open $fh, ">$iofile";
     close $fh;
 
     crypt_file($iofile, CRYPT_MODE_DECRYPTED());
-    ok($ErrStr eq 'Input data was already decrypted');
+    is($ErrStr, 'Input data was already decrypted',
+       '$ErrStr is set correctly when crypt_file() skips decryption');
 
     crypt_file($iofile);
-    ok($ErrStr eq '');
+    is($ErrStr, '',
+       '$ErrStr is blank when crypt_file() succeeds');
 
     crypt_file($iofile, CRYPT_MODE_ENCRYPTED());
-    ok($ErrStr eq 'Input data was already encrypted');
+    is($ErrStr, 'Input data was already encrypted',
+       '$ErrStr is set correctly when crypt_file() skips encryption');
 
     unlink $iofile;
 
     crypt_file($iofile);
-    ok($ErrStr =~ /^Can't open file '\Q$iofile\E'/);
+    like($ErrStr, qr/^Can't open file '\Q$iofile\E'/,
+         '$ErrStr is set correctly when crypt_file() fails');
 }
 
 #===============================================================================

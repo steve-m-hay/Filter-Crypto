@@ -1,4 +1,4 @@
-#line 1 "inc/Module/Install/Include.pm - C:/perl/site/lib/Module/Install/Include.pm"
+#line 1 "inc/Module/Install/Include.pm - C:/perl5/site/lib/Module/Install/Include.pm"
 package Module::Install::Include;
 use Module::Install::Base; @ISA = qw(Module::Install::Base);
 

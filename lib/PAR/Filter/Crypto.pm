@@ -30,7 +30,7 @@ use Filter::Crypto::CryptFile qw(:DEFAULT $ErrStr);
 use PAR::Filter;
 
 #===============================================================================
-# CLASS INITIALISATION
+# CLASS INITIALIZATION
 #===============================================================================
 
 our(@ISA, $VERSION);
@@ -143,9 +143,9 @@ very large C<__DATA__> sections.
 
 =item C<apply($ref)>
 
-Class method.  Encrypts the Perl source code referred to by I<$ref>, and
-replaces the code referred to by I<$ref> with the encrypted code.  Thus, the
-code in I<$$ref> gets encrypted "in-place".
+Class method.  Encrypts the Perl source code referred to by $ref, and replaces
+the code referred to by $ref with the encrypted code.  Thus, the code in $$ref
+gets encrypted "in-place".
 
 Returns 1 on success, or C<croak()>'s on failure (since the usual caller,
 PAR::Filter::apply(), doesn't bother checking the return value (as of

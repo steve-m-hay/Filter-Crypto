@@ -34,7 +34,7 @@ sub _isa_filehandle($);
 sub _isa_filename($);
 
 #===============================================================================
-# MODULE INITIALISATION
+# MODULE INITIALIZATION
 #===============================================================================
 
 our(@ISA, @EXPORT, @EXPORT_OK, $VERSION);
@@ -356,21 +356,20 @@ the null string) in order to be determined automatically by C<crypt_file()>.
 
 =item C<crypt_file($in_out_fh[, $crypt_mode])>
 
-If two open filehandles, I<$in_fh> and I<$out_fh>, are supplied then input is
-read from I<$in_fh>, encrypted or decrypted, and the output is written to
-I<$out_fh>.  Clearly I<$in_fh> must have been opened for reading and I<$out_fh>
-must have been opened for writing.  Only a small amount of data is held in
-memory at any time, so this method is safe to use for "large" files without
-using unduly large amounts of memory.
+If two open filehandles, $in_fh and $out_fh, are supplied then input is read
+from $in_fh, encrypted or decrypted, and the output is written to $out_fh.
+Clearly $in_fh must have been opened for reading and $out_fh must have been
+opened for writing.  Only a small amount of data is held in memory at any time,
+so this method is safe to use for "large" files without using unduly large
+amounts of memory.
 
-If only one open filehandle, I<$in_out_fh>, is supplied then input is read from
-it, encrypted or decrypted, and the output is written back to it after
-truncating the file to zero size.  In this case, I<$in_out_fh> must have been
-opened for "updating" (both reading and writing).  Using this method the whole
-file is read into memory in one go, so it is not suitable for use on "large"
-files.  This is unlikely to be a problem in practice, however, since Perl source
-code files are rarely, if ever, sufficiently large to cause any trouble in this
-regard.
+If only one open filehandle, $in_out_fh, is supplied then input is read from it,
+encrypted or decrypted, and the output is written back to it after truncating
+the file to zero size.  In this case, $in_out_fh must have been opened for
+"updating" (both reading and writing).  Using this method the whole file is read
+into memory in one go, so it is not suitable for use on "large" files.  This is
+unlikely to be a problem in practice, however, since Perl source code files are
+rarely, if ever, sufficiently large to cause any trouble in this regard.
 
 Note that the filehandle being written to when encrypting and the filehandle
 being read from when decrypting I<must> be opened in "binary" mode on those
@@ -385,7 +384,7 @@ be opened appropriately by C<crypt_file()> itself and closed again after use.
 (C<crypt_file()> always opens the filehandles in "binary" mode so any "binary"
 data in the Perl source code will be correctly handled.)
 
-The optional L<I<$crypt_mode>|"Crypt Mode Flags"> argument specifies whether to
+The optional L<$crypt_mode|"Crypt Mode Flags"> argument specifies whether to
 perform encryption or decryption.  If it is omitted or specified as C<undef> or
 the null string then the crypt mode will be determined automatically by reading
 the beginning of the input data.  If the beginning is
@@ -397,13 +396,13 @@ be set to C<CRYPT_MODE_DECRYPT>; otherwise the mode will be set to
 C<CRYPT_MODE_ENCRYPT>.
 
 Returns 1 on success, or a false value (namely, the undefined value in scalar
-context or the empty list in list context) and sets I<$ErrStr> on failure.
+context or the empty list in list context) and sets $ErrStr on failure.
 
 =back
 
 =head2 Crypt Mode Flags
 
-The I<$crypt_mode> argument in C<crypt_file()> specifies whether to encrypt or
+The $crypt_mode argument in C<crypt_file()> specifies whether to encrypt or
 decrypt the input data, as follows:
 
 =over 4
@@ -411,8 +410,8 @@ decrypt the input data, as follows:
 =item C<CRYPT_MODE_AUTO>
 
 Have the crypt mode determined automatically by the same means as described
-under C<crypt_file()> in the case where the I<$crypt_mode> argument is omitted
-or specified as C<undef> or the null string.
+under C<crypt_file()> in the case where the $crypt_mode argument is omitted or
+specified as C<undef> or the null string.
 
 =item C<CRYPT_MODE_ENCRYPT>
 
@@ -459,7 +458,7 @@ decrypted a second time.
 
 =over 4
 
-=item I<$ErrStr>
+=item $ErrStr
 
 Last error message.
 
@@ -467,13 +466,13 @@ If the C<crypt_file()> function fails then a description of the last error will
 be set in this variable for use in reporting the cause of the failure, much like
 the use of the Perl Special Variables C<$!> and C<$^E> after failed system calls
 and OS API calls.  See L<"Error Values"> for a listing of the possible values of
-I<$ErrStr>.
+$ErrStr.
 
 If the function succeeds then this variable will generally be set to the null
 string.  The only exceptions to this are when the crypt mode was specified as
 either C<CRYPT_MODE_ENCRYPTED> or C<CRYPT_MODE_DECRYPTED> and the input data was
 found to be already encrypted or decrypted respectively so that no action was
-required: in these cases a message to this effect will be set in I<$ErrStr>.
+required: in these cases a message to this effect will be set in $ErrStr.
 
 =back
 
@@ -629,8 +628,8 @@ Filter::Crypto::CryptFile module, but that constant is apparently not defined.
 
 =head2 Error Values
 
-The C<crypt_file()> function sets I<$ErrStr> to a value indicating the cause of
-the error when it fails.  The possible values are as follows:
+The C<crypt_file()> function sets $ErrStr to a value indicating the cause of the
+error when it fails.  The possible values are as follows:
 
 =over 4
 

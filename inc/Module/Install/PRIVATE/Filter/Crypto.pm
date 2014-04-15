@@ -68,7 +68,7 @@ use constant BUILD_OPTION_CRYPTFILE => 'CryptFile';
 use constant BUILD_OPTION_DECRYPT   => 'Decrypt';
 
 #===============================================================================
-# CLASS INITIALISATION
+# CLASS INITIALIZATION
 #===============================================================================
 
 our(@ISA, $VERSION);
@@ -76,12 +76,12 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::PRIVATE);
 
-    $VERSION = '1.01';
+    $VERSION = '1.02';
 
     # Define private API accessor methods.
     foreach my $prop (qw(
         _prefix_dir _inc_dir _package _ver_num _ver_str _lib_dir _lib_name
-        _bin_dir _bin_file _cipher_name _cipher_func _cipher_needs_iv _key_len
+        _bin_file _cipher_name _cipher_func _cipher_needs_iv _key_len
         _rc2_key_bits _rc5_rounds _pswd _key
     )) {
         no strict 'refs';
@@ -122,11 +122,9 @@ sub locate_openssl {
     $self->_determine_ver_num();
     $self->_set_define();
 
-    $self->_locate_lib_dir();
-    $self->_determine_lib_name();
+    $self->_locate_lib_dir_and_file();
     $self->_set_libs();
 
-    $self->_locate_bin_dir();
     $self->_locate_bin_file();
     print "\n";
 }
@@ -233,7 +231,7 @@ sub _get_prefix_dir {
         {
             # The binaries are normally located in a sub-directory (bin/,
             # out32/, out32dll/, out32.dbg/, out32dll.dbg or out/) of the prefix
-            # directory.  See _locate_bin_dir().
+            # directory.  See _locate_bin_file().
             my $bin_dir = dirname($bin_file);
             $default = canonpath(abs_path(catdir($bin_dir, updir())));
         }
@@ -453,50 +451,70 @@ sub _set_define {
     $self->define($define);
 }
 
-sub _locate_lib_dir {
+sub _locate_lib_dir_and_file {
     my $self = shift;
 
     # The libraries are normally located in the lib/ sub-directory of the prefix
-    # directory.
+    # directory, but may be in the lib64/ sub-directory on 64-bit systems.  (The
+    # latter may have lib/ directories as well, so check in lib64/ first.)
     # Again, build directories on "native" Windows platforms may have the files
     # in a different sub-directory, in this case out32/, out32dll/, out32.dbg/
     # or out32dll.dbg/ (0.9.0 onwards, depending on whether static or dynamic
     # libraries were built and whether they were built in release or debug mode)
     # or out/ (up to and including 0.8.1b).
     my $prefix_dir = $self->_prefix_dir();
-    my($dir, $lib_dir);
-    if (-d ($dir = catdir($prefix_dir, 'lib'))) {
+    my($dir, $lib_dir, $lib_file, $lib_name);
+    if (-d ($dir = catdir($prefix_dir, 'lib64')) and
+        ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+    {
+        $lib_dir = $dir;
+    }
+    elsif (-d ($dir = catdir($prefix_dir, 'lib')) and
+           ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+    {
         $lib_dir = $dir;
     }
     elsif ($self->is_win32()) {
-        if (-d ($dir = catdir($prefix_dir, 'out32'))) {
+        if (-d ($dir = catdir($prefix_dir, 'out32')) and
+            ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+        {
             $lib_dir = $dir;
         }
-        elsif (-d ($dir = catdir($prefix_dir, 'out32dll'))) {
+        elsif (-d ($dir = catdir($prefix_dir, 'out32dll')) and
+               ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+        {
             $lib_dir = $dir;
         }
-        elsif (-d ($dir = catdir($prefix_dir, 'out32.dbg'))) {
+        elsif (-d ($dir = catdir($prefix_dir, 'out32.dbg')) and
+               ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+        {
             $lib_dir = $dir;
         }
-        elsif (-d ($dir = catdir($prefix_dir, 'out32dll.dbg'))) {
+        elsif (-d ($dir = catdir($prefix_dir, 'out32dll.dbg')) and
+               ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+        {
             $lib_dir = $dir;
         }
-        elsif (-d ($dir = catdir($prefix_dir, 'out'))) {
+        elsif (-d ($dir = catdir($prefix_dir, 'out')) and
+               ($lib_file, $lib_name) = $self->_probe_for_lib_file($dir))
+        {
             $lib_dir = $dir;
         }
     }
 
     if (defined $lib_dir) {
-        $self->_show_found_var('Found library directory', $lib_dir);
-        $self->_lib_dir($lib_dir)
+        $self->_show_found_var('Found crypto library', $lib_file);
+        $self->_lib_dir($lib_dir);
+        $self->_lib_name($lib_name);
     }
     else {
-        $self->_exit_with_error(108, 'No library directory found');
+        $self->_exit_with_error(109, 'No crypto library found');
     }
 }
 
-sub _determine_lib_name {
+sub _probe_for_lib_file {
     my $self = shift;
+    my $candidate_lib_dir = shift;
 
     # The libraries on UNIX-type platforms (which includes Cygwin) are called
     # libssl.a (which contains the SSL and TLS implmentations) and libcrypto.a
@@ -515,48 +533,41 @@ sub _determine_lib_name {
     # called either libssl.a and libcrypto.a (for static builds) or libssl32.a
     # and libeay32.a [sic] (for dynamic builds).  They are specified as on UNIX-
     # type platforms, as described in the ExtUtils::Liblist manpage.
-    my $lib_dir = $self->_lib_dir();
     my($file, $lib_file, $lib_name);
     if ($self->is_win32()) {
         if ($Config{cc} =~ /gcc/io) {
-            if (-f ($file = catfile($lib_dir, 'libcrypto.a'))) {
+            if (-f ($file = catfile($candidate_lib_dir, 'libcrypto.a'))) {
                 $lib_file = $file;
                 $lib_name = 'crypto';
             }
-            elsif (-f ($file = catfile($lib_dir, 'libeay32.a'))) {
+            elsif (-f ($file = catfile($candidate_lib_dir, 'libeay32.a'))) {
                 $lib_file = $file;
                 $lib_name = 'eay32';
             }
         }
         else {
-            if (-f ($file = catfile($lib_dir, 'libeay32.lib'))) {
+            if (-f ($file = catfile($candidate_lib_dir, 'libeay32.lib'))) {
                 $lib_file = $file;
                 $lib_name = 'libeay32';
             }
-            elsif (-f ($file = catfile($lib_dir, 'crypt32.lib'))) {
+            elsif (-f ($file = catfile($candidate_lib_dir, 'crypt32.lib'))) {
                 $lib_file = $file;
                 $lib_name = 'crypt32';
             }
-            elsif (-f ($file = catfile($lib_dir, 'crypto.lib'))) {
+            elsif (-f ($file = catfile($candidate_lib_dir, 'crypto.lib'))) {
                 $lib_file = $file;
                 $lib_name = 'crypto';
             }
         }
     }
     else {
-        if (-f ($file = catfile($lib_dir, 'libcrypto.a'))) {
+        if (-f ($file = catfile($candidate_lib_dir, 'libcrypto.a'))) {
             $lib_file = $file;
             $lib_name = 'crypto';
         }
     }
 
-    if (defined $lib_name) {
-        $self->_show_found_var('Found crypto library', $lib_file);
-        $self->_lib_name($lib_name)
-    }
-    else {
-        $self->_exit_with_error(109, 'No crypto library found');
-    }
+    return $lib_file ? ($lib_file, $lib_name) : ();
 }
 
 sub _set_libs {
@@ -567,7 +578,7 @@ sub _set_libs {
     $self->libs("-L$lib_dir -l$lib_name");
 }
 
-sub _locate_bin_dir {
+sub _locate_bin_file {
     my $self = shift;
 
     # The binaries are normally located in the bin/ sub-directory of the prefix
@@ -579,58 +590,65 @@ sub _locate_bin_dir {
     # on whether static or dynamic libraries were built and whether they were
     # built in release or debug mode) or out/ (up to and including 0.8.1b).
     my $prefix_dir = $self->_prefix_dir();
-    my($dir, $bin_dir);
-    if (-d ($dir = catdir($prefix_dir, 'bin'))) {
-        $bin_dir = $dir;
+    my($dir, $bin_file);
+    my $found = 0;
+    if (-d ($dir = catdir($prefix_dir, 'bin')) and
+        defined($bin_file = $self->_probe_for_bin_file($dir)))
+    {
+        $found = 1;
     }
     elsif ($self->is_win32()) {
-        if (-d ($dir = catdir($prefix_dir, 'out32'))) {
-            $bin_dir = $dir;
+        if (-d ($dir = catdir($prefix_dir, 'out32')) and
+            defined($bin_file = $self->_probe_for_bin_file($dir)))
+        {
+            $found = 1;
         }
-        elsif (-d ($dir = catdir($prefix_dir, 'out32dll'))) {
-            $bin_dir = $dir;
+        elsif (-d ($dir = catdir($prefix_dir, 'out32dll')) and
+               defined($bin_file = $self->_probe_for_bin_file($dir)))
+        {
+            $found = 1;
         }
-        elsif (-d ($dir = catdir($prefix_dir, 'out32.dbg'))) {
-            $bin_dir = $dir;
+        elsif (-d ($dir = catdir($prefix_dir, 'out32.dbg')) and
+               defined($bin_file = $self->_probe_for_bin_file($dir)))
+        {
+            $found = 1;
         }
-        elsif (-d ($dir = catdir($prefix_dir, 'out32dll.dbg'))) {
-            $bin_dir = $dir;
+        elsif (-d ($dir = catdir($prefix_dir, 'out32dll.dbg')) and
+               defined($bin_file = $self->_probe_for_bin_file($dir)))
+        {
+            $found = 1;
         }
-        elsif (-d ($dir = catdir($prefix_dir, 'out'))) {
-            $bin_dir = $dir;
+        elsif (-d ($dir = catdir($prefix_dir, 'out')) and
+               defined($bin_file = $self->_probe_for_bin_file($dir)))
+        {
+            $found = 1;
         }
     }
 
-    if (defined $bin_dir) {
-        $self->_show_found_var('Found binary directory', $bin_dir);
-        $self->_bin_dir($bin_dir)
-    }
-    else {
-        $self->_exit_with_error(110, 'No binary directory found');
-    }
-}
-
-sub _locate_bin_file {
-    my $self = shift;
-
-    # The main binary executable is called "openssl" from 0.9.3 onwards, but
-    # used to be called "ssleay" up to and including 0.9.2b.
-    my $bin_dir = $self->_bin_dir();
-    my($file, $bin_file);
-    if (-f ($file = catfile($bin_dir, "openssl$Config{_exe}"))) {
-        $bin_file = $file;
-    }
-    elsif (-f ($file = catfile($bin_dir, "ssleay$Config{_exe}"))) {
-        $bin_file = $file;
-    }
-
-    if (defined $bin_file) {
+    if ($found) {
         $self->_show_found_var('Found binary executable', $bin_file);
         $self->_bin_file($bin_file)
     }
     else {
         $self->_exit_with_error(111, 'No binary executable found');
     }
+}
+
+sub _probe_for_bin_file {
+    my $self = shift;
+    my $candidate_bin_dir = shift;
+
+    # The main binary executable is called "openssl" from 0.9.3 onwards, but
+    # used to be called "ssleay" up to and including 0.9.2b.
+    my($file, $bin_file);
+    if (-f ($file = catfile($candidate_bin_dir, "openssl$Config{_exe}"))) {
+        $bin_file = $file;
+    }
+    elsif (-f ($file = catfile($candidate_bin_dir, "ssleay$Config{_exe}"))) {
+        $bin_file = $file;
+    }
+
+    return $bin_file;
 }
 
 sub _get_cipher_name {
@@ -1163,7 +1181,7 @@ sub _get_rand_pswd {
 }
 
 sub _get_rand_octets_hex {
-    my $self       = shift;
+    my $self = shift;
     my $num_octets = shift;
 
     my $rng = $self->_get_rng();

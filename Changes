@@ -1,9 +1,42 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.14
+                          Filter::Crypto, Version 1.15
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.15 02 Sep 2005
+
+    - Improved crypto library detection so that the library is now correctly
+      located on 64-bit systems that have both $PREFIX/lib and $PREFIX/lib64.
+      (Fixes cpan #14397.  Thanks to <COSIMO@cpan.org> for assistance with
+      this.)
+
+      Also improved the binary executable detection along the same lines.
+
+    - Changed test scripts from using Test to Test::More for better diagnostic
+      output in case of failures.
+
+    - Updated Module::Install::PRIVATE to version 1.03 for Makefile.PL
+      improvements:
+
+      * Relaxed the compiler version checking so that only the major version
+        numbers have to match (and also the minor version numbers for VC++ 7 and
+        later which use CRT DLL's named msvcr70.dll, msvcr71.dll, etc);
+        
+        (Thanks to Sisyphus <sisyphus1@optusnet.com.au> for drawing attention to
+        this problem via the PAR mailing list (par@perl.org).)
+
+      * Fixed the parsing of bcc32's output as per perl #24855.
+
+    - Dropped the use of I<> for Perl variables in POD, in line with changes
+      made (some time ago) to the perlpod manpage (perl #12542).
+
+    - Corrected spelling mistake: INITIALISATION should be INITIALIZATION.
+
+    - Updated Module::Install and ExtUtils::AutoInstall components from versions
+      0.37 and 0.62 of those distributions respectively.
 _________________
 
 v1.14 01 Jun 2005

@@ -7,7 +7,7 @@
 #   Test script to check crypt_file() function (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -23,28 +23,25 @@ use warnings;
 use Cwd qw(abs_path);
 use File::Spec::Functions qw(canonpath catdir catfile updir);
 use FindBin;
-use Test;
+use Test::More;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
-my($have_cryptfile, $have_decrypt, $num_tests);
+my $have_decrypt;
 
 BEGIN {
-    $num_tests = 290;
-    plan tests => $num_tests;           # Number of tests to be executed
-
     my $top_dir = canonpath(abs_path(catdir($FindBin::Bin, updir())));
     my $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     if (-f catfile($lib_dir, 'CryptFile.pm')) {
         require Filter::Crypto::CryptFile;
-        Filter::Crypto::CryptFile->import();
-        $have_cryptfile = 1;
+        Filter::Crypto::CryptFile->import(qw(:DEFAULT $ErrStr));
+        plan tests => 289;
     }
     else {
-        $have_cryptfile = 0;
+        plan skip_all => 'CryptFile component not built';
     }
 
     $have_decrypt = -f catfile($lib_dir, 'Decrypt.pm');
@@ -55,22 +52,13 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-                                        # Test 1: Did we make it this far OK?
-    ok(1);
-
-    unless ($have_cryptfile) {
-        for (2 .. $num_tests) {
-            skip('Skip CryptFile component not built', 1);
-        }
-        exit;
-    }
-
     my $ifile  = 'test.pl';
     my $ofile  = 'test.enc.pl';
     my $iofile = $ifile;
     my $str    = 'Hello, world.';
     my $prog   = qq[print "$str\\n";\n];
     my $head   = 'use Filter::Crypto::Decrypt;';
+    my $qrhead = qr/^\Q$head\E/;
 
     my $perl;
     my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
@@ -83,7 +71,7 @@ MAIN: {
         $perl = qq[$perl_exe -Mblib];
     }
 
-    my($fh, $ifh, $ofh, $iofh, $contents, $saved_contents, $line, $i);
+    my($fh, $ifh, $ofh, $iofh, $contents, $saved_contents, $line, $i, $n);
 
     unlink $ifile or die "Can't delete file '$ifile': $!\n" if -e $ifile;
     unlink $ofile or die "Can't delete file '$ofile': $!\n" if -e $ofile;
@@ -92,713 +80,628 @@ MAIN: {
     print $fh $prog;
     close $fh;
 
-                                        # Tests 2-4: Check 1-arg (1)
     open $iofh, "+<$iofile" or die "Can't update file '$iofile': $!\n";
     binmode $iofh;
-    ok(crypt_file($iofh));
+    ok(crypt_file($iofh), 'crypt_file($fh) returned OK') or
+        diag("\$ErrStr = '$ErrStr'");
     close $iofh;
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
-                                        # Tests 5-7: Check 1-arg (2)
-    ok(crypt_file($iofile));
+    ok(crypt_file($iofile), 'crypt_file($file) returned OK') or
+        diag("\$ErrStr = '$ErrStr'");
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and decrypted file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $iofile});
+    is($line, $str, '... and decrypted file runs OK');
 
-                                        # Tests 8-10: Check 2-arg (1)
     open $iofh, "+<$iofile" or die "Can't update file '$iofile': $!\n";
     binmode $iofh;
-    ok(crypt_file($iofh, CRYPT_MODE_AUTO()));
+    ok(crypt_file($iofh, CRYPT_MODE_AUTO()),
+       'crypt_file($fh, CRYPT_MODE_AUTO) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $iofh;
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
-                                        # Tests 11-13: Check 2-arg (2)
-    ok(crypt_file($iofile, CRYPT_MODE_AUTO()));
+    ok(crypt_file($iofile, CRYPT_MODE_AUTO()),
+       'crypt_file($file, CRYPT_MODE_AUTO) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and decrypted file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $iofile});
+    is($line, $str, '... and decrypted file runs OK');
 
-                                        # Tests 14-16: Check 2-arg (3)
     open $iofh, "+<$iofile" or die "Can't update file '$iofile': $!\n";
     binmode $iofh;
-    ok(crypt_file($iofh, CRYPT_MODE_ENCRYPT()));
+    ok(crypt_file($iofh, CRYPT_MODE_ENCRYPT()),
+       'crypt_file($fh, CRYPT_MODE_ENCRYPT) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $iofh;
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
     $saved_contents = $contents;
 
-                                        # Tests 17-19: Check 2-arg (4)
     open $iofh, "+<$iofile" or die "Can't update file '$iofile': $!\n";
     binmode $iofh;
-    ok(crypt_file($iofh, CRYPT_MODE_ENCRYPTED()));
+    ok(crypt_file($iofh, CRYPT_MODE_ENCRYPTED()),
+       'crypt_file($fh, CRYPT_MODE_ENCRYPTED) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $iofh;
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $saved_contents);
+    is($contents, $saved_contents, '... and left file encrypted');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file still runs OK');
     }
 
-                                        # Tests 20-22: Check 2-arg (5)
-    ok(crypt_file($iofile, CRYPT_MODE_DECRYPT()));
+    ok(crypt_file($iofile, CRYPT_MODE_DECRYPT()),
+       'crypt_file($file, CRYPT_MODE_DECRYPT) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and decrypted file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $iofile});
+    is($line, $str, '... and decrypted file runs OK');
 
-                                        # Tests 23-25: Check 2-arg (6)
-    ok(crypt_file($iofile, CRYPT_MODE_DECRYPTED()));
+    ok(crypt_file($iofile, CRYPT_MODE_DECRYPTED()),
+       'crypt_file($file, CRYPT_MODE_DECRYPTED) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left file decrypted');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $iofile});
+    is($line, $str, '... and decrypted file still runs OK');
 
-                                        # Tests 26-29: Check 2-arg (7)
     open $ifh, $ifile or die "Can't read file '$ifile': $!\n";
     binmode $ifh;
     open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ifh, $ofh));
+    ok(crypt_file($ifh, $ofh), 'crypt_file($fh1, $fh2) returned OK') or
+        diag("\$ErrStr = '$ErrStr'");
     close $ofh;
     close $ifh;
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ifile;
 
-                                        # Tests 30-33: Check 2-arg (8)
     open $ofh, $ofile or die "Can't read file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ofh, $ifile));
+    ok(crypt_file($ofh, $ifile), 'crypt_file($fh, $file) returned OK') or
+        diag("\$ErrStr = '$ErrStr'");
     close $ofh;
 
-    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents eq $prog);
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and left input file encrypted');
+    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and decrypted output file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $ifile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $ifile});
+    is($line, $str, '... and decrypted output file runs OK');
 
     unlink $ofile;
 
-                                        # Tests 34-37: Check 2-arg (9)
     open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ifile, $ofh));
+    ok(crypt_file($ifile, $ofh), 'crypt_file($file, $fh) returned OK') or
+        diag("\$ErrStr = '$ErrStr'");
     close $ofh;
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ifile;
 
-                                        # Tests 38-41: Check 2-arg (10)
-    ok(crypt_file($ofile, $ifile));
+    ok(crypt_file($ofile, $ifile), 'crypt_file($file1, $file2) returned OK') or
+        diag("\$ErrStr = '$ErrStr'");
 
-    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents eq $prog);
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and left input file encrypted');
+    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and decrypted output file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $ifile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $ifile});
+    is($line, $str, '... and decrypted output file runs OK');
 
     unlink $ofile;
 
-                                        # Tests 42-45: Check 3-arg (1)
     open $ifh, $ifile or die "Can't read file '$ifile': $!\n";
     binmode $ifh;
     open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ifh, $ofh, CRYPT_MODE_AUTO()));
+    ok(crypt_file($ifh, $ofh, CRYPT_MODE_AUTO()),
+       'crypt_file($fh1, $fh2, CRYPT_MODE_AUTO) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
     close $ifh;
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ifile;
 
-                                        # Tests 46-49: Check 3-arg (2)
     open $ofh, $ofile or die "Can't read file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ofh, $ifile, CRYPT_MODE_AUTO()));
+    ok(crypt_file($ofh, $ifile, CRYPT_MODE_AUTO()),
+       'crypt_file($fh, $file, CRYPT_MODE_AUTO) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
 
-    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents eq $prog);
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and left input file encrypted');
+    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and decrypted output file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $ifile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $ifile});
+    is($line, $str, '... and decrypted output file runs OK');
 
     unlink $ofile;
 
-                                        # Tests 50-53: Check 3-arg (3)
     open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ifile, $ofh, CRYPT_MODE_AUTO()));
+    ok(crypt_file($ifile, $ofh, CRYPT_MODE_AUTO()),
+       'crypt_file($file, $fh, CRYPT_MODE_AUTO) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ifile;
 
-                                        # Tests 54-57: Check 3-arg (4)
-    ok(crypt_file($ofile, $ifile, CRYPT_MODE_AUTO()));
+    ok(crypt_file($ofile, $ifile, CRYPT_MODE_AUTO()),
+       'crypt_file($file1, $file2, CRYPT_MODE_AUTO) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
 
-    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents eq $prog);
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and left input file encrypted');
+    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and decrypted output file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $ifile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $ifile});
+    is($line, $str, '... and decrypted output file runs OK');
 
     unlink $ofile;
 
-                                        # Tests 58-61: Check 3-arg (5)
     open $ifh, $ifile or die "Can't read file '$ifile': $!\n";
     binmode $ifh;
     open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ifh, $ofh, CRYPT_MODE_ENCRYPT()));
+    ok(crypt_file($ifh, $ofh, CRYPT_MODE_ENCRYPT()),
+       'crypt_file($fh1, $fh2, CRYPT_MODE_ENCRYPT) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
     close $ifh;
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left intput file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ofile;
 
-                                        # Tests 62-65: Check 3-arg (6)
     open $ifh, $ifile or die "Can't read file '$ifile': $!\n";
     binmode $ifh;
     open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ifh, $ofh, CRYPT_MODE_ENCRYPTED()));
+    ok(crypt_file($ifh, $ofh, CRYPT_MODE_ENCRYPTED()),
+       'crypt_file($fh1, $fh2, CRYPT_MODE_ENCRYPTED) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
     close $ifh;
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ifile;
 
-                                        # Tests 66-69: Check 3-arg (7)
     open $ofh, $ofile or die "Can't read file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ofh, $ifile, CRYPT_MODE_DECRYPT()));
+    ok(crypt_file($ofh, $ifile, CRYPT_MODE_DECRYPT()),
+       'crypt_file($fh, $file, CRYPT_MODE_DECRYPT) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
+    close $ofh;
+
+    open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    like($contents, $qrhead, '... and left intput file encrypted');
+    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and decrypted output file OK');
+
+    chomp($line = qx{$perl $ifile});
+    is($line, $str, '... and decrypted output file runs OK');
+
+    unlink $ifile;
+
+    open $ofh, $ofile or die "Can't read file '$ofile': $!\n";
+    binmode $ofh;
+    ok(crypt_file($ofh, $ifile, CRYPT_MODE_DECRYPTED()),
+       'crypt_file($fh, $file, CRYPT_MODE_DECRYPTED) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
+    close $ofh;
+
+    open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    like($contents, $qrhead, '... and left input file encrypted');
+    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and decrypted output file OK');
+
+    chomp($line = qx{$perl $ifile});
+    is($line, $str, '... and decrypted output file runs OK');
+
+    unlink $ofile;
+
+    open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
+    binmode $ofh;
+    ok(crypt_file($ifile, $ofh, CRYPT_MODE_ENCRYPT()),
+       'crypt_file($file, $fh, CRYPT_MODE_ENCRYPT) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $ifile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
-
-    unlink $ifile;
-
-                                        # Tests 70-73: Check 3-arg (8)
-    open $ofh, $ofile or die "Can't read file '$ofile': $!\n";
-    binmode $ofh;
-    ok(crypt_file($ofh, $ifile, CRYPT_MODE_DECRYPTED()));
-    close $ofh;
-
-    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents eq $prog);
-    open $fh, $ofile or die "Can't read file '$ofile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents =~ /^\Q$head\E/);
-
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $ifile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
+        chomp($line = qx{$perl $ofile});
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ofile;
 
-                                        # Tests 74-77: Check 3-arg (9)
     open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
     binmode $ofh;
-    ok(crypt_file($ifile, $ofh, CRYPT_MODE_ENCRYPT()));
+    ok(crypt_file($ifile, $ofh, CRYPT_MODE_ENCRYPTED()),
+       'crypt_file($file, $fh, CRYPT_MODE_ENCRYPTED) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
-
-    unlink $ofile;
-
-                                        # Tests 78-81: Check 3-arg (10)
-    open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
-    binmode $ofh;
-    ok(crypt_file($ifile, $ofh, CRYPT_MODE_ENCRYPTED()));
-    close $ofh;
-
-    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents eq $prog);
-    open $fh, $ofile or die "Can't read file '$ofile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents =~ /^\Q$head\E/);
-
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ifile;
 
-                                        # Tests 82-85: Check 3-arg (11)
-    ok(crypt_file($ofile, $ifile, CRYPT_MODE_DECRYPT()));
+    ok(crypt_file($ofile, $ifile, CRYPT_MODE_DECRYPT()),
+       'crypt_file($file1, $file2, CRYPT_MODE_DECRYPT) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
 
-    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents eq $prog);
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and left input file encrypted');
+    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and decrypted output file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $ifile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $ifile});
+    is($line, $str, '... and decrypted output file runs OK');
 
     unlink $ifile;
 
-                                        # Tests 86-89: Check 3-arg (12)
-    ok(crypt_file($ofile, $ifile, CRYPT_MODE_DECRYPTED()));
+    ok(crypt_file($ofile, $ifile, CRYPT_MODE_DECRYPTED()),
+       'crypt_file($file1, $file2, CRYPT_MODE_DECRYPTED) returned OK') or
+       diag("\$ErrStr = '$ErrStr'");
     close $ofh;
 
-    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
-    $contents = do { local $/; <$fh> };
-    close $fh;
-    ok($contents eq $prog);
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and left input file encrypted');
+    open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and decrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ifile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and decrypted output file runs OK');
     }
 
-                                        # Tests 90-92: Check no newline at EOF
     $prog =~ s/\n$//;
     open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
     print $fh $prog;
     close $fh;
 
-    ok(crypt_file($iofile));
+    ok(crypt_file($iofile), 'file without newline at EOF: OK') or
+       diag("\$ErrStr = '$ErrStr'");
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and file encrypted OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
-                                        # Tests 93-140: Check all sizes under
-                                        #               16 (largest block size)
-                                        #               with newline at EOF
     for ($i = 1; $i <= 16; $i++) {
         open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
         binmode $fh;
         print $fh +(';' x ($i - 1)) . "\n";
         close $fh;
 
-        ok(crypt_file($iofile));
+        ok(crypt_file($iofile), "$i byte file with newline at EOF: OK") or
+            diag("\$ErrStr = '$ErrStr'");
 
         open $fh, $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
-        ok($contents =~ /^\Q$head\E/);
+        like($contents, $qrhead, '... and file encrypted OK');
 
-        if ($have_decrypt) {
+        SKIP: {
+            skip 'Decrypt component not built', 1 unless $have_decrypt;
             chomp($line = qx{$perl $iofile});
-            ok($line eq '');
-        }
-        else {
-            skip('Skip Decrypt component not built', 1);
+            is($line, '', '... and encrypted file runs OK');
         }
     }
 
-                                        # Tests 141-188: Check all sizes under
-                                        #                16 (largest block size)
-                                        #                with no newline at EOF
     for ($i = 1; $i <= 16; $i++) {
         open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
         print $fh ';' x $i;
         close $fh;
 
-        ok(crypt_file($iofile));
+        ok(crypt_file($iofile), "$i byte file without newline at EOF: OK") or
+            diag("\$ErrStr = '$ErrStr'");
 
         open $fh, $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
-        ok($contents =~ /^\Q$head\E/);
+        like($contents, $qrhead, '... and file encrypted OK');
 
-        if ($have_decrypt) {
+        SKIP: {
+            skip 'Decrypt component not built', 1 unless $have_decrypt;
             chomp($line = qx{$perl $iofile});
-            ok($line eq '');
-        }
-        else {
-            skip('Skip Decrypt component not built', 1);
+            is($line, '', '... and encrypted file runs OK');
         }
     }
 
-                                        # Tests 189-236: Check all sizes modulo
-                                        #                16 (largest block size)
-                                        #                with newline at EOF
     for ($i = 1; $i <= 16; $i++) {
         $str = ';' x $i;
         open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
         print $fh qq[print "$str";\n];
         close $fh;
 
-        ok(crypt_file($iofile));
+        $n = -s $iofile;
+        ok(crypt_file($iofile), "$n byte file with newline at EOF: OK") or
+            diag("\$ErrStr = '$ErrStr'");
 
         open $fh, $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
-        ok($contents =~ /^\Q$head\E/);
+        like($contents, $qrhead, '... and file encrypted OK');
 
-        if ($have_decrypt) {
+        SKIP: {
+            skip 'Decrypt component not built', 1 unless $have_decrypt;
             chomp($line = qx{$perl $iofile});
-            ok($line eq $str);
-        }
-        else {
-            skip('Skip Decrypt component not built', 1);
+            is($line, $str, '... and encrypted file runs OK');
         }
     }
 
-                                        # Tests 237-284: Check all sizes modulo
-                                        #                16 (largest block size)
-                                        #                with no newline at EOF
     for ($i = 1; $i <= 16; $i++) {
         $str = ';' x $i;
         open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
         print $fh qq[print "$str";];
         close $fh;
 
-        ok(crypt_file($iofile));
+        $n = -s $iofile;
+        ok(crypt_file($iofile), "$n byte file without newline at EOF: OK") or
+            diag("\$ErrStr = '$ErrStr'");
 
         open $fh, $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
-        ok($contents =~ /^\Q$head\E/);
+        like($contents, $qrhead, '... and file encrypted OK');
 
-        if ($have_decrypt) {
+        SKIP: {
+            skip 'Decrypt component not built', 1 unless $have_decrypt;
             chomp($line = qx{$perl $iofile});
-            ok($line eq $str);
-        }
-        else {
-            skip('Skip Decrypt component not built', 1);
+            is($line, $str, '... and encrypted file runs OK');
         }
     }
 
-                                        # Tests 285-287: Check files larger than
-                                        #                BUFSIZ (>4kB should do)
-                                        #                with newline at EOF
     $str = ';' x 4096;
     open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
     print $fh qq[print "$str";\n];
     close $fh;
 
-    ok(crypt_file($iofile));
+    $n = -s $iofile;
+    ok(crypt_file($iofile), "$n byte file with newline at EOF: OK") or
+        diag("\$ErrStr = '$ErrStr'");
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and file encrypted OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
-                                        # Tests 288-290: Check files larger than
-                                        #                BUFSIZ (>4kB should do)
-                                        #                with no newline at EOF
     $str = ';' x 4096;
     open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
     print $fh qq[print "$str";];
     close $fh;
 
-    ok(crypt_file($iofile));
+    $n = -s $iofile;
+    ok(crypt_file($iofile), "$n byte file without newline at EOF: OK") or
+        diag("\$ErrStr = '$ErrStr'");
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and file encrypted OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
     unlink $ifile;

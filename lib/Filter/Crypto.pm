@@ -23,13 +23,13 @@ use strict;
 use warnings;
 
 #===============================================================================
-# MODULE INITIALISATION
+# MODULE INITIALIZATION
 #===============================================================================
 
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.14';
+    $VERSION = '1.15';
 }
 
 1;
@@ -157,7 +157,7 @@ Running under a Perl that was built with DEBUGGING (C<-DDEBUGGING>);
 
 =item *
 
-Running under a Perl with DEBUGGING flags enabled (B<-D> or I<$^D>);
+Running under a Perl with DEBUGGING flags enabled (B<-D> or $^D);
 
 =item *
 
@@ -263,11 +263,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.14
+Version 1.15
 
 =head1 DATE
 
-01 Jun 2005
+02 Sep 2005
 
 =head1 HISTORY
 

@@ -7,7 +7,7 @@
 #   Test script to check PAR::Filter::Crypto module (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -24,49 +24,28 @@ use Config;
 use Cwd qw(abs_path);
 use File::Spec::Functions qw(canonpath catdir catfile updir);
 use FindBin;
-use Test;
+use Test::More;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
-my $num_tests;
+my $pp;
 
 BEGIN {
-    $num_tests = 6;
-    plan tests => $num_tests;           # Number of tests to be executed
-}
-
-#===============================================================================
-# MAIN PROGRAM
-#===============================================================================
-
-MAIN: {
-                                        # Test 1: Did we make it this far OK?
-    ok(1);
-
     my $top_dir = canonpath(abs_path(catdir($FindBin::Bin, updir())));
     my $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     unless (-f catfile($lib_dir, 'CryptFile.pm')) {
-        for (2 .. $num_tests) {
-            skip('Skip CryptFile component not built', 1);
-        }
-        exit;
+        plan skip_all => 'CryptFile component not built';
     }
 
     unless (-f catfile($lib_dir, 'Decrypt.pm')) {
-        for (2 .. $num_tests) {
-            skip('Skip Decrypt component not built', 1);
-        }
-        exit;
+        plan skip_all => 'Decrypt component not built';
     }
 
     unless (eval { require PAR::Filter; 1 }) {
-        for (2 .. $num_tests) {
-            skip('Skip PAR::Filter required to test PAR::Filter::Crypto', 1);
-        }
-        exit;
+        plan skip_all => 'PAR::Filter required to test PAR::Filter::Crypto';
     }
 
     my @keys = qw(
@@ -74,7 +53,6 @@ MAIN: {
         installsitebin    installvendorbin    installbin
     );
 
-    my $pp;
     foreach my $key (@keys) {
         next unless exists $Config{$key} and $Config{$key} ne '';
         next unless -d $Config{$key};
@@ -83,13 +61,19 @@ MAIN: {
         undef $pp;
     }
 
-    unless (defined $pp) {
-        for (2 .. $num_tests) {
-            skip("Skip 'pp' required to test PAR::Filter::Crypto", 1);
-        }
-        exit;
+    if (defined $pp) {
+        plan tests => 6;
     }
+    else {
+        plan skip_all => "'pp' required to test PAR::Filter::Crypto";
+    }
+}
 
+#===============================================================================
+# MAIN PROGRAM
+#===============================================================================
+
+MAIN: {
     my $ifile = 'test.pl';
     my $ofile = "test$Config{_exe}";
     my $str   = 'Hello, world.';
@@ -118,27 +102,24 @@ MAIN: {
     print $fh $prog;
     close $fh;
 
-                                        # Tests 2-3: Check creating PAR archive
     qx{$perl $pp -f Crypto -M Filter::Crypto::Decrypt -o $ofile $ifile};
-    ok($? == 0);
-    ok(-s $ofile);
+    is($?, 0, 'pp exited successfully');
+    cmp_ok(-s $ofile, '>', 0, '... and created a non-zero size PAR archive');
 
-                                        # Tests 4-5: Inspect PAR archive
-    if ($have_archive_zip) {
+    SKIP: {
+        skip 'Archive::Zip required to inspect PAR archive', 2
+            unless $have_archive_zip;
+
         my $zip = Archive::Zip->new() or die "Can't create new Archive::Zip\n";
         my $ret = eval { $zip->read($ofile) };
-        ok(not $@ and $ret == Archive::Zip::AZ_OK());
-        ok($zip->contents("script/$ifile") =~ /^\Q$head\E/);
-    }
-    else {
-        for (1 .. 2) {
-            skip('Skip Archive::Zip required to inspect PAR archive', 1);
-        }
+        is($@, '', 'No exceptions were thrown reading the PAR archive');
+        is($ret, Archive::Zip::AZ_OK(), '... and read() returned OK');
+        like($zip->contents("script/$ifile"), qr/^\Q$head\E/,
+             '... and the contents are as expected');
     }
 
-                                        # Test 6: Check running PAR archive
     chomp($line = qx{$ofile});
-    ok($line eq $str);
+    is($line, $str, 'Running the PAR archive produces the expected output');
 
     unlink $ifile;
     unlink $ofile;

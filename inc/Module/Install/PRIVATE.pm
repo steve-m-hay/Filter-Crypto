@@ -32,7 +32,7 @@ use Pod::Usage;
 use Text::Wrap;
 
 #===============================================================================
-# CLASS INITIALISATION
+# CLASS INITIALIZATION
 #===============================================================================
 
 our(@ISA, $VERSION);
@@ -40,7 +40,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::Base);
 
-    $VERSION = '1.02';
+    $VERSION = '1.03';
 
     # Define public and private API accessor methods.
     foreach my $prop (qw(define inc libs _opts)) {
@@ -223,10 +223,10 @@ sub is_win32 {
     return $^O =~ /MSWin32/io;
 }
 
-# Method to perform a rudimentary check that the same compiler is being used to
-# build this module as was used to build Perl itself.  The check is skipped on
-# all platforms except Win32, and is also skipped on Win32 if the compiler used
-# to build Perl is unknown and unguessable.
+# Method to perform a rudimentary check that a compatible compiler is being used
+# to build this module as was used to build Perl itself.  The check is skipped
+# on all platforms except Win32, and is also skipped on Win32 if the compiler
+# used to build Perl is unknown and unguessable.
 # It is good enough, however, to catch the currently rather common situation in
 # which a Win32 user is building this module with the Visual C++ Toolkit 2003
 # for use with any ActivePerl, which are known currently to be built with Visual
@@ -265,14 +265,37 @@ sub check_compiler {
         if ($cc =~ /cl(?:\.exe)?"?$/io) {
             my $output = `$cc --version 2>&1`;
             $ccversion = $output =~ /^.*Version\s+([\d.]+)/io ? $1 : '?';
+
+            # Visual C++ 6.x and earlier (having ccversion 12.x and earlier) all
+            # used the system's msvcrt.dll, so just check that the major version
+            # number is the same.  Visual C++ 7.x onwards (having ccversion 13.x
+            # onwards) use msvcr70.dll, msvcr71.dll, etc, so check that the
+            # major and minor versions are the same.
+            my($major, $minor, $patch) = $ccversion =~ /^(\d+)\.(\d+)\.(\d+)$/o;
+            if (defined $major and defined $minor and defined $patch) {
+                if ($major <= 12) {
+                    if ($Config{ccversion} !~ /^$major\./) {
+                        $msg = sprintf $fmt, $ccversion, $Config{ccversion};
+                    }
+                }
+                else {
+                    if ($Config{ccversion} !~ /^$major\.$minor\./) {
+                        $msg = sprintf $fmt, $ccversion, $Config{ccversion};
+                    }
+                }
+            }
         }
         elsif ($cc =~ /bcc32(?:\.exe)?"?$/io) {
             my $output = `$cc --version 2>&1`;
-            $ccversion = $output =~ /(\d+.*)/o ? $1 : '?';
-            $ccversion =~ s/\s+copyright.*//io;
-        }
-        if (defined $ccversion and $ccversion ne $Config{ccversion}) {
-            $msg = sprintf $fmt, $ccversion, $Config{ccversion};
+            $ccversion = $output =~ /([\d.]+)/o ? $1 : '?';
+
+            # Just check that the major version number is the same.
+            my($major, $minor, $patch) = $ccversion =~ /^(\d+)\.(\d+)\.(\d+)$/o;
+            if (defined $major and defined $minor and defined $patch) {
+                if ($Config{ccversion} !~ /^$major\./) {
+                    $msg = sprintf $fmt, $ccversion, $Config{ccversion};
+                }
+            }
         }
     }
     elsif ($Config{gccversion} ne '') {
@@ -280,19 +303,36 @@ sub check_compiler {
         if ($cc =~ /gcc(?:\.exe)?"?$/io) {
             chomp($gccversion = `$cc -dumpversion`);
         }
-        if (defined $gccversion and $gccversion ne $Config{gccversion}) {
-            $msg = sprintf $fmt, $gccversion, $Config{gccversion};
+
+        # Just check that the major version number is the same.
+        my($major, $minor, $patch) = $gccversion =~ /^(\d+)\.(\d+)\.(\d+)$/o;
+        if (defined $major and defined $minor and defined $patch) {
+            if ($Config{gccversion} !~ /^$major\./) {
+                $msg = sprintf $fmt, $gccversion, $Config{gccversion};
+            }
         }
     }
     elsif ($Config{cf_by} eq 'ActiveState') {
-        my $ccversion;
+        my $ccversion  = '?';
         my $vc6version = '12.00.8804';
         if ($cc =~ /cl(?:\.exe)?"?$/io) {
             my $output = `$cc --version 2>&1`;
             $ccversion = $output =~ /^.*Version\s+([\d.]+)/ ? $1 : '?';
         }
-        if (defined $ccversion and $ccversion ne $vc6version) {
-            $msg = sprintf $fmt, $ccversion, $vc6version;
+
+        # Check the Visual C++ version number as above.
+        my($major, $minor, $patch) = $ccversion =~ /^(\d+)\.(\d+)\.(\d+)$/o;
+        if (defined $major and defined $minor and defined $patch) {
+            if ($major <= 12) {
+                if ($vc6version !~ /^$major\./) {
+                    $msg = sprintf $fmt, $ccversion, $vc6version;
+                }
+            }
+            else {
+                if ($vc6version !~ /^$major\.$minor\./) {
+                    $msg = sprintf $fmt, $ccversion, $vc6version;
+                }
+            }
         }
     }
 

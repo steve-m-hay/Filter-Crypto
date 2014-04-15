@@ -24,28 +24,15 @@ use Cwd qw(abs_path cwd);
 use File::Copy;
 use File::Spec::Functions qw(canonpath catdir catfile devnull rel2abs updir);
 use FindBin;
-use Test;
+use Test::More;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
-my $num_tests;
+my($top_dir, $lib_dir);
 
 BEGIN {
-    $num_tests = 99;
-    plan tests => $num_tests;           # Number of tests to be executed
-}
-
-#===============================================================================
-# MAIN PROGRAM
-#===============================================================================
-
-MAIN: {
-                                        # Test 1: Did we make it this far OK?
-    ok(1);
-
-    my $top_dir;
     if ($] < 5.006001) {
         # Prior to 5.6.0, Cwd::abs_path() didn't correctly clean-up Win32 paths
         # like C:\Temp\.. which breaks the -d/-r/-t tests, so do it the hard way
@@ -59,15 +46,21 @@ MAIN: {
     else {
         $top_dir = canonpath(abs_path(catdir($FindBin::Bin, updir())));
     }
-    my $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
+    $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
-    unless (-f catfile($lib_dir, 'CryptFile.pm')) {
-        for (2 .. $num_tests) {
-            skip('Skip CryptFile component not built', 1);
-        }
-        exit;
+    if (-f catfile($lib_dir, 'CryptFile.pm')) {
+        plan tests => 99;
     }
+    else {
+        plan skip_all => 'CryptFile component not built';
+    }
+}
 
+#===============================================================================
+# MAIN PROGRAM
+#===============================================================================
+
+MAIN: {
     my $ifile  = 'test.pl';
     my $ofile  = 'test.enc.pl';
     my $iofile = $ifile;
@@ -83,6 +76,7 @@ MAIN: {
     my $scrsrc = qq[use Foo;\nFoo::foo();\n];
     my $modsrc = qq[package Foo;\nsub foo() { print "$str\\n" }\n1;\n];
     my $head   = 'use Filter::Crypto::Decrypt;';
+    my $qrhead = qr/^\Q$head\E/;
     my $q      = $^O =~ /MSWin32/io ? '' : "'";
     my $null   = devnull();
 
@@ -129,155 +123,137 @@ MAIN: {
     print $fh "binmode STDIN; binmode STDOUT; print while <>;\n";
     close $fh;
 
-                                        # Tests 2-5: Check STD* re-directions
     qx{$perl $crypt_file <$ifile >$ofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK when using STD handle re-directions');
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ofile;
 
-                                        # Tests 6-9: Check STD* pipelines
     # Explicitly terminate crypt_file's (empty) options list with a "--" since
     # Getopt::Long's handling of a lone "-" is broken prior to version 2.25
     # which was first distributed in Perl 5.6.1.
     qx{$perl $cat <$ifile | $perl $crypt_file -- - 2>$null | $perl $cat >$ofile};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK when using STD handle pipelines');
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ofile;
 
-                                        # Tests 10-13: Check file spec input
     qx{$perl $crypt_file $ifile >$ofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with file spec input');
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ofile;
 
-                                        # Tests 14-17: Check -l option
     qx{$perl $crypt_file -l $lfile >$ofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -l option');
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ofile;
 
-                                        # Tests 18-21: Check -d option
     mkdir $dir1 or die "Can't create directory '$dir1': $!\n";
     copy($ifile, $dir1) or
         die "Can't copy file '$ifile' into directory '$dir1': $!\n";
 
     qx{$perl $crypt_file -d $dir1 $ifile >$ofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -d option');
 
     $dfile = catfile($dir1, $ifile);
     open $fh, $dfile or die "Can't read file '$dfile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $dfile;
     unlink $ofile;
 
-                                        # Tests 22-25: Check -r option
     $rdir = catdir($dir1, $dir2);
     mkdir $rdir or die "Can't create directory '$rdir': $!\n";
     copy($ifile, $rdir) or
         die "Can't copy file '$ifile' into directory '$rdir': $!\n";
 
     qx[$perl $crypt_file -d $dir1 -r ${q}test.p?$q >$ofile 2>$null];
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -r option');
 
     $dfile = catfile($rdir, $ifile);
     open $fh, $dfile or die "Can't read file '$dfile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $dfile;
@@ -285,18 +261,16 @@ MAIN: {
     rmdir $dir1;
     unlink $ofile;
 
-                                        # Tests 26-28: Check -t option
     $abs_ifile = rel2abs($ifile);
     chomp($data = qx{$perl $crypt_file -t $ifile});
-    ok($? == 0);
-    ok($data eq $abs_ifile);
+    is($?, 0, 'crypt_file ran OK with -t option');
+    is($data, $abs_ifile, '... and output correct file path');
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
 
-                                        # Tests 29-41: Check -d/-r/-t options
     $dir3 = catdir($top_dir, 'lib');
     $dir4 = catdir($dir3, 'Filter');
     $dir5 = catdir($dir3, 'PAR', 'Filter');
@@ -304,29 +278,29 @@ MAIN: {
     $expected = catdir($dir4, 'Crypto.pm');
     $file = catfile('lib', 'Filter', 'Crypto.pm');
     chomp($data = qx{$perl $crypt_file -d $top_dir -t $file});
-    ok($data eq $expected);
+    is($data, $expected, '-t works with one -d');
     $file = catfile('Filter', 'Crypto.pm');
     chomp($data = qx{$perl $crypt_file -d $dir3 -t $file});
-    ok($data eq $expected);
+    is($data, $expected, '-t works with another -d');
     $file = 'Crypto.pm';
     chomp($data = qx{$perl $crypt_file -d $dir4 -t $file});
-    ok($data eq $expected);
+    is($data, $expected, '-t works with yet another -d');
 
     $expected = catdir($dir4, $file);
     chomp($data = qx{$perl $crypt_file -d $dir4 -d $dir5 -t $file});
-    ok($data eq $expected);
+    is($data, $expected, "-t works with two -d's");
 
     $expected = catdir($dir5, $file);
     chomp($data = qx{$perl $crypt_file -d $dir5 -d $dir4 -t $file});
-    ok($data eq $expected);
+    is($data, $expected, "-t works with two -d's reversed");
 
     $expected = catfile($top_dir, 'Makefile.PL') . "\n";
     $data = qx[$perl $crypt_file -d $top_dir -t ${q}Makefil?.PL$q];
-    ok($data eq $expected);
+    is($data, $expected, '-t works with -d and a glob');
     $data = qx[$perl $crypt_file -d $top_dir -t ${q}Make*.PL$q];
-    ok($data eq $expected);
+    is($data, $expected, '-t works with -d and another glob');
     $data = qx[$perl $crypt_file -d $top_dir -t ${q}Makefile.[PQR]L$q];
-    ok($data eq $expected);
+    is($data, $expected, '-t works with -d and yet another glob');
 
     $expected = join("\n", sort +(
         catfile($top_dir,              'Makefile.PL'),
@@ -335,13 +309,13 @@ MAIN: {
     )) . "\n";
     chomp($data = qx[$perl $crypt_file -d $top_dir -r -t ${q}Makefil?.PL$q]);
     $data = join("\n", sort split /\n/, $data) . "\n";
-    ok($data eq $expected);
+    is($data, $expected, '-t works with -d, -r and a glob');
     chomp($data = qx[$perl $crypt_file -d $top_dir -r -t ${q}Make*.PL$q]);
     $data = join("\n", sort split /\n/, $data) . "\n";
-    ok($data eq $expected);
+    is($data, $expected, '-t works with -d, -r and another glob');
     chomp($data = qx[$perl $crypt_file -d $top_dir -r -t ${q}Makefile.[PQR]L$q]);
     $data = join("\n", sort split /\n/, $data) . "\n";
-    ok($data eq $expected);
+    is($data, $expected, '-t works with -d, -r and yet another glob');
 
     $dir3 = catdir($top_dir, 'CryptFile');
     $dir4 = catdir($top_dir, 'Decrypt');
@@ -349,327 +323,282 @@ MAIN: {
 
     chomp($data = qx[$perl $crypt_file -d $top_dir -d $dir3 -d $dir4 -t $file]);
     $data = join("\n", sort split /\n/, $data) . "\n";
-    ok($data eq $expected);
+    is($data, $expected, "-t works with three -d's and a glob");
     chomp($data = qx[$perl $crypt_file -d $top_dir -d $dir3 -d $dir4 -r -t $file]);
     $data = join("\n", sort split /\n/, $data) . "\n";
-    ok($data eq $expected);
+    is($data, $expected, "-t works with three -d's, -r and a glob");
 
-                                        # Tests 42-51: Check --silent option
     chomp($line = qx{$perl $crypt_file $ifile 2>&1 1>$ofile});
-    ok($? == 0);
-    ok($line eq "$abs_ifile: OK");
+    is($?, 0, 'crypt_file ran OK without --silent option');
+    is($line, "$abs_ifile: OK", '... and output correct file path');
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     chomp($line = qx{$perl $crypt_file --silent $ifile 2>&1 1>$ofile});
-    ok($? == 0);
-    ok($line eq '');
+    is($?, 0, 'crypt_file ran OK with --silent option');
+    is($line, '', "... and didn't output a file path");
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ofile;
 
-                                        # Tests 52-56: Check -i option
     qx{$perl $crypt_file -i $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -i option');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted input file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted input file runs OK');
     }
 
     qx{$perl $crypt_file -i $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK again with -i option');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and decrypted input file OK');
 
-                                        # Tests 57-65: Check script and module
+    chomp($line = qx{$perl $iofile});
+    is($line, $str, '... and decrypted input file runs OK');
+
     qx{$perl $crypt_file -i $script 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with unencrypted script + module');
 
     open $fh, $script or die "Can't read file '$script': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted script OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $script});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted script + unencrypted module run OK');
     }
 
     qx{$perl $crypt_file -i $module 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with unencrypted module');
 
     open $fh, $module or die "Can't read file '$module': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted module OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $script});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted script + encrypted module run OK');
     }
 
     qx{$perl $crypt_file -i $script 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with encrypted script + module');
 
     open $fh, $script or die "Can't read file '$script': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $scrsrc);
+    is($contents, $scrsrc, '... and decrypted script OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $script});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and unencrypted script + encrypted module run OK');
     }
 
-                                        # Tests 66-70: Check -e option
     qx{$perl $crypt_file -i -e memory $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -e memory option');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
-    if ($have_file_temp) {
+    SKIP: {
+        skip 'File::Temp required to test -e tempfile', 2
+            unless $have_file_temp;
         qx{$perl $crypt_file -i -e tempfile $iofile 2>$null};
-        ok($? == 0);
+        is($?, 0, 'crypt_file ran OK with -e tempfile option');
 
         open $fh, $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
-        ok($contents eq $prog);
+        is($contents, $prog, '... and decrypted file OK');
     }
-    else {
-        for (1 .. 2) {
-            skip('Skip File::Temp required to test -e tempfile', 1);
-        }
 
+    unless ($have_file_temp) {
         open $fh, ">$iofile" or die "Can't recreate file '$iofile': $!\n";
         print $fh $prog;
         close $fh;
     }
 
-                                        # Tests 71-74: Check -b option
     qx{$perl $crypt_file -i -b $q*.bak$q $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -b option');
 
     open $fh, $bfile or die "Can't read file '$bfile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and created unencrypted backup file');
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
     unlink $iofile;
     rename $bfile, $iofile;
 
-                                        # Tests 75-78: Check -o option
     qx{$perl $crypt_file -o $q?.enc.[$q $ifile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -o option');
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left input file unencrypted');
     open $fh, $ofile or die "Can't read file '$ofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and created encrypted output file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $ofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted output file runs OK');
     }
 
     unlink $ofile;
 
-                                        # Tests 79-96: Check -c option
     qx{$perl $crypt_file -i -c auto $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -c auto option');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
     qx{$perl $crypt_file -i -c auto $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK again with -c auto option');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and decrypted file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $iofile});
+    is($line, $str, '... and decrypted file runs OK');
 
     qx{$perl $crypt_file -i -c encrypt $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -c encrypt option');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and encrypted file OK');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file runs OK');
     }
 
     qx{$perl $crypt_file -i -c encrypted $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -c encrypted option');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents =~ /^\Q$head\E/);
+    like($contents, $qrhead, '... and left file encrypted');
 
-    if ($have_decrypt) {
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
+        is($line, $str, '... and encrypted file still runs OK');
     }
 
     qx{$perl $crypt_file -i -c decrypt $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -c decrypt');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and decrypted file OK');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $iofile});
+    is($line, $str, '... and decrypted file runs OK');
 
     qx{$perl $crypt_file -i -c decrypted $iofile 2>$null};
-    ok($? == 0);
+    is($?, 0, 'crypt_file ran OK with -c decrypted');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
     close $fh;
-    ok($contents eq $prog);
+    is($contents, $prog, '... and left file decrypted');
 
-    if ($have_decrypt) {
-        chomp($line = qx{$perl $iofile});
-        ok($line eq $str);
-    }
-    else {
-        skip('Skip Decrypt component not built', 1);
-    }
+    chomp($line = qx{$perl $iofile});
+    is($line, $str, '... and decrypted file still runs OK');
 
-                                        # Test 97: Check -v option
     chomp($data = qx{$perl $crypt_file -v});
-    ok($data =~ qr/\A This\ is\ crypt_file              .*?
+    like($data, qr/\A This\ is\ crypt_file              .*?
                     ^ Copyright                         .*?
-                    ^ This\ script\ is\ free\ software /mosx);
+                    ^ This\ script\ is\ free\ software /mosx,
+         '-v option works');
 
-                                        # Test 98: Check -h option
     chomp($data = qx{$perl $crypt_file -h});
-    ok($data =~ qr/\A Usage:     .*?
+    like($data, qr/\A Usage:     .*?
                     ^ Arguments: .*?
-                    ^ Options:   /mosx);
+                    ^ Options:   /mosx,
+         '-h option works');
 
-                                        # Test 99: Check -m option
     {
         local $ENV{PERLDOC} = '-t -T';
         chomp($data = qx{$perl $crypt_file -m});
-        ok($data =~ qr/^ NAME         .*?
+        like($data, qr/^ NAME         .*?
                        ^ SYNOPSIS     .*?
                        ^ ARGUMENTS    .*?
                        ^ OPTIONS      .*?
@@ -683,7 +612,8 @@ MAIN: {
                        ^ LICENCE      .*?
                        ^ VERSION      .*?
                        ^ DATE         .*?
-                       ^ HISTORY      /mosx);
+                       ^ HISTORY      /mosx,
+             '-m option works');
     }
 
     unlink $ifile;
