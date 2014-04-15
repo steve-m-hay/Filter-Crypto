@@ -8,7 +8,8 @@
 #   Filter-Crypto distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2008-2010, 2012 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2008-2010, 2012-2013 Steve Hay.  All rights
+#   reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -77,7 +78,7 @@ use constant BUILD_OPTION_DECRYPT   => 'Decrypt';
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.11';
+    $VERSION = '1.12';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(
@@ -523,7 +524,9 @@ sub locate_lib_dir_and_file {
     # or in the lib/amd64/ or lib/sparcv9/ sub-directory on 64-bit Solaris Intel
     # or 64-bit Solaris Sparc respectively.  Some 64-bit systems may have lib/
     # sub-directories as well, so check in lib64/ etc. first, but only check for
-    # 64-bit libraries if we are using a 64-bit Perl.
+    # 64-bit libraries if we are using a 64-bit Perl.  Under Debian Multiarch
+    # (e.g. Ubuntu >= 11.04) the libraries are migrated to lib/i386-linux-gnu/
+    # and lib/x86_64-linux-gnu/ sub-directories.
     # Again, build directories on "native" Windows platforms may have the files
     # in a different sub-directory, in this case out32/, out32dll/, out32.dbg/
     # or out32dll.dbg/ (0.9.0 onwards, depending on whether static or dynamic
@@ -597,6 +600,18 @@ sub locate_lib_dir_and_file {
         elsif (defined $Config{use64bitint} and
                $Config{use64bitint} eq 'define' and
                -d ($dir = catdir($prefix_dir, 'lib', 'sparcv9')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+        elsif (defined $Config{use64bitint} and
+               $Config{use64bitint} eq 'define' and
+               -d ($dir = catdir($prefix_dir, 'lib', 'x86_64-linux-gnu')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+        elsif (-d ($dir = catdir($prefix_dir, 'lib', 'i386-linux-gnu')) and
                ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
             $lib_dir = $dir;

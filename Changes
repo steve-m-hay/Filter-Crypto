@@ -1,9 +1,19 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 2.02
+                          Filter::Crypto, Version 2.03
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v2.03 08 Jul 2013
+
+    - Improved crypto library detection so that the library is now correctly
+      located on Debian Multiarch systems such as Ubuntu >= 11.04.  (Fixes [cpan
+      #86632].  Thanks to Stas Ivaschenko <ivaschenko.stas@gmail.com> for the
+      patch.)
+
+    - Corrected typo in a comment.
 _________________
 
 v2.02 14 Feb 2013

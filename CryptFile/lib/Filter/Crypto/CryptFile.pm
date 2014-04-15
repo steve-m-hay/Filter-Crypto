@@ -7,7 +7,7 @@
 #   which they can be run via Filter::Crypto::Decrypt.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009, 2012-2013 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -55,7 +55,7 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '2.02';
+    $VERSION = '2.03';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -67,7 +67,7 @@ our $ErrStr = '';
 # PUBLIC API
 #===============================================================================
 
-# Autoload the CRYPT_MODE_* flags from the constant() XS fuction.
+# Autoload the CRYPT_MODE_* flags from the constant() XS function.
 
 sub AUTOLOAD {
     our $AUTOLOAD;
@@ -906,11 +906,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.02
+Version 2.03
 
 =head1 DATE
 
-14 Feb 2013
+08 Jul 2013
 
 =head1 HISTORY
 
