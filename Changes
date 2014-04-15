@@ -1,9 +1,17 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 2.03
+                          Filter::Crypto, Version 2.04
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v2.04 19 Feb 2014
+
+    - Fixed crypt_file's "-c encrypted" and "-c decrypted" options when used in
+      conjunction with the "-e tempfile" option. These combinations of options
+      previously caused the input file to be replaced with a zero length file.
+      (Fixes [cpan #93152].)
 _________________
 
 v2.03 08 Jul 2013

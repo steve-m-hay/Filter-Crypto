@@ -7,7 +7,7 @@
 #   Test script to check crypt_file script (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2007, 2009 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2007, 2009, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -49,7 +49,7 @@ BEGIN {
     $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     if (-f catfile($lib_dir, 'CryptFile.pm')) {
-        plan tests => 99;
+        plan tests => 105;
     }
     else {
         plan skip_all => 'CryptFile component not built';
@@ -557,7 +557,21 @@ MAIN: {
     }
 
     qx{$perl $crypt_file -i -c encrypted $iofile 2>$null};
-    is($?, 0, 'crypt_file ran OK with -c encrypted option');
+    is($?, 0, 'crypt_file ran OK with -c encrypted option (working in memory)');
+
+    open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    like($contents, $qrhead, '... and left file encrypted');
+
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
+        chomp($line = qx{$perl $iofile});
+        is($line, $str, '... and encrypted file still runs OK');
+    }
+
+    qx{$perl $crypt_file -i -e tempfile -c encrypted $iofile 2>$null};
+    is($?, 0, 'crypt_file ran OK with -c encrypted option (using a tempfile)');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
@@ -571,7 +585,7 @@ MAIN: {
     }
 
     qx{$perl $crypt_file -i -c decrypt $iofile 2>$null};
-    is($?, 0, 'crypt_file ran OK with -c decrypt');
+    is($?, 0, 'crypt_file ran OK with -c decrypt option');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };
@@ -582,7 +596,18 @@ MAIN: {
     is($line, $str, '... and decrypted file runs OK');
 
     qx{$perl $crypt_file -i -c decrypted $iofile 2>$null};
-    is($?, 0, 'crypt_file ran OK with -c decrypted');
+    is($?, 0, 'crypt_file ran OK with -c decrypted option (working in memory)');
+
+    open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and left file decrypted');
+
+    chomp($line = qx{$perl $iofile});
+    is($line, $str, '... and decrypted file still runs OK');
+
+    qx{$perl $crypt_file -i -e tempfile -c decrypted $iofile 2>$null};
+    is($?, 0, 'crypt_file ran OK with -c decrypted option (using a tempfile)');
 
     open $fh, $iofile or die "Can't read file '$iofile': $!\n";
     $contents = do { local $/; <$fh> };

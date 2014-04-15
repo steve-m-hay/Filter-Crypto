@@ -7,7 +7,7 @@
 #   which they can be run via Filter::Crypto::Decrypt.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009, 2012-2013 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009, 2012-2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -55,7 +55,7 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '2.03';
+    $VERSION = '2.04';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -96,6 +96,7 @@ sub AUTOLOAD {
 
 sub crypt_file($;$$) {
     $ErrStr = '';
+    my $num_bytes = 0;
 
     if ( @_ == 1 or
         (@_ == 2 and (not defined $_[1] or $_[1] eq '' or
@@ -132,7 +133,7 @@ sub crypt_file($;$$) {
         my $crypt_mode = (@_ == 2 and defined $_[1] and $_[1] ne '')
                          ? $_[1] : CRYPT_MODE_AUTO();
 
-        unless (_crypt_fh($fh, $crypt_mode)) {
+        unless (_crypt_fh($fh, $crypt_mode, $num_bytes)) {
             local($!, $^E);
             $opened ? close $fh : $flocked ? flock $fh, LOCK_UN : 1;
             return;
@@ -231,7 +232,7 @@ sub crypt_file($;$$) {
             $crypt_mode = CRYPT_MODE_AUTO();
         }
 
-        unless (_crypt_fhs($in_fh, $out_fh, $crypt_mode)) {
+        unless (_crypt_fhs($in_fh, $out_fh, $crypt_mode, $num_bytes)) {
             local($!, $^E);
             $in_opened  ? close $in_fh
                         : $in_flocked  ? flock $in_fh,  LOCK_UN : 1;
@@ -261,7 +262,7 @@ sub crypt_file($;$$) {
         }
     }
 
-    return 1;
+    return $num_bytes ? $num_bytes : '0E0';
 }
 
 #===============================================================================
@@ -391,8 +392,10 @@ then the data is presumed to be in an encrypted state already so the mode will
 be set to C<CRYPT_MODE_DECRYPT>; otherwise the mode will be set to
 C<CRYPT_MODE_ENCRYPT>.
 
-Returns 1 on success, or a false value (namely, the undefined value in scalar
-context or the empty list in list context) and sets $ErrStr on failure.
+On success, returns the number of bytes written (which could be zero if the
+input was already in the requested state, in which case the special "zero but
+true" value will be returned); on failure returns the undefined value (in scalar
+context) or the empty list (in list context) and sets $ErrStr.
 
 =back
 
@@ -896,7 +899,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2009, 2012-2013 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009, 2012-2014 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -906,11 +909,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.03
+Version 2.04
 
 =head1 DATE
 
-08 Jul 2013
+19 Feb 2014
 
 =head1 HISTORY
 

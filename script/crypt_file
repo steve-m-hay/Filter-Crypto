@@ -8,7 +8,7 @@
 #   still runnable, format to hide the source code from casual prying eyes.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2012 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2012, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -43,6 +43,7 @@ use constant WARNING_TYPE_SEVERE => 1;
 
 sub get_input_files($$$);
 sub resolve_file_expr($$);
+sub show_result();
 sub show_warning($$$@);
 sub exit_with_version();
 sub exit_with_help();
@@ -54,8 +55,8 @@ sub exit_with_error(@);
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.03';
-our $YEAR    = '2004-2006, 2012';
+our $VERSION = '1.04';
+our $YEAR    = '2004-2006, 2012, 2014';
 
 #===============================================================================
 # MAIN PROGRAM
@@ -187,15 +188,7 @@ MAIN: {
 
         binmode STDIN;
         if (crypt_file(\*STDIN, $out_file, $crypt_mode)) {
-            unless ($silent) {
-                print STDERR "OK";
-
-                # There may be a message left in $ErrStr even after crypt_file()
-                # completes successfully, so output that too if there is.
-                print STDERR " ($ErrStr)" if $ErrStr ne '';
-
-                print STDERR "\n";
-            }
+            show_result() unless $silent;
         }
         else {
             show_warning($silent, WARNING_TYPE_SEVERE, '-',
@@ -273,7 +266,10 @@ MAIN: {
                         ($temp_fh, $temp_file) =
                             File::Temp::tempfile("$file.XXXXXXXX");
 
-                        unless (crypt_file($file, $temp_fh, $crypt_mode)) {
+                        my $num_bytes =
+                            crypt_file($file, $temp_fh, $crypt_mode);
+
+                        unless (defined $num_bytes) {
                             show_warning($silent, WARNING_TYPE_SEVERE, $file,
                                 "crypt_file() failed: %s", $ErrStr
                             );
@@ -287,6 +283,23 @@ MAIN: {
                                 "Can't close temporary file '%s' after " .
                                 "writing: %s", $temp_file, $!
                             );
+                        }
+
+                        # If no output was written because the file was already
+                        # in the requested state then just remove the temporary
+                        # file; there is nothing more to do.
+                        if ($num_bytes == 0 and
+                                ($crypt_mode == CRYPT_MODE_ENCRYPTED or
+                                $crypt_mode == CRYPT_MODE_DECRYPTED))
+                        {
+                            show_result() unless $silent;
+                            unless (unlink $temp_file) {
+                                show_warning($silent, WARNING_TYPE_NORMAL,
+                                    $file, "Can't delete temporary file " .
+                                    "'%s': %s", $temp_file, $!
+                                );
+                            }
+                            next;
                         }
 
                         # Get the input file's permissions and set them on the
@@ -356,15 +369,7 @@ MAIN: {
                 }
             }
 
-            unless ($silent) {
-                print STDERR "OK";
-
-                # There may be a message left in $ErrStr even after crypt_file()
-                # completes successfully, so output that too if there is.
-                print STDERR " ($ErrStr)" if $ErrStr ne '';
-
-                print STDERR "\n";
-            }
+            show_result() unless $silent;
         }
     }
 
@@ -474,13 +479,23 @@ sub resolve_file_expr($$) {
     return $new_file;
 }
 
+sub show_result() {
+    print STDERR "OK";
+
+    # There may be a message left in $ErrStr even after crypt_file() completes
+    # successfully, so output that too if there is.
+    print STDERR " ($ErrStr)" if $ErrStr ne '';
+
+    print STDERR "\n";
+}
+
 sub show_warning($$$@) {
     my($silent, $type, $file, $msg) = splice @_, 0, 4;
 
     $msg = sprintf $msg, @_ if @_;
 
     my $hdr = '';
-    $hdr = "$file: " if $silent;
+    $hdr = "$file: " unless $silent;
     if ($type == WARNING_TYPE_NORMAL) {
         $hdr .= "Warning: ";
     }
@@ -945,9 +960,10 @@ given.
 =item Can't delete temporary file '%s': %s
 
 (W) The specified temporary file could not be deleted during the clean up of
-temporary files just before exiting when a SIGINT has been caught.  The system
-error message corresponding to the standard C library C<errno> variable is also
-given.
+temporary files just before exiting when a SIGINT has been caught, or when
+removing an unneeded temporary file when an input file was found to already be
+in the requested state.  The system error message corresponding to the standard
+C library C<errno> variable is also given.
 
 =item Can't open list file '%s' for reading: %s
 
@@ -1098,7 +1114,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2006, 2012 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2006, 2012, 2014 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -1108,11 +1124,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.03
+Version 1.04
 
 =head1 DATE
 
-20 Mar 2012
+19 Feb 2014
 
 =head1 HISTORY
 
