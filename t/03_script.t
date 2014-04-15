@@ -26,8 +26,6 @@ use File::Spec::Functions qw(canonpath catdir catfile devnull rel2abs updir);
 use FindBin;
 use Test;
 
-sub _get_head1_pattern($);
-
 #===============================================================================
 # INITIALISATION
 #===============================================================================
@@ -668,22 +666,25 @@ MAIN: {
                     ^ Options:   /mosx);
 
                                         # Test 99: Check -m option
-    chomp($data = qx{$perl $crypt_file -m});
-    ok($data =~ qr/^ @{[_get_head1_pattern('NAME')]}        .*?
-                   ^ @{[_get_head1_pattern('SYNOPSIS')]}    .*?
-                   ^ @{[_get_head1_pattern('ARGUMENTS')]}   .*?
-                   ^ @{[_get_head1_pattern('OPTIONS')]}     .*?
-                   ^ @{[_get_head1_pattern('EXIT STATUS')]} .*?
-                   ^ @{[_get_head1_pattern('DIAGNOSTICS')]} .*?
-                   ^ @{[_get_head1_pattern('EXAMPLES')]}    .*?
-                   ^ @{[_get_head1_pattern('ENVIRONMENT')]} .*?
-                   ^ @{[_get_head1_pattern('SEE ALSO')]}    .*?
-                   ^ @{[_get_head1_pattern('AUTHOR')]}      .*?
-                   ^ @{[_get_head1_pattern('COPYRIGHT')]}   .*?
-                   ^ @{[_get_head1_pattern('LICENCE')]}     .*?
-                   ^ @{[_get_head1_pattern('VERSION')]}     .*?
-                   ^ @{[_get_head1_pattern('DATE')]}        .*?
-                   ^ @{[_get_head1_pattern('HISTORY')]}     /mosx);
+    {
+        local $ENV{PERLDOC} = '-t -T';
+        chomp($data = qx{$perl $crypt_file -m});
+        ok($data =~ qr/^ NAME         .*?
+                       ^ SYNOPSIS     .*?
+                       ^ ARGUMENTS    .*?
+                       ^ OPTIONS      .*?
+                       ^ EXIT\ STATUS .*?
+                       ^ DIAGNOSTICS  .*?
+                       ^ EXAMPLES     .*?
+                       ^ ENVIRONMENT  .*?
+                       ^ SEE\ ALSO    .*?
+                       ^ AUTHOR       .*?
+                       ^ COPYRIGHT    .*?
+                       ^ LICENCE      .*?
+                       ^ VERSION      .*?
+                       ^ DATE         .*?
+                       ^ HISTORY      /mosx);
+    }
 
     unlink $ifile;
     unlink $ofile;
@@ -691,36 +692,6 @@ MAIN: {
     unlink $script;
     unlink $module;
     unlink $cat;
-}
-
-#===============================================================================
-# PRIVATE SUBROUTINES
-#===============================================================================
-
-sub _get_head1_pattern($) {
-    # Given the POD directive "=head1 NAME", perldoc produces different output
-    # on different OS's.
-
-    my $str = shift;
-    my @pats = ();
-
-    # On Win32 we get "NAME".
-    push @pats, $str;
-
-    # On Cygwin we get "^[[1mNAME^[[0m".
-    push @pats, "\\e\\[\\d+m$str\\e\\[\\d+m";
-
-    # On Solaris we get "N^HN^HN^HNA^HA^HA^HAM^HM^HM^HME^HE^HE^HE".
-    push @pats, join('',
-        map { / / ? $_ : "$_\\x08$_\\x08$_\\x08$_" } split //, $str
-    );
-
-    my $pat = '(?:' . join('|', @pats) . ')';
-
-    # Escape any spaces for insertion into a qr//x expression.
-    $pat =~ s/ /\\ /go;
-
-    return $pat;
 }
 
 #===============================================================================

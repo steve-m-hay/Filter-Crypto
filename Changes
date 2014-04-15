@@ -1,9 +1,18 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.12
+                          Filter::Crypto, Version 1.13
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.13 14 Mar 2005
+
+    - The previous fix to t/03_script.t didn't do the job for the original bug
+      reporter, so try a different approach: rather than trying to cope with the
+      various format outputs produced by "perldoc" on different OS's, use the
+      PERLDOC environment variable to ask for plain text output (-t).  We can
+      also avoid involving a pager (-T).
 _________________
 
 v1.12 09 Mar 2005
