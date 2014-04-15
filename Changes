@@ -1,9 +1,17 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.30
+                          Filter::Crypto, Version 1.31
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.31 25 Jul 2010
+
+    - Added support for building on Mac.  (Thanks to Dan Waldheim
+      <dan.waldheim@toolcase.com>) for the patch to enable this.)
+
+    - Updated Module::Install components from version 1.00 of that distribution.
 _________________
 
 v1.30 14 Nov 2009

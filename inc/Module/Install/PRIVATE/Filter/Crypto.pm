@@ -8,7 +8,7 @@
 #   Filter-Crypto distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2008-2009 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2008-2010 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -694,6 +694,10 @@ sub probe_for_lib_file {
             $lib_name = 'crypto';
         }
         elsif (-f ($file = catfile($candidate_lib_dir, 'libcrypto.so'))) {
+            $lib_file = $file;
+            $lib_name = 'crypto';
+        }
+        elsif (-f ($file = catfile($candidate_lib_dir, 'libcrypto.dylib'))) {
             $lib_file = $file;
             $lib_name = 'crypto';
         }

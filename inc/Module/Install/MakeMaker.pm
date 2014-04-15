@@ -7,12 +7,12 @@ use Module::Install::Base ();
 
 use vars qw{$VERSION @ISA $ISCORE};
 BEGIN {
-	$VERSION = '0.91';
+	$VERSION = '1.00';
 	@ISA     = 'Module::Install::Base';
 	$ISCORE  = 1;
 }
 
-my $makefile;
+my $makefile = undef;
 
 sub WriteMakefile {
     my ($self, %args) = @_;
@@ -33,6 +33,12 @@ sub WriteMakefile {
     if (my $prereq = delete($args{PREREQ_PM})) {
         while (my($k,$v) = each %$prereq) {
             $self->requires($k,$v);
+        }
+    }
+
+    if (my $prereq = delete($args{BUILD_REQUIRES})) {
+        while (my($k,$v) = each %$prereq) {
+            $self->build_requires($k,$v);
         }
     }
 
