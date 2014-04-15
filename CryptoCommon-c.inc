@@ -1071,7 +1071,6 @@ static bool FilterCrypto_DecodeSV(pTHX_ const SV *in_sv, SV *out_sv) {
     }
 
     for (i = 0; i < in_len; i += 2) {
-        sscanf(in_text + i, "%02x", &out_text[i / 2]);
         out_text[i/2] = (H2B(in_text[i]) << 4) | H2B(in_text[i + 1]);
         out_len++;
     }
