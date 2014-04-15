@@ -8,7 +8,7 @@
 #   SHAY (Steve Hay).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2008, 2012 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -23,6 +23,8 @@ use 5.006000;
 use strict;
 use warnings;
 
+use parent qw(Module::Install::Base);
+
 use Carp qw(croak);
 use Config qw(%Config);
 use Cwd qw(abs_path);
@@ -36,12 +38,10 @@ use Text::Wrap qw(wrap);
 # CLASS INITIALIZATION
 #===============================================================================
 
-our(@ISA, $VERSION);
+our($VERSION);
 
 BEGIN {
-    @ISA = qw(Module::Install::Base);
-
-    $VERSION = '1.06';
+    $VERSION = '1.07';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(define inc libs opts)) {
@@ -166,10 +166,10 @@ sub process_opts {
 # on all platforms except Win32, and is also skipped on Win32 if the compiler
 # used to build Perl is unknown and unguessable.
 # It is good enough, however, to catch the currently rather common situation in
-# which a Win32 user is building this module with the Visual C++ Toolkit 2003 or
-# the Visual C++ 2005 Express Edition for use with any ActivePerl, which are
-# known currently to be built with Visual Studio 98.  These combinations do not
-# work for this particular module; see the INSTALL file for details.
+# which a Win32 user is building this module with Visual C++ Toolkit 2003 or
+# Visual C++ 2005 Express Edition or later for use with ActivePerl, which is
+# known currently to be built with Visual C++ 6.0.  These combinations do not
+# work for all modules; see the INSTALL file for details.
 
 # This method is based on code taken from the get_avail_w32compilers() function
 # in the configsmoke.pl script in the Test-Smoke distribution (version 1.19).
@@ -206,15 +206,14 @@ sub check_compiler {
             my $output = `$cc --version 2>&1`;
             $ccversion = $output =~ /^.*Version\s+([\d.]+)/io ? $1 : '?';
 
-            # Visual C++ 6.x and earlier (having ccversion 12.x and earlier) all
+            # Visual C++ 6.0 and earlier (having ccversion 12.x and earlier) all
             # used the system's msvcrt.dll, so just check that the major version
-            # number is the same.  Visual C++ 7.x onwards (having ccversion 13.x
-            # onwards) use msvcr70.dll, msvcr71.dll, msvcr80.dll etc, so check
-            # that the major and minor versions are the same. (Note that from
-            # Visual C++ 8.x onwards (having ccversion 14.x onwards) the
-            # ccversion is now composed of four numbers separated by dots, not
-            # just three. We are only interested in the first two anyway,
-            # though.)
+            # number is the same.  Visual C++ 7.0 onwards (having ccversion 13.x
+            # onwards) use msvcr70.dll onwards, so check that the major and
+            # minor versions are the same. (Note that from Visual C++ 8.x
+            # onwards (having ccversion 14.x onwards) the ccversion is now
+            # composed of four numbers separated by dots, not just three. We are
+            # only interested in the first two anyway, though.)
             my($major, $minor) = $ccversion =~ /^(\d+)\.(\d+)\./o;
             if (defined $major and defined $minor) {
                 if ($major <= 12) {

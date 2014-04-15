@@ -8,7 +8,7 @@
 #   still runnable, format to hide the source code from casual prying eyes.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2012 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -23,10 +23,11 @@ use warnings;
 
 use Config qw(%Config);
 use Cwd qw(cwd);
+use ExtUtils::MakeMaker qw();
 use File::Basename qw(basename fileparse);
 use File::Copy qw(copy);
 use File::Find qw(find);
-use File::Spec::Functions qw(canonpath file_name_is_absolute rel2abs);
+use File::Spec::Functions qw(canonpath catfile file_name_is_absolute rel2abs);
 use Filter::Crypto;
 use Filter::Crypto::CryptFile qw(:DEFAULT $ErrStr);
 use Getopt::Long qw(GetOptions);
@@ -53,8 +54,8 @@ sub exit_with_error(@);
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.02';
-our $YEAR    = '2004-2006';
+our $VERSION = '1.03';
+our $YEAR    = '2004-2006, 2012';
 
 #===============================================================================
 # MAIN PROGRAM
@@ -517,9 +518,21 @@ sub exit_with_help() {
 }
 
 sub exit_with_manpage() {
+    # Tell pod2usage() not to use perldoc if it doesn't exist, at least until
+    # [cpan #75598] is resolved.  It looks for perldoc in $Config{scriptdirexp}
+    # (if set) from 1.50 onwards; otherwise in $Config{scriptdir}.
+    my $script_dir;
+    if ($Pod::Usage::VERSION >= 1.50) {
+       $script_dir = $Config{scriptdirexp} || $Config{scriptdir};
+    }
+    else {
+       $script_dir = $Config{scriptdir};
+    }
+    my $perldoc = catfile($script_dir, 'perldoc');
     pod2usage(
         -exitval => 1,
-        -verbose => 2
+        -verbose => 2,
+        -noperldoc => MM->maybe_command($perldoc) ? 0 : 1
     );
 }
 
@@ -1085,7 +1098,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2006, 2012 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -1095,11 +1108,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.02
+Version 1.03
 
 =head1 DATE
 
-14 Feb 2006
+20 Mar 2012
 
 =head1 HISTORY
 

@@ -1,9 +1,29 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.35
+                          Filter::Crypto, Version 1.36
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.36 20 Mar 2012
+
+    - Removed extra diagnostics previously added to t/03_script.t now that the
+      cause of the "FAIL" reports has been discovered.  It turns out that the
+      perl installations in question are all development versions of perl (5.X.Y
+      where X is an odd number) with $Config{versiononly} defined and the
+      required "perldoc" script consequently named "perldoc5.X.Y" rather than
+      the usual "perldoc".
+      It is really up to Pod::Usage to handle this situation, so I have raised
+      [cpan #75598] reporting the problem.  However, in the meantime I have also
+      modified script/crypt_file to workaround the problem itself.  Hopefully
+      this will resolve the long-running "FAIL" reports relating to this issue.
+
+    - Updated Module::Install::PRIVATE to version 1.07 and
+      Module::Install::PRIVATE::Filter::Crypto to version 1.11 now that
+      [cpan #5849] is fixed.
+
+    - Updated Module::Install components from version 1.06 of that distribution.
 _________________
 
 v1.35 05 Mar 2012

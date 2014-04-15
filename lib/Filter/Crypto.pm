@@ -29,7 +29,7 @@ use warnings;
 our($VERSION);
 
 BEGIN {
-    $VERSION = '1.35';
+    $VERSION = '1.36';
 }
 
 1;
@@ -263,11 +263,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.35
+Version 1.36
 
 =head1 DATE
 
-05 Mar 2012
+20 Mar 2012
 
 =head1 HISTORY
 

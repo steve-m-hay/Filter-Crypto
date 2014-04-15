@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.35
+                          Filter::Crypto, Version 1.36
 ________________________________________________________________________________
 
 PREREQUISITES
@@ -14,15 +14,16 @@ PREREQUISITES
 
         In particular, Windows users should be aware that these modules will not
         work correctly if they load a different C run-time DLL to that loaded by
-        perl itself.  Note that Visual Studio 98 (VC++ 6) and earlier produce
-        binaries that require the system's msvcrt.dll, while Visual Studio
-        .NET/2003 (VC++ 7), Visual Studio 2005 (VC++ 8) and later (including the
-        free Visual C++ Toolkit 2003 and the free Visual C++ 2005 Express
-        Edition) produce binaries that require compiler-specific DLLs named
+        perl itself.  Note that Visual C++ 6.0 (part of Visual Studio 6.0) and
+        earlier produce binaries that require the system's msvcrt.dll, while
+        Visual C++ .NET (aka Visual C++ 7.0, part of Visual Studio .NET), Visual
+        C++ .NET 2003 (aka Visual C++ 7.1, part of Visual Studio .NET 2003 and
+        the free Visual C++ Toolkit 2003), Visual C++ 2005 (aka Visual C++ 8.0,
+        part of Visual Studio 2005 and the free Visual C++ 2005 Express Edition)
+        and later produce binaries that require compiler-specific DLLs named
         msvcr70.dll, msvcr71.dll, msvcr80.dll etc.  Therefore, building these
-        modules with the anything later than Visual Studio 98 for use with any
-        ActivePerl, which are known currently to be built with Visual Studio 98,
-        will not work.
+        modules with anything later than VC6 for use with ActivePerl, which is
+        known currently to be built with VC6, will not work.
 
         On Windows, the Makefile.PL script will try to detect if a different
         compiler is being used and will give an error if necessary.  Note,

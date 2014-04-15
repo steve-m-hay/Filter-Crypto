@@ -7,7 +7,7 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -26,10 +26,10 @@ use inc::Module::Install;
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.09';
+our $VERSION = '1.10';
 {
     no warnings 'once';
-    our $YEAR = '2004-2009';
+    our $YEAR = '2004-2009, 2012';
 }
 
 #===============================================================================
@@ -55,6 +55,7 @@ MAIN: {
     configure_requires ('Pod::Usage' => '1.15');
     configure_requires ('Text::Wrap');
     configure_requires ('constant');
+    configure_requires ('parent');
     configure_requires ('strict');
     configure_requires ('vars');
     configure_requires ('warnings');
@@ -922,7 +923,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -932,11 +933,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.09
+Version 1.10
 
 =head1 DATE
 
-18 Oct 2009
+20 Mar 2012
 
 =head1 HISTORY
 

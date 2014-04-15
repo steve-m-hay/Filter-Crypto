@@ -8,7 +8,7 @@
 #   Filter-Crypto distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2008-2010 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2008-2010, 2012 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -22,6 +22,8 @@ use 5.006000;
 
 use strict;
 use warnings;
+
+use parent qw(Module::Install::PRIVATE);
 
 use Config qw(%Config);
 use Cwd qw(abs_path);
@@ -72,12 +74,10 @@ use constant BUILD_OPTION_DECRYPT   => 'Decrypt';
 # CLASS INITIALIZATION
 #===============================================================================
 
-our(@ISA, $VERSION);
+our($VERSION);
 
 BEGIN {
-    @ISA = qw(Module::Install::PRIVATE);
-
-    $VERSION = '1.10';
+    $VERSION = '1.11';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(

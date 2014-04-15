@@ -20,7 +20,6 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Config qw(%Config);
 use Cwd qw(abs_path cwd);
 use File::Copy qw(copy);
 use File::Spec::Functions qw(canonpath catdir catfile devnull rel2abs updir);
@@ -629,32 +628,7 @@ MAIN: {
                        ^ VERSION      .*?
                        ^ DATE         .*?
                        ^ HISTORY      /mosx,
-             '-m option works') or
-            diag("perl = '$perl'\ncrypt_file = '$crypt_file'\n" .
-                 "scriptdir = '$Config{scriptdir}' " .
-                 (-e catfile($Config{scriptdir}, 'perldoc')
-                  ? "contains perldoc\n" : "does not contain perldoc\n") .
-                 "scriptdirexp = '$Config{scriptdirexp}' " .
-                 (-e catfile($Config{scriptdirexp}, 'perldoc')
-                  ? "contains perldoc\n" : "does not contain perldoc\n") .
-                 "installsitescript = '$Config{installsitescript}' " .
-                 (-e catfile($Config{installsitescript}, 'perldoc')
-                  ? "contains perldoc\n" : "does not contain perldoc\n") .
-                 "installvendorscript = '$Config{installvendorscript}' " .
-                 (-e catfile($Config{installvendorscript}, 'perldoc')
-                  ? "contains perldoc\n" : "does not contain perldoc\n") .
-                 "installscript = '$Config{installscript}' " .
-                 (-e catfile($Config{installscript}, 'perldoc')
-                  ? "contains perldoc\n" : "does not contain perldoc\n") .
-                 "installsitebin = '$Config{installsitebin}' " .
-                 (-e catfile($Config{installsitebin}, 'perldoc')
-                  ? "contains perldoc\n" : "does not contain perldoc\n") .
-                 "installvendorbin = '$Config{installvendorbin}' " .
-                 (-e catfile($Config{installvendorbin}, 'perldoc')
-                  ? "contains perldoc\n" : "does not contain perldoc\n") .
-                 "installbin = '$Config{installbin}' " .
-                 (-e catfile($Config{installbin}, 'perldoc')
-                  ? "contains perldoc\n" : "does not contain perldoc\n"));
+             '-m option works');
     }
 
     unlink $mbfile;
