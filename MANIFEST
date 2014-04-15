@@ -30,6 +30,7 @@ inc/Module/Install/Makefile.pm                 Module::Install::Makefile Perl mo
 inc/Module/Install/MakeMaker.pm                Module::Install::MakeMaker Perl module
 inc/Module/Install/Metadata.pm                 Module::Install::Metadata Perl module
 inc/Module/Install/PRIVATE.pm                  Module::Install::PRIVATE Perl module
+inc/Module/Install/Scripts.pm                  Module::Install::Scripts Perl module
 inc/Module/Install/PRIVATE/Filter/Crypto.pm    Module::Install::PRIVATE::Filter::Crypto Perl module
 lib/Filter/Crypto.pm                           Filter::Crypto Perl module
 lib/PAR/Filter/Crypto.pm                       PAR::Filter::Crypto Perl module

@@ -1,9 +1,22 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.27
+                          Filter::Crypto, Version 1.28
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.28 25 Oct 2009
+
+    - The previous change to address CPAN Testers "FAIL" reports from Solaris
+      2.11 didn't work, perhaps because, as pointed out on the OpenSSL users
+      mailing list (openssl-users@openssl.org), libcrypto.so must be used
+      instead of libcrypto.a.  Therefore, added code to check for libcrypto.so
+      where libcrypto.a isn't found.
+
+    - Updated Module::Install components from version 0.91 of that distribution.
+
+    - Updated ppport.h using version 3.19 of the Devel::PPPort distribution.
 _________________
 
 v1.27 22 Oct 2009

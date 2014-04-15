@@ -77,7 +77,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::PRIVATE);
 
-    $VERSION = '1.08';
+    $VERSION = '1.09';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(
@@ -387,14 +387,14 @@ sub determine_ver_num {
 
     # The version number is now specified by an OPENSSL_VERSION_NUMBER #define
     # in the opensslv.h header file (0.9.2 onwards).  That #define was in the
-    # crypto.h header file (0.9.1's), and was called SSLEAY_VERSION_NUMBER (from
+    # crypto.h header file (0.9.1s), and was called SSLEAY_VERSION_NUMBER (from
     # 0.6.0 to 0.9.0b inclusive).  Earlier versions do not seem to have a
     # version number defined in this way, but we do not support anything earlier
     # anyway.  The version number is specified as a hexadecimal integer of the
     # form MNNFFPPS (major, minor, fix, patch, status [0 for dev, 1 to 14 for
     # betas, and f for release) (0.9.5a onwards, but with the highest bit set in
-    # the patch byte for the 0.9.5's), or of the form MNNFFRBB (major, minor,
-    # fix, release, patch or beta) (0.9.3's, 0.9.4's and 0.9.5), or of the form
+    # the patch byte for the 0.9.5s), or of the form MNNFFRBB (major, minor,
+    # fix, release, patch or beta) (0.9.3s, 0.9.4s and 0.9.5), or of the form
     # MNFP (major, minor, fix, patch) (up to and including 0.9.2b).
     my($file, $ver_file);
     if (-f ($file = catfile($inc_files_dir, 'opensslv.h'))) {
@@ -618,7 +618,9 @@ sub probe_for_lib_file {
     # The libraries on UNIX-type platforms (which includes Cygwin) are called
     # libssl.a (which contains the SSL and TLS implmentations) and libcrypto.a
     # (which contains the ciphers, digests, etc) and are specified as -lssl and
-    # -lcrypto respectively.
+    # -lcrypto respectively.  Solaris 10 discourages static linking and Solaris
+    # 11 doesn't even ship static libraries for OpenSSL, so libcrypto.so must be
+    # used instead where that exists in place of libcrypto.a.
     # On "native" Windows platforms built with the Microsoft Visual C++ (cl) or
     # Borland C++ (bcc32) they are called ssleay32.lib and libeay32.lib and are
     # specified as -lssleay32 and -llibeay32 (0.8.0 onwards), or ssl32.lib and
@@ -681,6 +683,10 @@ sub probe_for_lib_file {
     }
     else {
         if (-f ($file = catfile($candidate_lib_dir, 'libcrypto.a'))) {
+            $lib_file = $file;
+            $lib_name = 'crypto';
+        }
+        elsif (-f ($file = catfile($candidate_lib_dir, 'libcrypto.so'))) {
             $lib_file = $file;
             $lib_name = 'crypto';
         }

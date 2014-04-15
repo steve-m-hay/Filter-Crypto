@@ -36,7 +36,7 @@ BEGIN {
     if ($] < 5.006001) {
         # Before 5.6.1, Cwd::abs_path() did not correctly clean-up Win32 paths
         # like C:\Temp\.., which breaks the -d/-r/-t tests, so do it the hard
-        # way instead.  Do it for all OS's just in case.
+        # way instead.  Do it for all OSes just in case.
         my $cwd = cwd();
         chdir $Bin or die "Can't cd to test script directory: $!\n";
         chdir updir() or die "Can't cd to parent directory: $!\n";
@@ -291,11 +291,11 @@ MAIN: {
 
     $expected = catdir($dir4, $file);
     chomp($data = qx{$perl $crypt_file -d $dir4 -d $dir5 -t $file});
-    is($data, $expected, "-t works with two -d's");
+    is($data, $expected, "-t works with two -ds");
 
     $expected = catdir($dir5, $file);
     chomp($data = qx{$perl $crypt_file -d $dir5 -d $dir4 -t $file});
-    is($data, $expected, "-t works with two -d's reversed");
+    is($data, $expected, "-t works with two -ds reversed");
 
     $expected = catfile($top_dir, 'Makefile.PL') . "\n";
     $data = qx[$perl $crypt_file -d $top_dir -t ${q}Makefil?.PL$q];
@@ -326,10 +326,10 @@ MAIN: {
 
     chomp($data = qx{$perl $crypt_file -d $top_dir -d $dir3 -d $dir4 -t $file});
     $data = join("\n", sort split /\n/, $data) . "\n";
-    is($data, $expected, "-t works with three -d's and a glob");
+    is($data, $expected, "-t works with three -ds and a glob");
     chomp($data = qx{$perl $crypt_file -d $top_dir -d $dir3 -d $dir4 -r -t $file});
     $data = join("\n", sort split /\n/, $data) . "\n";
-    is($data, $expected, "-t works with three -d's, -r and a glob");
+    is($data, $expected, "-t works with three -ds, -r and a glob");
 
     chomp($line = qx{$perl $crypt_file $ifile 2>&1 1>$ofile});
     is($?, 0, 'crypt_file ran OK without --silent option');

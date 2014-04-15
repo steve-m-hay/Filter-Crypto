@@ -65,7 +65,7 @@ MAIN: {
     my($in_place, $edit_mode, $bak_file_expr, $out_file_expr, $crypt_mode);
 
     # Allow options to be introduced with a "/" character on Windows, as is
-    # common on those OS's, as well as the default set of characters.
+    # common on those OSes, as well as the default set of characters.
     if ($^O =~ /MSWin32/io) {
         Getopt::Long::Configure('prefix_pattern=(--|-|\+|\/)');
     }

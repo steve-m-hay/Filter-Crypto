@@ -571,7 +571,7 @@ import(module, ...)
 
         /* Store a pointer back to the MAGIC within the filter context structure
          * itself so that we can verify later that we have retrieved the correct
-         * MAGIC from the SV since multiple MAGIC's, even of the same type, can
+         * MAGIC from the SV since multiple MAGICs, even of the same type, can
          * be added to a single SV. */
         ctx->mg_ptr = mg;
 

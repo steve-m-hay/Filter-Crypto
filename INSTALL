@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.27
+                          Filter::Crypto, Version 1.28
 ________________________________________________________________________________
 
 PREREQUISITES
@@ -18,7 +18,7 @@ PREREQUISITES
         binaries that require the system's msvcrt.dll, while Visual Studio
         .NET/2003 (VC++ 7), Visual Studio 2005 (VC++ 8) and later (including the
         free Visual C++ Toolkit 2003 and the free Visual C++ 2005 Express
-        Edition) produce binaries that require compiler-specific DLL's named
+        Edition) produce binaries that require compiler-specific DLLs named
         msvcr70.dll, msvcr71.dll, msvcr80.dll etc.  Therefore, building these
         modules with the anything later than Visual Studio 98 for use with any
         ActivePerl, which are known currently to be built with Visual Studio 98,

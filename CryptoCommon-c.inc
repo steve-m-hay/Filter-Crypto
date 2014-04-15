@@ -36,15 +36,15 @@
 #  include <unistd.h>
 #endif
 
-/* The definition of RAND_screen() is only seen if WINDOWS is #define'd, which
- * it is not by default (even on Win32).  The C file containing the definition
- * #include's "e_os.h" first which #define's WINDOWS if it is not aleady
- * #define'd and WIN32 is (which is indeed the case on Win32).  However, the
- * header file declaring RAND_screen() does not include "e_os.h" so the
- * declaration (which, before 0.9.5a, is also only seen if WINDOWS #define'd)
- * does not get seen.  From 0.9.5a onwards the header file declaring
- * RAND_screen() tests if WIN32 is #define'd too so it works OK.  Therefore,
- * ensure WINDOWS is #define'd if WIN32 is so that earlier versions work too. */
+/* The definition of RAND_screen() is only seen if WINDOWS is #defined, which it
+ * is not by default (even on Win32).  The C file containing the definition
+ * #includes "e_os.h" first which #define's WINDOWS if it is not aleady #defined
+ * and WIN32 is (which is indeed the case on Win32).  However, the header file
+ * declaring RAND_screen() does not include "e_os.h" so the declaration (which,
+ * before 0.9.5a, is also only seen if WINDOWS #defined) does not get seen.
+ * From 0.9.5a onwards the header file declaring RAND_screen() tests if WIN32 is
+ * #defined too so it works OK.  Therefore, ensure WINDOWS is #defined if WIN32
+ * is so that earlier versions work too. */
 #ifdef WIN32
 #  ifndef WINDOWS
 #    define WINDOWS
@@ -199,7 +199,7 @@ static void FilterCrypto_HexDumpSV(pTHX_ const SV *sv, const char *title, ...);
 
 /* Fully-qualified name of the relevant Perl module's $ErrStr variable.  This is
  * set at boot time from the (hard-coded) unqualified name and the package name
- * #define'd in the individual XS files and is not subsequently changed, so is
+ * #defined in the individual XS files and is not subsequently changed, so is
  * virtually a "const" and is therefore thread-safe. */
 static char *filter_crypto_errstr_var = NULL;
 

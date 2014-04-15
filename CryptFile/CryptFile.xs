@@ -76,7 +76,7 @@ typedef enum {
 
 #define FILTER_CRYPTO_SYS_ERR_STR (strerror(errno))
 
-/* Our _crypt_fh() and _crypt_fhs() XSUB's use the typemap INPUT types
+/* Our _crypt_fh() and _crypt_fhs() XSUBs use the typemap INPUT types
  * InputStream, OutputStream and InOutStream for convenience, so we must provide
  * definitions for these "types".                                             */
 #ifndef InputStream
