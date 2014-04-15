@@ -77,7 +77,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::PRIVATE);
 
-    $VERSION = '1.04';
+    $VERSION = '1.05';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(
@@ -1239,12 +1239,13 @@ sub generate_rand_octets_hex {
     elsif (lc $rng eq lc RNG_CRYPT_RANDOM) {
         # Delay the loading of Crypt::Random until it is actually required since
         # it is not a standard module.
-        eval {
+        my $ok = eval {
             require Crypt::Random;
             Crypt::Random->import(qw(makerandom_octet));
+            1;
         };
 
-        if ($@) {
+        if (not $ok) {
             $self->exit_with_error(122,
                 "Can't load Crypt::Random module for random number generation"
             );
@@ -1259,12 +1260,13 @@ sub generate_rand_octets_hex {
     elsif (lc $rng eq lc RNG_MATH_RANDOM) {
         # Delay the loading of Math::Random until it is actually required since
         # it is not a standard module.
-        eval {
+        my $ok = eval {
             require Math::Random;
             Math::Random->import(qw(random_uniform_integer));
+            1;
         };
 
-        if ($@) {
+        if (not $ok) {
             $self->exit_with_error(123,
                 "Can't load Math::Random module for random number generation"
             );

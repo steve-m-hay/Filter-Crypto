@@ -538,15 +538,15 @@ import(module, ...)
          * than a savepvn() copy of it being stored.
          * Before 5.7.3 we have to do it the hard way, using sv_magic().  Note
          * that this stores a savepvn() copy of the mg_ptr member-to-be for all
-         * lengths >= 0, so instead we just pass (Nullch, 0) and assign ctx to
-         * the mg_ptr member later.  (We cannot pass (ctx, sizeof(*ctx)) and
-         * then assign mg->mg_ptr back to ctx because the original ctx would
+         * lengths >= 0, so instead we just pass ((char *)NULL, 0) and assign
+         * ctx to the mg_ptr member later.  (We cannot pass (ctx, sizeof(*ctx))
+         * and then assign mg->mg_ptr back to ctx because the original ctx would
          * need to be freed, but we cannot use FilterCrypto_FilterFree() to free
          * it since savepvn() will only have made a shallow copy.) */
         filter_sv = newSV(0);
 #if (PERL_REVISION == 5 && \
      (PERL_VERSION < 7 || (PERL_VERSION == 7 && PERL_SUBVERSION < 3)))
-        sv_magic(filter_sv, Nullsv, PERL_MAGIC_ext, Nullch, 0);
+        sv_magic(filter_sv, (SV *)NULL, PERL_MAGIC_ext, (char *)NULL, 0);
         if (!(mg = mg_find(filter_sv, PERL_MAGIC_ext))) {
             FilterCrypto_FilterFree(aTHX_ ctx);
             croak("Can't add MAGIC to decryption filter's SV");
@@ -554,7 +554,7 @@ import(module, ...)
         mg->mg_ptr = (char *)ctx;
         mg->mg_virtual = (MGVTBL *)&FilterCrypto_FilterSvMgVTBL;
 #else
-        if (!(mg = sv_magicext(filter_sv, Nullsv, PERL_MAGIC_ext,
+        if (!(mg = sv_magicext(filter_sv, (SV *)NULL, PERL_MAGIC_ext,
                 (MGVTBL *)&FilterCrypto_FilterSvMgVTBL, (char *)ctx, 0)))
         {
             FilterCrypto_FilterFree(aTHX_ ctx);

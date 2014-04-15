@@ -6,7 +6,7 @@
 #   Common XS code for Filter::Crypto modules.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -53,7 +53,7 @@ BOOT:
      * Thanks to Joost on PerlMonks for this idea. */
     sv = newSV(0);
     rv = newRV_noinc(sv);
-    if ((stash = gv_stashpvn(package, package_len, 0)) == Nullhv)
+    if ((stash = gv_stashpvn(package, package_len, 0)) == (HV *)NULL)
         croak("No such package '%s'", package);
     sv_bless(rv, stash);
 }

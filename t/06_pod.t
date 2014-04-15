@@ -7,7 +7,7 @@
 #   Test script to check POD.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2008 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -27,12 +27,13 @@ use Test::More;
 #===============================================================================
 
 MAIN: {
-    eval {
+    my $ok = eval {
         require Test::Pod;
         Test::Pod->import();
+        1;
     };
 
-    if ($@) {
+    if (not $ok) {
         plan skip_all => 'Test::Pod required to test POD';
     }
     elsif ($Test::Pod::VERSION < 1.00) {

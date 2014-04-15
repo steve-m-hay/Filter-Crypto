@@ -8,7 +8,7 @@
 #   use in creating PAR archives in which the Perl files are encrypted.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -38,7 +38,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(PAR::Filter);
 
-    $VERSION = '1.03';
+    $VERSION = '1.04';
 }
 
 #===============================================================================
@@ -49,7 +49,11 @@ BEGIN {
 # in the PAR distribution (version 0.85).
 
 sub apply {
-    my($class, $ref) = @_;
+    my($class, $ref, $filename, $name) = @_;
+
+    # If we're encrypting modules (e.g. pp -F Crypto ...) then be careful not to
+    # encrypt the decryption module.
+    return 1 if $filename eq 'Filter/Crypto/Decrypt.pm';
 
     if (eval { require Module::ScanDeps; 1 } and
         $Module::ScanDeps::VERSION eq '0.75')
@@ -106,6 +110,9 @@ PAR::Filter::Crypto - Encrypt Perl files in PAR archives
     # Create a PAR archive containing an encrypted Perl script:
     $ pp -f Crypto -M Filter::Crypto::Decrypt -o hello hello.pl
 
+    # The same, but with included modules encrypted as well:
+    $ pp -f Crypto -F Crypto -M Filter::Crypto::Decrypt -o hello hello.pl
+
     # Encrypt Perl source code in $code:
     use PAR::Filter::Crypto;
     PAR::Filter::Crypto->apply(\$code);
@@ -117,21 +124,25 @@ containing encrypted Perl files.  The PAR::Filter class itself is part of the
 L<PAR|PAR> distribution, and is clearly a prerequisite for using this sub-class.
 
 The usual means of producing a PAR archive is using the B<pp> script, which also
-comes with the PAR distribution.  That script's B<-f> command-line option can be
-used to specify a "filter" through which to pass the Perl script being put into
-the PAR archive.  Specifying this sub-class as the filter (i.e. "B<-f Crypto>")
-means that the Perl script will be encrypted using the
+comes with the PAR distribution.  That script's B<-f> and B<-F> command-line
+options can be used to specify a "filter" through which to pass the Perl files
+being put into the PAR archive.  Specifying this sub-class as the filter (i.e.
+"B<-f Crypto>" for scripts and/or "B<-F Crypto>" for modules) means that the
+Perl files will be encrypted using the
 L<Filter::Crypto::CryptFile|Filter::Crypto::CryptFile> module.  The resulting
-encrypted script is what will be placed in the PAR archive.
+encrypted files are what will be placed in the PAR archive.
 
 Note that the encrypted script requires the
 L<Filter::Crypto::Decrypt|Filter::Crypto::Decrypt> module in order to decrypt
 itself when it is run.  The original Perl script will not have specified any
 such dependency, so B<pp> will not automatically include that module in the PAR
 archive for you.  Therefore, you must use the B<-M> option to force that module
-to be included.  A typical B<pp> invocation is thus something like:
+to be included.  Also note that if you use the B<-F> option to encrypt modules
+as well then the filtering will automatically skip the
+L<Filter::Crypto::Decrypt|Filter::Crypto::Decrypt> module itself for obvious
+reasons.  A typical B<pp> invocation is thus something like:
 
-    $ pp -f Crypto -M Filter::Crypto::Decrypt -o hello hello.pl
+    $ pp -f Crypto -F Crypto -M Filter::Crypto::Decrypt -o hello hello.pl
 
 (Version 0.75 of the L<Module::ScanDeps|Module::ScanDeps> module, used by B<pp>
 to scan for dependencies that need including in the PAR archive, is known to
@@ -161,7 +172,7 @@ Class method.  Encrypts the Perl source code referred to by $ref, and replaces
 the code referred to by $ref with the encrypted code.  Thus, the code in $$ref
 gets encrypted "in-place".
 
-Returns 1 on success, or C<croak()>'s on failure (since the usual caller,
+Returns 1 on success, or C<croak()>s on failure (since the usual caller,
 PAR::Filter::apply(), does not bother checking the return value (as of
 PAR::Filter version 0.02, at least)).
 
@@ -255,7 +266,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -265,11 +276,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.03
+Version 1.04
 
 =head1 DATE
 
-25 Jul 2007
+25 Aug 2008
 
 =head1 HISTORY
 

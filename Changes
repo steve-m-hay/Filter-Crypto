@@ -1,9 +1,31 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.21
+                          Filter::Crypto, Version 1.22
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.22 25 Aug 2008
+
+    - Fixed PAR::Filter::Crypto so that it doesn't encrypt the
+      Filter/Crypto/Decrypt.pm module, otherwise programs created using
+      "pp -F Crypto ..." don't run. Added new tests to check this. (Fixes [cpan
+      #38638].)
+
+    - Updated Module::Install components from version 0.77 of that distribution.
+      (That includes a fix for [cpan #29866], which in turn fixes [cpan #29795]
+      in this distribution.)
+
+    - Skipped a couple of tests in t/04_par.t that are known to fail when using
+      Module::ScanDeps 0.75 (see changes below for version 1.20).
+
+    - Changed the use of "eval { ... };" to test the return value rather than $@
+      since under certain circumstances $@ can end up undefined after a failed
+      eval.
+
+    - Changed all Nullxx macros to (XX *)NULL as per perl change #33051 and
+      various earlier changes.
 _________________
 
 v1.21 06 Jul 2008

@@ -252,12 +252,12 @@ static bool FilterCrypto_CryptoInit(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 #if FILTER_CRYPTO_NEED_RANDOM_SALT
     FilterCrypto_SvSetCUR(ctx->salt_sv, 0);
 #else
-    ctx->salt_sv = Nullsv;
+    ctx->salt_sv = (SV *)NULL;
 #endif
 #if FILTER_CRYPTO_NEED_RANDOM_IV
     FilterCrypto_SvSetCUR(ctx->iv_sv,   0);
 #else
-    ctx->iv_sv = Nullsv;
+    ctx->iv_sv = (SV *)NULL;
 #endif
 
     /* Initialize the crypt mode and cipher context initialization status. */

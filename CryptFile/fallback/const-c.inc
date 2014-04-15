@@ -40,11 +40,11 @@ my $types = {map {($_, 1)} qw(IV)};
 my @names = (qw(CRYPT_MODE_AUTO CRYPT_MODE_DECRYPT CRYPT_MODE_DECRYPTED
 	       CRYPT_MODE_ENCRYPT CRYPT_MODE_ENCRYPTED));
 
-print constant_types(), "\n"; # macro defs
+print constant_types(); # macro defs
 foreach (C_constant ("Filter::Crypto::CryptFile", 'constant', 'IV', $types, undef, 3, @names) ) {
     print $_, "\n"; # C constant subs
 }
-print "\n#### XS Section:\n";
+print "#### XS Section:\n";
 print XS_constant ("Filter::Crypto::CryptFile", $types);
 __END__
    */

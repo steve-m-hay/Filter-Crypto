@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::CryptFile module.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -123,7 +123,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
 
     /* If there is no output filehandle supplied then we are in "update mode",
      * and need to create a temporary output buffer. */
-    if (out_fh == Nullfp) {
+    if (out_fh == (PerlIO *)NULL) {
         update_mode = TRUE;
         buf_sv = sv_2mortal(newSV(BUFSIZ));
         SvPOK_only(buf_sv);
@@ -446,7 +446,7 @@ _crypt_fh(fh, crypt_mode_ex);
 
     PPCODE:
     {
-        if (FilterCrypto_CryptFh(aTHX_ fh, Nullfp, crypt_mode_ex))
+        if (FilterCrypto_CryptFh(aTHX_ fh, (PerlIO *)NULL, crypt_mode_ex))
             XSRETURN_YES;
         else
             XSRETURN_EMPTY;
