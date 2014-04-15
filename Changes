@@ -1,9 +1,15 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.34
+                          Filter::Crypto, Version 1.35
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.35 05 Mar 2012
+
+    - Added extra diagnostics to t/03_script.t to try to discover the cause of
+      persistent CPAN Testers "FAIL" reports regarding test 99.
 _________________
 
 v1.34 02 Mar 2012
