@@ -38,7 +38,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(PAR::Filter);
 
-    $VERSION = '1.06';
+    $VERSION = '1.07';
 }
 
 #===============================================================================
@@ -54,13 +54,6 @@ sub apply {
     # If we're encrypting modules (e.g. pp -F Crypto ...) then be careful not to
     # encrypt the decryption module.
     return 1 if $filename eq 'Filter/Crypto/Decrypt.pm';
-
-    if ($Carp::VERSION eq '1.18' or $Carp::VERSION eq '1.19' or
-        $Carp::VERSION eq '1.20')
-    {
-        croak("Detected Carp version $Carp::VERSION, which does not work " .
-              "correctly with " . __PACKAGE__);
-    }
 
     if (eval { require Module::ScanDeps; 1 } and
         $Module::ScanDeps::VERSION eq '0.75')
@@ -222,17 +215,6 @@ corresponding to the standard C library C<errno> variable is also given.
 is used to perform the encryption failed.  The last error message from the
 Filter::Crypto::CryptFile module is also given.
 
-=item Detected Carp version %s, which does not work correctly with
-      PAR::Filter::Crypto
-
-(F) Your current installation of the Carp module, used by the PAR archive when
-it self-extracts and runs, was found to be version 1.18, 1.19 or 1.20, which are
-known to have the effect of preventing the PAR archive from running.
-(Specifically, they auto-vivify the B:: stash, giving the impression that the
-Perl compiler backend bas been loaded, in which state the source code decryption
-filter will refuse to run as documented in L<Filter::Crypto/"WARNING">.) You
-must upgrade Carp to version 1.21 or higher.
-
 =item Detected Module::ScanDeps version 0.75, which may not work correctly with
       PAR::Filter::Crypto
 
@@ -281,11 +263,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.06
+Version 1.07
 
 =head1 DATE
 
-29 Feb 2012
+02 Mar 2012
 
 =head1 HISTORY
 

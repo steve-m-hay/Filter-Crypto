@@ -38,7 +38,7 @@ BEGIN {
     if (-f catfile($lib_dir, 'CryptFile.pm')) {
         require Filter::Crypto::CryptFile;
         Filter::Crypto::CryptFile->import(qw(:DEFAULT $ErrStr));
-        plan tests => 289;
+        plan tests => 295;
     }
     else {
         plan skip_all => 'CryptFile component not built';
@@ -58,10 +58,15 @@ MAIN: {
     my $ifile  = 'test.pl';
     my $ofile  = 'test.enc.pl';
     my $iofile = $ifile;
+    my $script = 'foo.pl';
+    my $module = 'Foo.pm';
     my $str    = 'Hello, world.';
     my $prog   = qq[print "$str\\n";\n];
+    my $scrsrc = qq[use Carp;\nuse Foo;\nFoo::foo();\n];
+    my $modsrc = qq[package Foo;\nsub foo() { print "$str\\n" }\n1;\n];
     my $head   = 'use Filter::Crypto::Decrypt;';
     my $qrhead = qr/^\Q$head\E/;
+    my $buf    = '';
 
     # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which looks
     # ugly when we spawn a child perl process and breaks the --silent test.
@@ -622,9 +627,9 @@ MAIN: {
     }
 
     for ($i = 1; $i <= 16; $i++) {
-        $str = ';' x $i;
+        $buf = ';' x $i;
         open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
-        print $fh qq[print "$str";\n];
+        print $fh qq[print "$buf";\n];
         close $fh;
 
         $n = -s $iofile;
@@ -639,14 +644,14 @@ MAIN: {
         SKIP: {
             skip 'Decrypt component not built', 1 unless $have_decrypt;
             chomp($line = qx{$perl $iofile});
-            is($line, $str, '... and encrypted file runs OK');
+            is($line, $buf, '... and encrypted file runs OK');
         }
     }
 
     for ($i = 1; $i <= 16; $i++) {
-        $str = ';' x $i;
+        $buf = ';' x $i;
         open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
-        print $fh qq[print "$str";];
+        print $fh qq[print "$buf";];
         close $fh;
 
         $n = -s $iofile;
@@ -661,13 +666,13 @@ MAIN: {
         SKIP: {
             skip 'Decrypt component not built', 1 unless $have_decrypt;
             chomp($line = qx{$perl $iofile});
-            is($line, $str, '... and encrypted file runs OK');
+            is($line, $buf, '... and encrypted file runs OK');
         }
     }
 
-    $str = ';' x 4096;
+    $buf = ';' x 4096;
     open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
-    print $fh qq[print "$str";\n];
+    print $fh qq[print "$buf";\n];
     close $fh;
 
     $n = -s $iofile;
@@ -682,12 +687,12 @@ MAIN: {
     SKIP: {
         skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        is($line, $str, '... and encrypted file runs OK');
+        is($line, $buf, '... and encrypted file runs OK');
     }
 
-    $str = ';' x 4096;
+    $buf = ';' x 4096;
     open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
-    print $fh qq[print "$str";];
+    print $fh qq[print "$buf";];
     close $fh;
 
     $n = -s $iofile;
@@ -702,12 +707,54 @@ MAIN: {
     SKIP: {
         skip 'Decrypt component not built', 1 unless $have_decrypt;
         chomp($line = qx{$perl $iofile});
-        is($line, $str, '... and encrypted file runs OK');
+        is($line, $buf, '... and encrypted file runs OK');
+    }
+
+    open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
+    print $fh $prog;
+    close $fh;
+    
+    ok(crypt_file($iofile), 'crypt_file($file) returned OK') or
+        diag("\$ErrStr = '$ErrStr'");
+    
+    open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    like($contents, $qrhead, '... and file encrypted OK');
+    
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
+        chomp($line = qx{$perl -MCarp $iofile});
+        is($line, $str, '... and encrypted file runs OK with Carp loaded');
+    }
+
+    open $fh, ">$script" or die "Can't create file '$script': $!\n";
+    print $fh $scrsrc;
+    close $fh;
+    
+    open $fh, ">$module" or die "Can't create file '$module': $!\n";
+    print $fh $modsrc;
+    close $fh;
+    
+    ok(crypt_file($module), 'crypt_file($file) returned OK') or
+        diag("\$ErrStr = '$ErrStr'");
+    
+    open $fh, $module or die "Can't read file '$module': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    like($contents, $qrhead, '... and module encrypted OK');
+    
+    SKIP: {
+        skip 'Decrypt component not built', 1 unless $have_decrypt;
+        chomp($line = qx{$perl $script});
+        is($line, $str, '... and encrypted module runs OK with Carp loaded');
     }
 
     unlink $mbfile;
     unlink $ifile;
     unlink $ofile;
+    unlink $script;
+    unlink $module;
 }
 
 #===============================================================================

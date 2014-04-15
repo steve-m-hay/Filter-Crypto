@@ -20,7 +20,6 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Carp qw();
 use Config qw(%Config);
 use Cwd qw(abs_path);
 use File::Spec::Functions qw(canonpath catdir catfile curdir updir);
@@ -47,12 +46,6 @@ BEGIN {
 
     unless (eval { require PAR::Filter; 1 }) {
         plan skip_all => 'PAR::Filter required to test PAR::Filter::Crypto';
-    }
-
-    if ($Carp::VERSION eq '1.18' or $Carp::VERSION eq '1.19' or
-        $Carp::VERSION eq '1.20')
-    {
-        plan skip_all => 'Carp 1.21 or higher required to use PAR::Filter::Crypto';
     }
 
     my @keys = qw(

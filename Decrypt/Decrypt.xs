@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::Decrypt module.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -502,7 +502,7 @@ BOOT:
     /* Check that we are not running with the Perl compiler backend enabled.
      * e.g. perl -MO=Deparse <script> */
 #  ifndef FILTER_CRYPTO_UNSAFE_MODE
-    if (gv_stashpvn("B", 1, FALSE))
+    if (get_sv("B::VERSION", FALSE))
         croak("Can't run with Perl compiler backend");
 #  endif
 #endif

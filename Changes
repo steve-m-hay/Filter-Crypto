@@ -1,9 +1,22 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.33
+                          Filter::Crypto, Version 1.34
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.34 02 Mar 2012
+
+    - Reverted changes made in version 1.32 which caused PAR::Filter::Crypto to
+      abort (and t/04_par.t to skip corresponding tests) with certain versions
+      of Carp, and applied a simple fix for the problem instead.  (Carp only
+      auto-vivified the B:: stash, but left it tellingly empty, so we now simply
+      test for the existence of something actually in the B:: stash.)
+      Note that the problem did not only affect the execution of encrypted files
+      within a PAR archive: it actually affected the execution of any encrypted
+      file being loaded after Carp has already been loaded.  The new approach
+      fixes those scenarios too.  (Fixes [cpan #75443].)
 _________________
 
 v1.33 29 Feb 2012
