@@ -26,7 +26,7 @@ use inc::Module::Install;
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.07';
+our $VERSION = '1.08';
 {
     no warnings 'once';
     our $YEAR = '2004-2009';
@@ -37,27 +37,53 @@ our $VERSION = '1.07';
 #===============================================================================
 
 MAIN: {
-    name          ('Filter-Crypto');
-    license       ('perl');
-    all_from      ('lib/Filter/Crypto.pm');
-    requires      ('Scalar::Util');
-    test_requires ('Test::More');
-    feature       ('crypt_file -e tempfile support' => [
-                   -default => 0,
-                   'File::Temp'
+    name               ('Filter-Crypto');
+    license            ('perl');
+    all_from           ('lib/Filter/Crypto.pm');
+    configure_requires ('Carp');
+    configure_requires ('Config');
+    configure_requires ('Cwd');
+    configure_requires ('ExtUtils::MakeMaker');
+    configure_requires ('File::Basename');
+    configure_requires ('File::Copy');
+    configure_requires ('File::Find');
+    configure_requires ('File::Path');
+    configure_requires ('File::Spec');
+    configure_requires ('File::Spec::Functions');
+    configure_requires ('FindBin');
+    configure_requires ('Getopt::Long');
+    configure_requires ('Pod::Usage');
+    configure_requires ('Text::Wrap');
+    configure_requires ('constant');
+    configure_requires ('strict');
+    configure_requires ('vars');
+    configure_requires ('warnings');
+    test_requires      ('Test::More');
+    requires           ('Exporter');
+    requires           ('Fcntl');
+    requires           ('Scalar::Util');
+    requires           ('Text::ParseWords');
+    requires           ('XSLoader');
+    recommends         ('File::Temp');
+    recommends         ('PAR::Filter');
+    feature            ('crypt_file -e tempfile support' => [
+                        -default => 0,
+                        'File::Temp'
     ]);
-    feature       ('PAR::Filter support' => [
-                   -default => 0,
-                   'PAR::Filter',
-                   'File::Temp'
+    feature            ('PAR::Filter support' => [
+                        -default => 0,
+                        'PAR::Filter',
+                        'File::Temp'
     ]);
-    feature       ('POD testing' => [
-                   -default    => 0,
-                   'Test::Pod' => '1.00'
+    feature            ('Fuller PAR::Filter::Crypto testing' => [
+                        -default => 0,
+                        'Archive::Zip'
     ]);
-    recommends    ('File::Temp');
-    recommends    ('PAR::Filter');
-    clean_files   ('CipherConfig.h');
+    feature            ('POD testing' => [
+                        -default    => 0,
+                        'Test::Pod' => '1.00'
+    ]);
+    clean_files        ('CipherConfig.h');
 
     my $obj = get_filter_crypto_private_obj();
 
@@ -894,11 +920,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.07
+Version 1.08
 
 =head1 DATE
 
-06 Sep 2009
+11 Oct 2009
 
 =head1 HISTORY
 

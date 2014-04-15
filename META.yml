@@ -5,7 +5,24 @@ author:
 build_requires:
   Test::More: 0
 configure_requires:
+  Carp: 0
+  Config: 0
+  Cwd: 0
   ExtUtils::MakeMaker: 6.42
+  File::Basename: 0
+  File::Copy: 0
+  File::Find: 0
+  File::Path: 0
+  File::Spec: 0
+  File::Spec::Functions: 0
+  FindBin: 0
+  Getopt::Long: 0
+  Pod::Usage: 0
+  Text::Wrap: 0
+  constant: 0
+  strict: 0
+  vars: 0
+  warnings: 0
 distribution_type: module
 generated_by: 'Module::Install version 0.77'
 license: perl
@@ -21,8 +38,12 @@ recommends:
   File::Temp: 0
   PAR::Filter: 0
 requires:
+  Exporter: 0
+  Fcntl: 0
   Scalar::Util: 0
+  Text::ParseWords: 0
+  XSLoader: 0
   perl: 5.6.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.24
+version: 1.25
