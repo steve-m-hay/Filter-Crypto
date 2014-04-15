@@ -77,7 +77,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::PRIVATE);
 
-    $VERSION = '1.05';
+    $VERSION = '1.06';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(
@@ -505,19 +505,12 @@ sub locate_lib_dir_and_file {
     # or out32dll.dbg/ (0.9.0 onwards, depending on whether static or dynamic
     # libraries were built and whether they were built in release or debug mode)
     # or out/ (up to and including 0.8.1b).
+    # The Win32 OpenSSL Installation produced by Shining Light Productions
+    # installs its libraries into lib/VC (dynamic libraries), lib/VC/static
+    # (static libraries) or lib/MinGW.
     my $prefix_dir = $self->prefix_dir();
     my($dir, $lib_dir, $lib_file, $lib_name);
-    if (-d ($dir = catdir($prefix_dir, 'lib64')) and
-        ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
-    {
-        $lib_dir = $dir;
-    }
-    elsif (-d ($dir = catdir($prefix_dir, 'lib')) and
-           ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
-    {
-        $lib_dir = $dir;
-    }
-    elsif ($self->is_win32()) {
+    if ($self->is_win32()) {
         if (-d ($dir = catdir($prefix_dir, 'out32')) and
             ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
@@ -539,6 +532,36 @@ sub locate_lib_dir_and_file {
             $lib_dir = $dir;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'out')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+        elsif ($Config{cc} =~ /cl/io and
+               -d ($dir = catdir($prefix_dir, 'lib', 'VC', 'static')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+        elsif ($Config{cc} =~ /cl/io and
+               -d ($dir = catdir($prefix_dir, 'lib', 'VC')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+        elsif ($Config{cc} =~ /gcc/io and
+               -d ($dir = catdir($prefix_dir, 'lib', 'MinGW')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+    }
+    if (not defined $lib_dir) {
+        if (-d ($dir = catdir($prefix_dir, 'lib64')) and
+            ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+        elsif (-d ($dir = catdir($prefix_dir, 'lib')) and
                ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
             $lib_dir = $dir;
@@ -576,6 +599,14 @@ sub probe_for_lib_file {
     # called either libssl.a and libcrypto.a (for static builds) or libssl32.a
     # and libeay32.a [sic] (for dynamic builds).  They are specified as on UNIX-
     # type platforms, as described in the ExtUtils::Liblist manpage.
+    # The Win32 OpenSSL Installation produced by Shining Light Productions names
+    # its libraries differently. The Visual C++ libraries are named as normal
+    # but with a MD, MDd, MT or MTd suffix just before the .lib extension (e.g.
+    # libeay32MD.lib), depending on whether they were built with the -MD or -MT
+    # compiler option (of which only the former is supported by perl) and
+    # whether they were built in release or debug mode. The MinGW libraries are
+    # only provided as dynamic release build libraries, and are named similarly
+    # to the default names of VC++ libraries, namely ssleay32.a and libeay32.a.
     my($file, $lib_file, $lib_name);
     if ($self->is_win32()) {
         if ($Config{cc} =~ /gcc/io) {
@@ -600,6 +631,18 @@ sub probe_for_lib_file {
             elsif (-f ($file = catfile($candidate_lib_dir, 'crypto.lib'))) {
                 $lib_file = $file;
                 $lib_name = 'crypto';
+            }
+            elsif ($Config{cc} =~ /cl/io and
+                   -f ($file = catfile($candidate_lib_dir, 'libeay32MD.lib')))
+            {
+                $lib_file = $file;
+                $lib_name = 'libeay32MD';
+            }
+            elsif ($Config{cc} =~ /cl/io and
+                   -f ($file = catfile($candidate_lib_dir, 'libeay32MDd.lib')))
+            {
+                $lib_file = $file;
+                $lib_name = 'libeay32MDd';
             }
         }
     }
