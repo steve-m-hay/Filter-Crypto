@@ -6,7 +6,7 @@
  *   Common C code for Filter::Crypto modules.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -518,9 +518,11 @@ static void FilterCrypto_CryptoFree(pTHX_ FILTER_CRYPTO_CCTX *ctx) {
 
     /* Free the cipher context. */
     Safefree(ctx->cipher_ctx);
+    ctx->cipher_ctx = NULL;
 
     /* Free the crypto context. */
     Safefree(ctx);
+    ctx = NULL;
 }
 
 /*
@@ -603,6 +605,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
             key, iv)) != FILTER_CRYPTO_KEY_LEN)
     {
         Safefree(iv);
+        iv = NULL;
         FilterCrypto_SetErrStr(aTHX_
             "Derived key length is wrong (%d, expected %d)",
             derived_key_len, FILTER_CRYPTO_KEY_LEN
@@ -618,6 +621,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
 
 #  if FILTER_CRYPTO_USING_PBE
     Safefree(iv);
+    iv = NULL;
 #  endif
 
 #elif FILTER_CRYPTO_OPENSSL_VERSION < 90600

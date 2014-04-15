@@ -1,9 +1,37 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.26
+                          Filter::Crypto, Version 1.27
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.27 22 Oct 2009
+
+    - Fixed a double-free error in the Decrypt component when using Perl 5.6.2,
+      which was detected by some CPAN Testers "FAIL" reports.
+
+      The filter's SV contains a pointer to the filter context.  The SV is made
+      magical so that when the SV is destroyed the filter context gets
+      automatically freed by the magic virtual table's svt_free function,
+      namely, FilterCrypto_FilterSvMgFree().  However, that freed the mg_ptr on
+      the magic but didn't set it to NULL, which meant that the caller
+      (Perl_mg_free()) potentially tried to free the mg_ptr again.  Prior to
+      Perl 5.7.3 it would indeed free the mg_ptr again if mg_len >= 0, which is
+      true in this case (our mg_len is always 0), hence the errors with Perl
+      5.6.2.  From Perl 5.7.3 onwards (specifically, perl change #14373),
+      Perl_mg_free() only frees the mg_ptr again if mg_len > 0, so the double-
+      free wouldn't occur with those Perls.  However, it is good practice to set
+      pointers to NULL after freeing them, so this is done in
+      FilterCrypto_FilterSvMgFree() for all versions of Perl, and all other
+      pointers elsewhere are also set to NULL after being freed.
+
+    - Added two new locations in which to check for libcrypto.a on non-Win32
+      systems: ${prefix}/lib/amd64 and ${prefix}/lib/sparcv9.  This is where the
+      library could be found on 64-bit Solaris Intel and 64-bit Solaris Sparc
+      systems respectively, according to answers from the OpenSSL users mailing
+      list (openssl-users@openssl.org), and should hopefully resolve a couple of
+      CPAN Testers "FAIL" reports from 64-bit Solaris 2.11.
 _________________
 
 v1.26 18 Oct 2009

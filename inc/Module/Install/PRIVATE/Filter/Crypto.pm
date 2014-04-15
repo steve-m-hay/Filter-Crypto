@@ -77,7 +77,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::PRIVATE);
 
-    $VERSION = '1.07';
+    $VERSION = '1.08';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(
@@ -519,8 +519,10 @@ sub locate_lib_dir_and_file {
     my $self = shift;
 
     # The libraries are normally located in the lib/ sub-directory of the prefix
-    # directory, but may be in the lib64/ sub-directory on 64-bit systems.  (The
-    # latter may have lib/ directories as well, so check in lib64/ first.)
+    # directory, but may be in the lib64/ sub-directory on some 64-bit systems,
+    # or in the lib/amd64/ or lib/sparcv9/ sub-directory on 64-bit Solaris Intel
+    # or 64-bit Solaris Sparc respectively.  (Some 64-bit systems may have lib/
+    # sub-directories as well, so check in lib64/ etc. first.)
     # Again, build directories on "native" Windows platforms may have the files
     # in a different sub-directory, in this case out32/, out32dll/, out32.dbg/
     # or out32dll.dbg/ (0.9.0 onwards, depending on whether static or dynamic
@@ -579,6 +581,16 @@ sub locate_lib_dir_and_file {
     if (not defined $lib_dir) {
         if (-d ($dir = catdir($prefix_dir, 'lib64')) and
             ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+        elsif (-d ($dir = catdir($prefix_dir, 'lib', 'amd64')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+        elsif (-d ($dir = catdir($prefix_dir, 'lib', 'sparcv9')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
             $lib_dir = $dir;
         }

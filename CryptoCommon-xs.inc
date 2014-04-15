@@ -6,7 +6,7 @@
 #   Common XS code for Filter::Crypto modules.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -89,6 +89,7 @@ DESTROY(self)
 
         /* Free the relevant Perl module's $ErrStr variable name. */
         Safefree(filter_crypto_errstr_var);
+        filter_crypto_errstr_var = NULL;
     }
 
 #===============================================================================

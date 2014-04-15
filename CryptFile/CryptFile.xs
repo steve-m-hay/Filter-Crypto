@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::CryptFile module.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -258,6 +258,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
 
     if (!FilterCrypto_CryptoInit(aTHX_ ctx, crypt_mode)) {
         FilterCrypto_CryptoFree(aTHX_ ctx);
+        ctx = NULL;
         return FALSE;
     }
 
@@ -281,6 +282,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
 
             if (!FilterCrypto_CryptoUpdate(aTHX_ ctx, in_sv, out_sv)) {
                 FilterCrypto_CryptoFree(aTHX_ ctx);
+                ctx = NULL;
                 return FALSE;
             }
 
@@ -290,6 +292,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
                     buf_sv))
             {
                 FilterCrypto_CryptoFree(aTHX_ ctx);
+                ctx = NULL;
                 return FALSE;
             }
         }
@@ -309,6 +312,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
                 FILTER_CRYPTO_SYS_ERR_STR
             );
             FilterCrypto_CryptoFree(aTHX_ ctx);
+            ctx = NULL;
             return FALSE;
         }
     }
@@ -317,6 +321,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
      * the output SV. */
     if (!FilterCrypto_CryptoFinal(aTHX_ ctx, out_sv)) {
         FilterCrypto_CryptoFree(aTHX_ ctx);
+        ctx = NULL;
         return FALSE;
     }
 
@@ -324,11 +329,13 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
      * filehandle as appropriate. */
     if (!FilterCrypto_OutputData(aTHX_ out_sv, update_mode, out_fh, buf_sv)) {
         FilterCrypto_CryptoFree(aTHX_ ctx);
+        ctx = NULL;
         return FALSE;
     }
 
     /* Free the crypto context. */
     FilterCrypto_CryptoFree(aTHX_ ctx);
+    ctx = NULL;
 
     /* If we are in update mode then rewind and truncate the filehandle, and
      * write the output buffer back to the filehandle. */

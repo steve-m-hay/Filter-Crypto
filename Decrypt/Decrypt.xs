@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::Decrypt module.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2008 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -193,13 +193,15 @@ static void FilterCrypto_FilterFree(pTHX_ FILTER_CRYPTO_FCTX *ctx) {
 
     /* Free the crypto context. */
     FilterCrypto_CryptoFree(aTHX_ ctx->crypto_ctx);
+    ctx->crypto_ctx = NULL;
 
     /* Free the filter context. */
     Safefree(ctx);
+    ctx = NULL;
 }
 
 /*
- * Function to free the filter context pointed to by the given SV.
+ * Function to free the filter context pointed to by the given MAGIC.
  * Note: This function's signature and return value are determined by the mgvtbl
  * structure in Perl.
  */
@@ -209,6 +211,8 @@ static int FilterCrypto_FilterSvMgFree(pTHX_ SV *sv, MAGIC *mg) {
 
     if ((ctx = (FILTER_CRYPTO_FCTX *)(mg->mg_ptr)) && ctx->mg_ptr == mg) {
         FilterCrypto_FilterFree(aTHX_ ctx);
+        ctx = NULL;
+        mg->mg_ptr = NULL;
     }
     return 1;
 }
@@ -525,6 +529,7 @@ import(module, ...)
         ctx = FilterCrypto_FilterAlloc(aTHX);
         if (!FilterCrypto_FilterInit(aTHX_ ctx, FILTER_CRYPTO_MODE_DECRYPT)) {
             FilterCrypto_FilterFree(aTHX_ ctx);
+            ctx = NULL;
             croak("Can't start decryption: %s", FilterCrypto_GetErrStr(aTHX));
         }
 
@@ -549,6 +554,7 @@ import(module, ...)
         sv_magic(filter_sv, (SV *)NULL, PERL_MAGIC_ext, (char *)NULL, 0);
         if (!(mg = mg_find(filter_sv, PERL_MAGIC_ext))) {
             FilterCrypto_FilterFree(aTHX_ ctx);
+            ctx = NULL;
             croak("Can't add MAGIC to decryption filter's SV");
         }
         mg->mg_ptr = (char *)ctx;
@@ -558,6 +564,7 @@ import(module, ...)
                 (MGVTBL *)&FilterCrypto_FilterSvMgVTBL, (char *)ctx, 0)))
         {
             FilterCrypto_FilterFree(aTHX_ ctx);
+            ctx = NULL;
             croak("Can't add MAGIC to decryption filter's SV");
         }
 #endif
