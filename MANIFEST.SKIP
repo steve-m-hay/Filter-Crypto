@@ -1,0 +1,10 @@
+^blib/
+^CryptFile/const-(?:c|xs)\.inc$
+^(?:CryptFile/|Decrypt/)?Makefile(?:\.old)?$
+^(?:CryptFile/|Decrypt/)?pm_to_blib$
+^(CryptFile|Decrypt)/vc60\.pdb$
+# Why doesn't "^(CryptFile|Decrypt)/\1..." work?
+^CryptFile/CryptFile\.(?:bs|c|def|obj)$
+^Decrypt/Decrypt\.(?:bs|c|def|obj)$
+^CipherConfig\.h$
+^Filter-Crypto-\d\.\d\d\.(?:tar\.gz|zip)$

@@ -1,0 +1,83 @@
+#!perl
+#===============================================================================
+#
+# CryptFile/Makefile.PL
+#
+# DESCRIPTION
+#   Makefile creation script.
+#
+# COPYRIGHT
+#   Copyright (c) 2004, Steve Hay.  All rights reserved.
+#
+# LICENCE
+#   You may distribute under the terms of either the GNU General Public License
+#   or the Artistic License, as specified in the LICENCE file.
+#
+#===============================================================================
+
+use 5.006000;
+
+use strict;
+use warnings;
+
+use ExtUtils::MakeMaker;
+use File::Spec::Functions qw(catfile updir);
+
+#===============================================================================
+# MAIN PROGRAM
+#===============================================================================
+
+MAIN: {
+    my $config_h  = catfile(updir(), 'CipherConfig.h');
+    my $common_c  = catfile(updir(), 'CryptoCommon-c.inc');
+    my $common_xs = catfile(updir(), 'CryptoCommon-xs.inc');
+
+    WriteMakefile(
+        NAME         => 'Filter::Crypto::CryptFile',
+        VERSION_FROM => 'lib/Filter/Crypto/CryptFile.pm',
+
+        DEFINE => $ENV{__SHAY_PRIVATE_DEFINE},
+        INC    => $ENV{__SHAY_PRIVATE_INC},
+        LIBS   => $ENV{__SHAY_PRIVATE_LIBS},
+
+        depend => {
+            '$(C_FILES)' => "$config_h $common_c $common_xs"
+        },
+
+        clean => {
+            FILES => 'const-c.inc const-xs.inc'
+        }
+    );
+
+    if  (eval { require ExtUtils::Constant; 1 }) {
+        ExtUtils::Constant::WriteConstants(
+            NAME => 'Filter::Crypto::CryptFile',
+
+            NAMES => [ qw(
+                CRYPT_MODE_AUTO
+                CRYPT_MODE_DECRYPT
+                CRYPT_MODE_ENCRYPT
+                CRYPT_MODE_DECRYPTED
+                CRYPT_MODE_ENCRYPTED
+            ) ],
+
+            DEFAULT_TYPE => 'IV',
+
+            C_FILE => 'const-c.inc',
+
+            XS_FILE => 'const-xs.inc'
+        );
+    }
+    else {
+        require File::Copy;
+        require File::Spec;
+
+        foreach my $file ('const-c.inc', 'const-xs.inc') {
+            my $fallback_file = File::Spec->catfile('fallback', $file);
+            File::Copy::copy($fallback_file, $file) or
+                die "Can't copy '$fallback_file' to '$file': $!.\n";
+        }
+    }
+}
+
+#===============================================================================
