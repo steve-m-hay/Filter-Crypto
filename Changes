@@ -1,9 +1,19 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.15
+                          Filter::Crypto, Version 1.16
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.16 06 Sep 2005
+
+    - Changed all files back to UNIX end-of-line format.  The previous release
+      had accidentally made them all Windows format, which caused t/03_script.t
+      test 98 to fail.  Thanks to <COSIMO@cpan.org> for the spot.
+
+    - Modified PREOP key in the dist option in Makefile.PL to ensure files are
+      all UNIX format in the future to stop this from happening again.
 _________________
 
 v1.15 02 Sep 2005

@@ -107,7 +107,10 @@ MAIN: {
 
         dist => {
             DIST_CP  => 'cp',
-            PREOP    => 'chmod -R a-x+rwX,go-w $(DISTVNAME) && ' .
+            PREOP    => 'chmod -R a+w $(DISTVNAME) && ' .
+                        '\\cygwin\\bin\\find $(DISTVNAME) -type f ' .
+                        '-exec dos2unix {} ; && ' .
+                        'chmod -R a-x+rwX,go-w $(DISTVNAME) && ' .
                         'chmod a+x $(DISTVNAME)/script/*',
             COMPRESS => 'gzip -9fv',
             SUFFIX   => '.gz',
