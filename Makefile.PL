@@ -7,7 +7,7 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -26,10 +26,10 @@ use inc::Module::Install;
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 {
     no warnings 'once';
-    our $YEAR = '2004-2006';
+    our $YEAR = '2004-2007';
 }
 
 #===============================================================================
@@ -165,7 +165,7 @@ Makefile.PL - Generate makefiles for Filter-Crypto distribution
 
 Any standard ExtUtils::MakeMaker command-line arguments may be specified, but
 note that the guts of this distribution is contained in two modules located in
-their own sub-directories with their own B<Makefile.PL>'s and not all
+their own sub-directories with their own B<Makefile.PL>s and not all
 ExtUtils::MakeMaker arguments are necessarily passed through to such
 sub-directory builds.
 
@@ -337,7 +337,7 @@ A randomly generated password [sic] is used by default.
 
 Specify the random number generator (RNG) with which to generate the password or
 key if the option to have one of them randomly generated was chosen above.
-Valid RNG's are:
+Valid RNGs are:
 
     Perl          - Use perl's built-in rand() function
     Crypt::Random - Use the Crypt::Random Perl module
@@ -524,18 +524,14 @@ as follows (a la L<perldiag>):
 
 (F) The specified module could not be loaded and therefore could not be used
 as the random number generator (RNG).  Make sure that the module concerned is
-properly installed or use one of the other RNG's instead.
+properly installed or use one of the other RNGs instead.
 
-=item Compiler not found: please see INSTALL file for details
+=item Compiler used to build perl ('%s') not found
 
-(F) The compiler that was used to build Perl, which can be seen by running the
-command:
+(F) The specified compiler that was used to build Perl could not be found and
+therefore could not be used to build this module.
 
-    perl -V:cc
-
-could not be found and therefore could not be used to build this module.
-
-=item Compiler not specified: please see INSTALL file for details
+=item Compiler used to build perl not specified in perl configuration
 
 (F) The compiler that was used to build Perl, which can normally be seen by
 running the command:
@@ -891,7 +887,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -901,11 +897,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.04
+Version 1.05
 
 =head1 DATE
 
-14 Feb 2006
+10 Jul 2007
 
 =head1 HISTORY
 

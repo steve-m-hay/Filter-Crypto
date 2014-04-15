@@ -1,16 +1,19 @@
-#line 1 "inc/Module/Install/Metadata.pm - C:/perl5/site/lib/Module/Install/Metadata.pm"
+#line 1
 package Module::Install::Metadata;
 
-use Module::Install::Base;
-@ISA = qw{Module::Install::Base};
-
-$VERSION = '0.06';
-
 use strict 'vars';
+use Module::Install::Base;
+
+use vars qw{$VERSION $ISCORE @ISA};
+BEGIN {
+	$VERSION = '0.65';
+	$ISCORE  = 1;
+	@ISA     = qw{Module::Install::Base};
+}
 
 my @scalar_keys = qw{
     name module_name abstract author version license
-    distribution_type perl_version tests
+    distribution_type perl_version tests installdirs
 };
 
 my @tuple_keys = qw{
@@ -53,11 +56,26 @@ foreach my $key (@tuple_keys) {
     };
 }
 
+sub install_as_core   { $_[0]->installdirs('perl')   }
+sub install_as_cpan   { $_[0]->installdirs('site')   }
+sub install_as_site   { $_[0]->installdirs('site')   }
+sub install_as_vendor { $_[0]->installdirs('vendor') }
+
 sub sign {
     my $self = shift;
     return $self->{'values'}{'sign'} if defined wantarray and !@_;
     $self->{'values'}{'sign'} = ( @_ ? $_[0] : 1 );
     return $self;
+}
+
+sub dynamic_config {
+	my $self = shift;
+	unless ( @_ ) {
+		warn "You MUST provide an explicit true/false value to dynamic_config, skipping\n";
+		return $self;
+	}
+	$self->{'values'}{'dynamic_config'} = $_[0] ? 1 : 0;
+	return $self;
 }
 
 sub all_from {
@@ -110,9 +128,9 @@ sub auto_provides {
 
     require Module::Build;
     my $build = Module::Build->new(
-        dist_name    => $self->{name},
-        dist_version => $self->{version},
-        license      => $self->{license},
+        dist_name    => $self->name,
+        dist_version => $self->version,
+        license      => $self->license,
     );
     $self->provides(%{ $build->find_dist_packages || {} });
 }
@@ -128,8 +146,7 @@ sub feature {
         # The user used ->feature like ->features by passing in the second
         # argument as a reference.  Accomodate for that.
         $mods = $_[0];
-    }
-    else {
+    } else {
         $mods = \@_;
     }
 
@@ -152,7 +169,9 @@ sub features {
     while ( my ( $name, $mods ) = splice( @_, 0, 2 ) ) {
         $self->feature( $name, @$mods );
     }
-    return @{ $self->{values}{features} };
+    return $self->{values}->{features}
+    	? @{ $self->{values}->{features} }
+    	: ();
 }
 
 sub no_index {
@@ -224,11 +243,13 @@ sub perl_version_from {
         ^
         use \s*
         v?
-        ([\d\.]+)
+        ([\d_\.]+)
         \s* ;
     /ixms
       )
     {
+        my $v = $1;
+        $v =~ s{_}{}g;
         $self->perl_version($1);
     }
     else {
@@ -263,9 +284,11 @@ sub license_from {
 
     if (
         $self->_slurp($file) =~ m/
-        =head \d \s+
-        (?:licen[cs]e|licensing|copyright|legal)\b
-        (.*?)
+        (
+            =head \d \s+
+            (?:licen[cs]e|licensing|copyright|legal)\b
+            .*?
+        )
         (=head\\d.*|=cut.*|)
         \z
     /ixms
@@ -282,6 +305,7 @@ sub license_from {
             'LGPL'                                            => 'lgpl',
             'BSD'                                             => 'bsd',
             'Artistic'                                        => 'artistic',
+            'MIT'                                             => 'MIT',
         );
         while ( my ( $pattern, $license ) = splice( @phrases, 0, 2 ) ) {
             $pattern =~ s{\s+}{\\s+}g;

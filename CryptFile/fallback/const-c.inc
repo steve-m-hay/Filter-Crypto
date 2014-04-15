@@ -33,18 +33,18 @@ constant (pTHX_ const char *name, STRLEN len, IV *iv_return) {
      Regenerate these constant functions by feeding this entire source file to
      perl -x
 
-#!C:\Dev\Perls\VC6\Release\perl588\bin\perl.exe -w
+#!C:\perl5\bin\perl.exe -w
 use ExtUtils::Constant qw (constant_types C_constant XS_constant);
 
 my $types = {map {($_, 1)} qw(IV)};
 my @names = (qw(CRYPT_MODE_AUTO CRYPT_MODE_DECRYPT CRYPT_MODE_DECRYPTED
 	       CRYPT_MODE_ENCRYPT CRYPT_MODE_ENCRYPTED));
 
-print constant_types(); # macro defs
+print constant_types(), "\n"; # macro defs
 foreach (C_constant ("Filter::Crypto::CryptFile", 'constant', 'IV', $types, undef, 3, @names) ) {
     print $_, "\n"; # C constant subs
 }
-print "#### XS Section:\n";
+print "\n#### XS Section:\n";
 print XS_constant ("Filter::Crypto::CryptFile", $types);
 __END__
    */

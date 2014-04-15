@@ -1,45 +1,45 @@
-Artistic
-Changes
-Copying
-CryptoCommon-c.inc
-CryptoCommon-xs.inc
-INSTALL
-LICENCE
-Makefile.PL
-MANIFEST
-MANIFEST.SKIP
-META.yml
-README
-ppport.h
-CryptFile/CryptFile.xs
-CryptFile/Makefile.PL
-CryptFile/typemap
-CryptFile/fallback/const-c.inc
-CryptFile/fallback/const-xs.inc
-CryptFile/lib/Filter/Crypto/CryptFile.pm
-Decrypt/Decrypt.xs
-Decrypt/Makefile.PL
-Decrypt/lib/Filter/Crypto/Decrypt.pm
-inc/Module/AutoInstall.pm
-inc/Module/Install.pm
-inc/Module/Install/AutoInstall.pm
-inc/Module/Install/Base.pm
-inc/Module/Install/Can.pm
-inc/Module/Install/Include.pm
-inc/Module/Install/Makefile.pm
-inc/Module/Install/MakeMaker.pm
-inc/Module/Install/Metadata.pm
-inc/Module/Install/PRIVATE.pm
-inc/Module/Install/Scripts.pm
-inc/Module/Install/PRIVATE/Filter/Crypto.pm
-lib/Filter/Crypto.pm
-lib/PAR/Filter/Crypto.pm
-script/crypt_file
-t/01_constants.t
-t/02_function.t
-t/03_script.t
-t/04_par.t
-t/05_errstr.t
-t/06_pod.t
-t/cryptfile-leaktest.pl
-t/decrypt-leaktest.pl
+Artistic                                       The "Artistic License"
+Changes                                        Differences from previous version
+Copying                                        The GNU General Public License
+CryptoCommon-c.inc                             Filter::Crypto::* extensions common C code
+CryptoCommon-xs.inc                            Filter::Crypto::* extensions common external subroutines
+INSTALL                                        Detailed installation instructions
+LICENCE                                        The Licence
+Makefile.PL                                    Filter::Crypto makefile writer
+MANIFEST                                       This list of files
+MANIFEST.SKIP                                  Manifest skip specs
+META.yml                                       Distribution meta-data in YAML
+README                                         The Instructions
+ppport.h                                       Perl/Pollution/Portability header
+CryptFile/CryptFile.xs                         Filter::Crypto::CryptFile extension external subroutines
+CryptFile/Makefile.PL                          Filter::Crypto::CryptFile extension makefile writer
+CryptFile/typemap                              Filter::Crypto::CryptFile extension interface types
+CryptFile/fallback/const-c.inc                 Filter::Crypto::CryptFile extension constants fallback file
+CryptFile/fallback/const-xs.inc                Filter::Crypto::CryptFile extension constants fallback file
+CryptFile/lib/Filter/Crypto/CryptFile.pm       Filter::Crypto::CryptFile extension Perl module
+Decrypt/Decrypt.xs                             Filter::Crypto::Decrypt extension external subroutines
+Decrypt/Makefile.PL                            Filter::Crypto::Decrypt extension makefile writer
+Decrypt/lib/Filter/Crypto/Decrypt.pm           Filter::Crypto::Decrypt extension Perl module
+inc/Module/AutoInstall.pm                      Module::AutoInstall Perl module
+inc/Module/Install.pm                          Module::Install Perl module
+inc/Module/Install/AutoInstall.pm              Module::Install::AutoInstall Perl module
+inc/Module/Install/Base.pm                     Module::Install::Base Perl module
+inc/Module/Install/Can.pm                      Module::Install::Can Perl module
+inc/Module/Install/Include.pm                  Module::Install::Include Perl module
+inc/Module/Install/Makefile.pm                 Module::Install::Makefile Perl module
+inc/Module/Install/MakeMaker.pm                Module::Install::MakeMaker Perl module
+inc/Module/Install/Metadata.pm                 Module::Install::Metadata Perl module
+inc/Module/Install/PRIVATE.pm                  Module::Install::PRIVATE Perl module
+inc/Module/Install/Scripts.pm                  Module::Install::Scripts Perl module
+inc/Module/Install/PRIVATE/Filter/Crypto.pm    Module::Install::PRIVATE::Filter::Crypto Perl module
+lib/Filter/Crypto.pm                           Filter::Crypto Perl module
+lib/PAR/Filter/Crypto.pm                       PAR::Filter::Crypto Perl module
+script/crypt_file                              Perl script to encrypt (and decrypt) Perl modules
+t/01_constants.t                               See if autoloading of constants works
+t/02_function.t                                See if crypt_file() function (and decryption filter) works
+t/03_script.t                                  See if crypt_file script (and decryption filter) works
+t/04_par.t                                     See if PAR::Filter::Crypto module (and decryption filter) works
+t/05_errstr.t                                  See if $ErrStr variable works
+t/06_pod.t                                     See if POD is OK
+t/cryptfile-leaktest.pl                        Manually see if crypt_file() function leaks
+t/decrypt-leaktest.pl                          Manually see if decryption filter leaks

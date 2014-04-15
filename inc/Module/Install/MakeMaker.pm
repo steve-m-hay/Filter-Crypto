@@ -1,12 +1,16 @@
-#line 1 "inc/Module/Install/MakeMaker.pm - C:/perl5/site/lib/Module/Install/MakeMaker.pm"
+#line 1
 package Module::Install::MakeMaker;
 
+use strict;
 use Module::Install::Base;
-@ISA = qw(Module::Install::Base);
-
-$VERSION = '0.01';
-
 use ExtUtils::MakeMaker ();
+
+use vars qw{$VERSION $ISCORE @ISA};
+BEGIN {
+	$VERSION = '0.65';
+	$ISCORE  = 1;
+	@ISA     = qw{Module::Install::Base};
+}
 
 my $makefile;
 sub WriteMakefile {
@@ -20,7 +24,7 @@ sub WriteMakefile {
         $args{NAME} =~ s/::/-/g;
     }
 
-    foreach my $key (qw(name module_name version version_from abstract author)) {
+    foreach my $key (qw(name module_name version version_from abstract author installdirs)) {
         my $value = delete($args{uc($key)}) or next;
         $self->$key($value);
     }
@@ -36,7 +40,7 @@ sub WriteMakefile {
 }
 
 END {
-    if ($makefile) {
+    if ( $makefile ) {
         $makefile->write;
         $makefile->Meta->write;
     }

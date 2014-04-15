@@ -6,7 +6,7 @@
  *   Common C code for Filter::Crypto modules.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -80,7 +80,7 @@
 
 #include "patchlevel.h"                 /* Get the version numbers first.     */
 
-#if(PERL_REVISION == 5 && PERL_VERSION > 6)
+#if (PERL_REVISION == 5 && PERL_VERSION > 6)
 #  define PERLIO_NOT_STDIO 0            /* See the "perlapio" manpage.        */
 #endif
 
@@ -111,7 +111,7 @@
 
                                         /* PKCS5_SALT_LEN and                 */
                                         /* PKCS5_DEFAULT_ITER were added in   */
-                                        /* 0.9.4.                             */
+                                        /* OpenSSL 0.9.4.                     */
 #ifndef PKCS5_SALT_LEN
 #  define PKCS5_SALT_LEN     8
 #endif
@@ -122,7 +122,7 @@
                                         /* EVP_CIPHER_block_size(),           */
                                         /* EVP_CIPHER_CTX_block_size() and    */
                                         /* EVP_CIPHER_iv_length() were all    */
-                                        /* added in 0.6.5.                    */
+                                        /* added in SSLeay 0.6.5.             */
 #ifndef EVP_CIPHER_block_size
 #  define EVP_CIPHER_block_size(e)     ((e)->block_size)
 #endif
@@ -133,9 +133,16 @@
 #  define EVP_CIPHER_iv_length(e)      ((e)->iv_len)
 #endif
 
-                                        /* Poison() was added in Perl 5.8.0.  */
-#ifndef Poison
-#  define Poison(d, n, t) (void)memset((char*)(d), 0xAB, (n) * sizeof(t))
+                                        /* SvPV_const() and                   */
+                                        /* SvPV_nolen_const() were added in   */
+                                        /* Perl 5.9.3 but are not yet         */
+                                        /* supported by Devel::PPPort (as of  */
+                                        /* version 3.11).                     */
+#ifndef SvPV_const
+#  define SvPV_const(sv, len)  ((const char*) (0 + SvPV(sv, len)))
+#endif
+#ifndef SvPV_nolen_const
+#  define SvPV_nolen_const(sv) ((const char*) (0 + SvPV_nolen(sv)))
 #endif
 
 #define FILTER_CRYPTO_OPENSSL_ERR_STR \
@@ -147,7 +154,11 @@
                                         /* NUL terminator in case the string  */
                                         /* gets used as a C "string" later.   */
 #define FilterCrypto_SvSetCUR(sv, len) STMT_START { \
-    SvCUR_set(sv, len); SvPVX(sv)[len] = '\0'; \
+    if (SvPOK(sv)) {                                \
+        char * const p = SvPVX(sv);                 \
+        SvCUR_set(sv, len);                         \
+        p[len] = '\0';                              \
+    }                                               \
 } STMT_END
 
 #define FILTER_CRYPTO_NEED_RANDOM_SALT FILTER_CRYPTO_USING_PBE
@@ -216,7 +227,7 @@ static FILTER_CRYPTO_CCTX *FilterCrypto_CryptoAlloc(pTHX) {
     /* Allocate the cipher context. */
     Newxz(ctx->cipher_ctx, 1, EVP_CIPHER_CTX);
 
-    /* Allocate a pair of SV's with enough string space to hold a salt and an
+    /* Allocate a pair of SVs with enough string space to hold a salt and an
      * initialization vector (IV) respectively, and store their required
      * lengths.  Mark each one as being a string only. */
 #if FILTER_CRYPTO_NEED_RANDOM_SALT
@@ -294,7 +305,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
      * used again for decrypting.  We also need an IV, which must be handled in
      * the same way, except that the old key derivation algorithm used by
      * FilterCrypto_CipherInit() before 0.9.4 generates an IV for us. */
-#if(FILTER_CRYPTO_NEED_RANDOM_SALT || FILTER_CRYPTO_NEED_RANDOM_IV)
+#if (FILTER_CRYPTO_NEED_RANDOM_SALT || FILTER_CRYPTO_NEED_RANDOM_IV)
     switch (ctx->crypt_mode) {
         case FILTER_CRYPTO_MODE_ENCRYPT: {
 #  if FILTER_CRYPTO_NEED_RANDOM_SALT
@@ -383,16 +394,16 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
             int missing_iv_len;
 #  endif
             int in_len;
-            unsigned char *in_text;
+            const unsigned char *in_text;
 
 #  if FILTER_CRYPTO_NEED_RANDOM_SALT
             missing_salt_len = ctx->required_salt_len - SvCUR(ctx->salt_sv);
             if (missing_salt_len > 0) {
                 in_len = SvCUR(in_sv);
-                in_text = (unsigned char *)SvPVX(in_sv);
+                in_text = (const unsigned char *)SvPVX_const(in_sv);
                 if (missing_salt_len <= in_len) {
                     sv_catpvn(ctx->salt_sv, in_text, missing_salt_len);
-                    sv_chop(in_sv, in_text + missing_salt_len);
+                    sv_chop(in_sv, (char *)in_text + missing_salt_len);
                 }
                 else {
                     sv_catpvn(ctx->salt_sv, in_text, in_len);
@@ -415,10 +426,10 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
             missing_iv_len = ctx->required_iv_len - SvCUR(ctx->iv_sv);
             if (missing_iv_len > 0) {
                 in_len = SvCUR(in_sv);
-                in_text = (unsigned char *)SvPVX(in_sv);
+                in_text = (const unsigned char *)SvPVX_const(in_sv);
                 if (missing_iv_len <= in_len) {
                     sv_catpvn(ctx->iv_sv, in_text, missing_iv_len);
-                    sv_chop(in_sv, in_text + missing_iv_len);
+                    sv_chop(in_sv, (char *)in_text + missing_iv_len);
                 }
                 else {
                     sv_catpvn(ctx->iv_sv, in_text, in_len);
@@ -549,9 +560,9 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
 #else
     unsigned char *iv = NULL;
 #endif
-#if(FILTER_CRYPTO_USING_PBE                && \
-    FILTER_CRYPTO_OPENSSL_VERSION  < 90400 && \
-    FILTER_CRYPTO_OPENSSL_VERSION >= 90000)
+#if (FILTER_CRYPTO_USING_PBE                && \
+     FILTER_CRYPTO_OPENSSL_VERSION  < 90400 && \
+     FILTER_CRYPTO_OPENSSL_VERSION >= 90000)
     int derived_key_len;
 #endif
 
@@ -758,7 +769,7 @@ static bool FilterCrypto_CipherUpdate(pTHX_ EVP_CIPHER_CTX *ctx, SV *in_sv,
 #if FILTER_CRYPTO_OPENSSL_VERSION < 90700
     unsigned char *in_text = (unsigned char *)SvPVX(in_sv);
 #else
-    const unsigned char *in_text = (const unsigned char *)SvPVX(in_sv);
+    const unsigned char *in_text = (const unsigned char *)SvPVX_const(in_sv);
 #endif
     unsigned char *out_text;
     int in_len = SvCUR(in_sv);
@@ -866,7 +877,7 @@ static bool FilterCrypto_CipherFinal(pTHX_ EVP_CIPHER_CTX *ctx, SV *out_sv) {
  */
 
 static bool FilterCrypto_PRNGInit(pTHX) {
-    /* The PRNG is seeded transparently for us on some OS's (e.g. using UNIX's
+    /* The PRNG is seeded transparently for us on some OSes (e.g. using UNIX's
      * /dev/urandom or /dev/random devices or Win32's Crypto API) in some
      * versions of OpenSSL and SSLeay, but in other cases we must do it
      * manually.  From 0.9.5 onwards RAND_status() is available to report
@@ -879,7 +890,7 @@ static bool FilterCrypto_PRNGInit(pTHX) {
 
     /* Win32 has a RAND_screen() function for seeding the PRNG from 0.6.5
      * onwards.  In other cases we just have to manage ourselves. */
-#if(defined(WIN32) && FILTER_CRYPTO_OPENSSL_VERSION >= 60500)
+#if (defined(WIN32) && FILTER_CRYPTO_OPENSSL_VERSION >= 60500)
     RAND_screen();
 #else
     {
@@ -1030,10 +1041,10 @@ static void FilterCrypto_HexDump(pTHX_ const unsigned char *data,
 
 static void FilterCrypto_HexDumpSV(pTHX_ const SV *sv, const char *title, ...) {
     STRLEN len;
-    unsigned char *data;
+    const unsigned char *data;
     va_list args;
 
-    data = (unsigned char *)SvPV((SV *)sv, len);
+    data = (const unsigned char *)SvPV_const((SV *)sv, len);
     va_start(args, title);
     FilterCrypto_vHexDump(aTHX_ data, len, title, args);
     va_end(args);

@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::CryptFile module.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -48,16 +48,16 @@ typedef enum {
 
 /* Before Perl 5.8.7 PerlLIO_chsize() was defined as chsize() even on systems
  * that do not have chsize().  Therefore, in those situations we define chsize()
- * to be ftruncate() if that's available instead, or else Perl_my_chsize() if
+ * to be ftruncate() if that's available instead, or else my_chsize() if
  * F_FREESP is defined (see the my_chsize() and pp_truncate() functions in Perl
  * for details).  Failing that we just have to croak() via a macro with a
  * non-void type to match the context in which PerlLIO_chsize() is called. */
-#if(!defined(HAS_CHSIZE) && PERL_REVISION == 5 && \
-    (PERL_VERSION < 8 || (PERL_VERSION == 8 && PERL_SUBVERSION < 7)))
+#if (!defined(HAS_CHSIZE) && PERL_REVISION == 5 && \
+     (PERL_VERSION < 8 || (PERL_VERSION == 8 && PERL_SUBVERSION < 7)))
 #  ifdef HAS_TRUNCATE
 #    define chsize(fd, size) ftruncate((fd), (size))
 #  elif defined(F_FREESP)
-#    define chsize(fd, size) Perl_my_chsize((fd), (size))
+#    define chsize(fd, size) my_chsize((fd), (size))
 #  else
 #    define chsize(fd, size) (croak("chsize/truncate not implemented"), 0)
 #  endif
@@ -68,8 +68,8 @@ typedef enum {
  * Therefore, in that situation we have to fall back on the standard Microsoft C
  * library function chsize(), referred to by its Microsoft-specific name
  * _chsize() since chsize() is also defined as win32_chsize(). */
-#if(defined(WIN32) && PERL_REVISION == 5 && \
-    (PERL_VERSION < 8 || (PERL_VERSION == 8 && PERL_SUBVERSION < 5)))
+#if (defined(WIN32) && PERL_REVISION == 5 && \
+     (PERL_VERSION < 8 || (PERL_VERSION == 8 && PERL_SUBVERSION < 5)))
 #  undef  PerlLIO_chsize
 #  define PerlLIO_chsize(fd, size) _chsize((fd), (size))
 #endif
@@ -116,8 +116,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
     int buf_len;
     int use_len = strlen(filter_crypto_use_text);
     unsigned char *in_text  = (unsigned char *)SvPVX(in_sv);
-    unsigned char *out_text = (unsigned char *)SvPVX(out_sv);
-    unsigned char *buf_text;
+    const unsigned char *buf_text;
 
     SvPOK_only(in_sv);
     SvPOK_only(out_sv);
@@ -342,7 +341,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
             return FALSE;
         }
 
-        buf_text = (unsigned char *)SvPVX(buf_sv);
+        buf_text = (const unsigned char *)SvPVX_const(buf_sv);
         buf_len = SvCUR(buf_sv);
         if (PerlIO_write(in_fh, buf_text, buf_len) < buf_len) {
             FilterCrypto_SetErrStr(aTHX_
@@ -381,7 +380,8 @@ static bool FilterCrypto_OutputData(pTHX_ SV *from_sv, bool update_mode,
     }
     else {
         /* Get the data and length to output. */
-        unsigned char *from_text = (unsigned char *)SvPVX(from_sv);
+        const unsigned char *from_text =
+            (const unsigned char *)SvPVX_const(from_sv);
         int from_len = SvCUR(from_sv);
 
         if (PerlIO_write(to_fh, from_text, from_len) < from_len) {

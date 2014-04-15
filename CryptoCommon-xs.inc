@@ -6,7 +6,7 @@
 #   Common XS code for Filter::Crypto modules.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -19,7 +19,7 @@
 BOOT:
 {
     STRLEN package_len;
-    char *package = SvPV(ST(0), package_len);
+    const char *package = SvPV_const(ST(0), package_len);
     SV *sv;
     SV *rv;
     HV *stash;
@@ -48,7 +48,7 @@ BOOT:
      * Normally we would use an END subroutine instead of a DESTROY method, but
      * in a mod_perl Apache::Registry set-up END subroutines are run at the end
      * of each request (unless the script being filtered was preloaded by
-     * the parent server process), which would cause multiple free()'s of memory
+     * the parent server process), which would cause multiple free()s of memory
      * that was only allocated once (at boot time, by the Newxz() above).
      * Thanks to Joost on PerlMonks for this idea. */
     sv = newSV(0);
@@ -72,8 +72,8 @@ DESTROY(self)
 #endif
 
         /* Free the current thread's error queue and all previously loaded error
-         * strings.  ERR_remove_state() was introduced in SSLeay 0.6.1, but
-         * seems to crash before 0.6.4. */
+         * strings.  ERR_remove_state() was added in SSLeay 0.6.1, but seems to
+         * crash before 0.6.4. */
 #if FILTER_CRYPTO_OPENSSL_VERSION >= 60400
         ERR_remove_state(0);
 #endif

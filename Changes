@@ -1,9 +1,40 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.18
+                          Filter::Crypto, Version 1.19
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.19 10 Jul 2007
+
+    - Introduced a new FILTER_CRYPTO_FILTER_COUNT macro to determine the number
+      of filters currently installed rather than querying PL_rsfp_filters
+      directly because that variable no longer exists as of perl change #31200
+      which moved it into the PL_parser structure.
+
+    - Changed Perl_my_chsize() to my_chsize() as suggested by the output from
+      running "perl ppport.h --compat-version=5.6.0 --copy=.new".
+
+    - Changed some SvPV(), SvPV_nolen() and SvPVX() calls to SvPV_const(),
+      SvPV_nolen_const() and SvPVX_const() respectively.
+
+    - Removed definitions of PERL_MAGIC_ext and Poison() for those older Perls
+      that don't have them because they are now supplied by ppport.h.
+
+    - Made FilterCrypto_SvSetCUR() safer as per perl changes #26952 and #26953.
+
+    - Updated Module::Install::PRIVATE to version 1.05 for Makefile.PL
+      improvements:
+
+      * Fixed the compiler version checking on Win32 for Visual C++ 8.x, which
+        now uses four numbers separated by dots for its compiler version.
+        
+    - Updated Module::Install components from version 0.65 of that distribution.
+
+    - Updated ppport.h using version 3.11 of the Devel::PPPort distribution.
+
+    - Added comments to MANIFEST file.
 _________________
 
 v1.18 27 Sep 2006
@@ -31,7 +62,7 @@ v1.17 14 Feb 2006
       change #24665, is no longer true.  Perl has always been at liberty to
       allocate more memory than was requested if it thinks that would be a good
       idea, and that is exactly what it now does in order to reduce the number
-      of realloc()'s that might be required.
+      of realloc()s that might be required.
 
     - Changed all Newz() and NEWSV() calls to the cleaner Newxz() and newSV()
       respectively, as per perl changes #25101 and #26901, and included ppport.h
@@ -61,7 +92,7 @@ v1.17 14 Feb 2006
 
       * Fixed the handling of user-input relative directory paths so that they
         are converted to absolute paths before use in case the Makefile.PL has
-        changed to another directory in the meantime.
+        changed to another directory in the meantime;
 
       * Renamed lots of methods for a better naming convention.
 
@@ -102,10 +133,10 @@ v1.15 02 Sep 2005
 
       * Relaxed the compiler version checking so that only the major version
         numbers have to match (and also the minor version numbers for VC++ 7 and
-        later, which use CRT DLL's named msvcr70.dll, msvcr71.dll, etc);
+        later, which use CRT DLLs named msvcr70.dll, msvcr71.dll, etc)
         
         (Thanks to Sisyphus <sisyphus1@optusnet.com.au> for drawing attention to
-        this problem via the PAR mailing list (par@perl.org).)
+        this problem via the PAR mailing list (par@perl.org));
 
       * Fixed the parsing of bcc32's output as per perl change #24855.
 
@@ -153,7 +184,7 @@ v1.13 14 Mar 2005
 
     - The previous fix to t/03_script.t did not do the job for the original bug
       reporter, so try a different approach: rather than trying to cope with the
-      various format outputs produced by "perldoc" on different OS's, use the
+      various format outputs produced by "perldoc" on different OSes, use the
       PERLDOC environment variable to ask for plain text output (-t).  We can
       also avoid involving a pager (-T).
 _________________
@@ -161,7 +192,7 @@ _________________
 v1.12 09 Mar 2005
 
     - Fixed t/03_script.t test 99 to account for different format output
-      produced by "perldoc" on some OS's.
+      produced by "perldoc" on some OSes.
 
       Thanks to <cpan@calaquendi.net> for drawing attention to this problem via
       CPAN Testers (http://testers.cpan.org/).
@@ -207,7 +238,7 @@ v1.11 03 Mar 2005
       * Added code to try to check that on Win32 the same compiler is being used
         to build these modules as was used to build Perl itself to avoid
         problems with binaries built by different compiler versions loading
-        different C run-time DLL's.
+        different C run-time DLLs.
 
     - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
       building these modules.
@@ -222,9 +253,9 @@ v1.10 12 Dec 2004
     - Fix for running encrypted scripts in a mod_perl Apache::Registry set-up.
 
       In such a set-up the END subroutine in the CryptoCommon-xs.inc file, which
-      free()'s memory allocated in the BOOT: XSUB, gets runs at the end of each
+      free()s memory allocated in the BOOT: XSUB, gets runs at the end of each
       request (unless the script being filtered was preloaded by the parent
-      server process), which caused multiple free()'s of memory that was only
+      server process), which caused multiple free()s of memory that was only
       allocated once (at boot time, in the BOOT: XSUB).
 
       Instead, we now create a dummy object, blessed into the package concerned,
@@ -233,7 +264,7 @@ v1.10 12 Dec 2004
       cleanup.
 
     - Moved XSLoader::load() calls inside BEGIN subroutines as recommended by
-      the XSLoader manpage.  This means that the XSUB's are now installed before
+      the XSLoader manpage.  This means that the XSUBs are now installed before
       the rest of the Perl module is compiled, and hence their prototypes are
       now known, and can be checked, during the remaining compilation.
 

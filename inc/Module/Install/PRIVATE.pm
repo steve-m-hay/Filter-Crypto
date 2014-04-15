@@ -1,3 +1,4 @@
+#line 1
 #===============================================================================
 #
 # inc/Module/Install/PRIVATE.pm
@@ -7,7 +8,7 @@
 #   SHAY (Steve Hay).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2007 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -40,7 +41,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(Module::Install::Base);
 
-    $VERSION = '1.04';
+    $VERSION = '1.05';
 
     # Define protected accessor/mutator methods.
     foreach my $prop (qw(define inc libs opts)) {
@@ -75,7 +76,7 @@ sub process_opts {
     my($self, $opt_specs, $with_auto_install) = @_;
 
     # Allow options to be introduced with a "/" character on Windows, as is
-    # common on those OS's, as well as the default set of characters.
+    # common on those OSes, as well as the default set of characters.
     if ($self->is_win32()) {
         Getopt::Long::Configure('prefix_pattern=(--|-|\+|\/)');
     }
@@ -139,7 +140,7 @@ sub process_opts {
         # If it appears that Test::Builder has been loaded during the course of
         # the auto-install testing then disable the Test::Builder ending
         # diagnostic code that would otherwise be invoked if the Makefile.PL
-        # die()'s anytime later.  This suppresses a somewhat confusing (given
+        # die()s anytime later.  This suppresses a somewhat confusing (given
         # the context) message about the test having died before it could output
         # anything.
         if (my $test = eval { Test::Builder->new() }) {
@@ -165,10 +166,10 @@ sub process_opts {
 # on all platforms except Win32, and is also skipped on Win32 if the compiler
 # used to build Perl is unknown and unguessable.
 # It is good enough, however, to catch the currently rather common situation in
-# which a Win32 user is building this module with the Visual C++ Toolkit 2003
-# for use with any ActivePerl, which are known currently to be built with Visual
-# Studio 98.  This combination generally does not work; see the INSTALL file for
-# details.
+# which a Win32 user is building this module with the Visual C++ Toolkit 2003 or
+# the Visual C++ 2005 Express Edition for use with any ActivePerl, which are
+# known currently to be built with Visual Studio 98.  These combinations do not
+# work for this particular module; see the INSTALL file for details.
 
 # This method is based on code taken from the get_avail_w32compilers() function
 # in the configsmoke.pl script in the Test-Smoke distribution (version 1.19).
@@ -180,12 +181,13 @@ sub check_compiler {
     unless ($cc = $self->can_cc()) {
         if ($Config{cc} ne '') {
             $self->exit_with_error(8,
-                'Compiler not found: please see INSTALL file for details'
+                "Compiler used to build perl ('%s') not found", $Config{cc}
             );
         }
         else {
             $self->exit_with_error(9,
-                'Compiler not specified: please see INSTALL file for details'
+                'Compiler used to build perl not specified in perl ' .
+                'configuration'
             );
         }
     }
@@ -206,19 +208,21 @@ sub check_compiler {
             # Visual C++ 6.x and earlier (having ccversion 12.x and earlier) all
             # used the system's msvcrt.dll, so just check that the major version
             # number is the same.  Visual C++ 7.x onwards (having ccversion 13.x
-            # onwards) use msvcr70.dll, msvcr71.dll, etc, so check that the
-            # major and minor versions are the same.
-            my($major, $minor, $patch) = $ccversion =~ /^(\d+)\.(\d+)\.(\d+)$/o;
-            if (defined $major and defined $minor and defined $patch) {
+            # onwards) use msvcr70.dll, msvcr71.dll, msvcr80.dll etc, so check
+            # that the major and minor versions are the same. (Note that from
+            # Visual C++ 8.x onwards (having ccversion 14.x onwards) the
+            # ccversion is now composed of four numbers separated by dots, not
+            # just three. We are only interested in the first two anyway,
+            # though.)
+            my($major, $minor) = $ccversion =~ /^(\d+)\.(\d+)\./o;
+            if (defined $major and defined $minor) {
                 if ($major <= 12) {
                     if ($Config{ccversion} !~ /^$major\./) {
                         $msg = sprintf $fmt, $ccversion, $Config{ccversion};
                     }
                 }
-                else {
-                    if ($Config{ccversion} !~ /^$major\.$minor\./) {
-                        $msg = sprintf $fmt, $ccversion, $Config{ccversion};
-                    }
+                elsif ($Config{ccversion} !~ /^$major\.$minor\./) {
+                    $msg = sprintf $fmt, $ccversion, $Config{ccversion};
                 }
             }
         }
@@ -227,11 +231,9 @@ sub check_compiler {
             $ccversion = $output =~ /([\d.]+)/o ? $1 : '?';
 
             # Just check that the major version number is the same.
-            my($major, $minor, $patch) = $ccversion =~ /^(\d+)\.(\d+)\.(\d+)$/o;
-            if (defined $major and defined $minor and defined $patch) {
-                if ($Config{ccversion} !~ /^$major\./) {
-                    $msg = sprintf $fmt, $ccversion, $Config{ccversion};
-                }
+            my($major) = $ccversion =~ /^(\d+)\./o;
+            if (defined $major and $Config{ccversion} !~ /^$major\./) {
+                $msg = sprintf $fmt, $ccversion, $Config{ccversion};
             }
         }
     }
@@ -242,11 +244,9 @@ sub check_compiler {
         }
 
         # Just check that the major version number is the same.
-        my($major, $minor, $patch) = $gccversion =~ /^(\d+)\.(\d+)\.(\d+)$/o;
-        if (defined $major and defined $minor and defined $patch) {
-            if ($Config{gccversion} !~ /^$major\./) {
-                $msg = sprintf $fmt, $gccversion, $Config{gccversion};
-            }
+        my($major) = $gccversion =~ /^(\d+)\./o;
+        if (defined $major and $Config{gccversion} !~ /^$major\./) {
+            $msg = sprintf $fmt, $gccversion, $Config{gccversion};
         }
     }
     elsif ($Config{cf_by} eq 'ActiveState') {
@@ -258,17 +258,15 @@ sub check_compiler {
         }
 
         # Check the Visual C++ version number as above.
-        my($major, $minor, $patch) = $ccversion =~ /^(\d+)\.(\d+)\.(\d+)$/o;
-        if (defined $major and defined $minor and defined $patch) {
+        my($major, $minor) = $ccversion =~ /^(\d+)\.(\d+)\./o;
+        if (defined $major and defined $minor) {
             if ($major <= 12) {
                 if ($vc6version !~ /^$major\./) {
                     $msg = sprintf $fmt, $ccversion, $vc6version;
                 }
             }
-            else {
-                if ($vc6version !~ /^$major\.$minor\./) {
-                    $msg = sprintf $fmt, $ccversion, $vc6version;
-                }
+            elsif ($vc6version !~ /^$major\.$minor\./) {
+                $msg = sprintf $fmt, $ccversion, $vc6version;
             }
         }
     }
@@ -329,7 +327,7 @@ sub query_scripts {
 }
 
 # Method to store the build options in this process' environment so that they
-# are available to the sub-directories' Makefile.PL's when they are run.  Note
+# are available to the sub-directories' Makefile.PLs when they are run.  Note
 # that ExtUtils::MakeMaker's PASTHRU macro is not good enough because that only
 # passes things through when "make Makefile" is run, which is too late for the
 # processing of the LIBS option that Makefile.PL itself handles.
