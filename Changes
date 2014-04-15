@@ -1,9 +1,23 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.29
+                          Filter::Crypto, Version 1.30
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.30 14 Nov 2009
+
+    - Fixed t/03_script.t to skip test 99 when run on a Debian-based host
+      without perl-doc installed.  (Thanks to C.J. Adams-Collier
+      <cjac@colliertech.org> on the Debian perl mailing list
+      (debian-perl@lists.debian.org) for the patch to fix this.)
+
+    - Added a note to LICENCE to mention that whilst this distribution is
+      licensed under the same terms as Perl itself, it depends on OpenSSL (or
+      SSLeay), which are licensed under BSD-style licences that are incompatible
+      with the GPL option of this distribution's licensing.  (Thanks again to
+      C.J. Adams-Collier for suggesting this.)
 _________________
 
 v1.29 26 Oct 2009

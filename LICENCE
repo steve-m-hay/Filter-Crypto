@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.29
+                          Filter::Crypto, Version 1.30
 ________________________________________________________________________________
 
 This distribution is free software; you can redistribute it and/or modify it
@@ -25,6 +25,12 @@ the Perl web page at http://dev.perl.org/licenses/gpl1.html.
 You should also have received a copy of the Artistic License with this
 distribution, in the file named "Artistic".  If not, visit the Perl web page on
 the internet at http://dev.perl.org/licenses/artistic.html.
+________________________________________________________________________________
+
+Note that this distribution depends on OpenSSL (or SSLeay), which are licensed
+under BSD-style licences that are incompatible with the GPL option of this
+distribution's licensing.  The licence for the two functions mentioned below is
+also a similar BSD-style licence.
 ________________________________________________________________________________
 
 The _PRNGInit() and _GetRandNum() functions in CryptoCommon.c are based on (code

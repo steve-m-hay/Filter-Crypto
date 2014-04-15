@@ -604,7 +604,13 @@ MAIN: {
                     ^ Options:   /mosx,
          '-h option works');
 
-    {
+    SKIP: {
+        if (-e catfile('', 'etc', 'debian_version') and
+            not -e catfile('', 'usr', 'bin', 'perldoc.stub'))
+        {
+            skip 'Debian-based host without perl-doc installed', 1;
+        }
+
         local $ENV{PERLDOC} = '-t';
         chomp($data = qx{$perl $crypt_file -m});
         like($data, qr/^ NAME         .*?
