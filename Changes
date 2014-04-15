@@ -1,9 +1,16 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 2.00
+                          Filter::Crypto, Version 2.01
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v2.01 07 Feb 2013
+
+    - Fixed decoding of bytes from pairs of hexadecimal digits to work on
+      big-endian systems.  (Fixes [cpan #83122].  Thanks to Jörg Weber
+      <joerg.weber@meta-level.de> for the solution.)
 _________________
 
 v2.00 19 May 2012

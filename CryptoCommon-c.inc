@@ -6,7 +6,7 @@
  *   Common C code for Filter::Crypto modules.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2009, 2012-2013 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -156,6 +156,12 @@
 #define FILTER_CRYPTO_NEED_RANDOM_IV   FILTER_CRYPTO_NEED_IV   &&            \
                                      !(FILTER_CRYPTO_USING_PBE &&            \
                                        FILTER_CRYPTO_OPENSSL_VERSION < 90400)
+
+                                        /* Convert between bytes and          */
+                                        /* lowercase hexadecimal digits,      */
+                                        /* assuming an ASCII character set.   */
+#define B2H(b) (((b) >= 10) ? ('a' - 10 + (b)) : ('0' + (b)))
+#define H2B(h) (((h) >= 'a') ? ((h) - 'a' + 10) : ((h) - '0'))
 
 typedef enum {
     FILTER_CRYPTO_MODE_DECRYPT = 0,
@@ -1011,7 +1017,8 @@ static void FilterCrypto_EncodeSV(pTHX_ const SV *in_sv, SV *out_sv)
     out_len = SvCUR(out_sv);
 
     for (i = 0; i < in_len; i++) {
-        sprintf(out_text + 2 * i, "%02x", in_text[i]);
+        out_text[2 * i]     = B2H((in_text[i] & 0xf0) >> 4);
+        out_text[2 * i + 1] = B2H( in_text[i] & 0x0f);
         out_len += 2;
     }
 
@@ -1065,6 +1072,7 @@ static bool FilterCrypto_DecodeSV(pTHX_ const SV *in_sv, SV *out_sv) {
 
     for (i = 0; i < in_len; i += 2) {
         sscanf(in_text + i, "%02x", &out_text[i / 2]);
+        out_text[i/2] = (H2B(in_text[i]) << 4) | H2B(in_text[i + 1]);
         out_len++;
     }
 

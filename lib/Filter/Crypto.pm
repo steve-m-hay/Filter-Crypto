@@ -29,7 +29,7 @@ use warnings;
 our($VERSION);
 
 BEGIN {
-    $VERSION = '2.00';
+    $VERSION = '2.01';
 }
 
 1;
@@ -270,7 +270,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2010, 2012 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2010, 2012-2013 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -280,11 +280,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.00
+Version 2.01
 
 =head1 DATE
 
-19 May 2012
+07 Feb 2013
 
 =head1 HISTORY
 
