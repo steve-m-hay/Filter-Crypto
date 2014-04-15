@@ -22,7 +22,7 @@ use warnings;
 
 use Config qw(%Config);
 use Cwd qw(abs_path);
-use File::Spec::Functions qw(canonpath catdir catfile updir);
+use File::Spec::Functions qw(canonpath catdir catfile curdir updir);
 use FindBin qw($Bin);
 use Test::More;
 
@@ -93,7 +93,7 @@ MAIN: {
 
     my $have_archive_zip = eval { require Archive::Zip; 1 };
 
-    my($fh, $line);
+    my($fh, $line, $cur_ofile);
 
     unlink $ifile or die "Can't delete file '$ifile': $!\n" if -e $ifile;
     unlink $ofile or die "Can't delete file '$ofile': $!\n" if -e $ofile;
@@ -118,7 +118,10 @@ MAIN: {
              '... and the contents are as expected');
     }
 
-    chomp($line = qx{$ofile});
+    # Some platforms search the directories in PATH before the current directory
+    # so be explicit which file we want to run.
+    $cur_ofile = catfile(curdir(), $ofile);
+    chomp($line = qx{$cur_ofile});
     is($line, $str, 'Running the PAR archive produces the expected output');
 
     unlink $ifile;

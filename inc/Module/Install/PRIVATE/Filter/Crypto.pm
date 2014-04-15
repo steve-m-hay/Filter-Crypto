@@ -182,7 +182,7 @@ sub query_build {
     }
     else {
         my $message  = 'Build options:';
-        my $question = 'Which component(s) to you want to build?';
+        my $question = 'Which component(s) do you want to build?';
         my $default  = BUILD_OPTION_BOTH;
 
         $build = $self->prompt_list(

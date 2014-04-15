@@ -1,9 +1,17 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 1.17
+                          Filter::Crypto, Version 1.18
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
+_________________
+
+v1.18 27 Sep 2006
+
+    - Fixed a PATH problem that caused t/04_par.t to fail on some platforms.
+
+      Thanks to Jakub Holy <JHOLY@at.ibm.com> for drawing attention to this
+      failure and for suggesting a solution.
 _________________
 
 v1.17 14 Feb 2006

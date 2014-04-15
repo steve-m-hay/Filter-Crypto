@@ -321,10 +321,10 @@ MAIN: {
     $dir4 = catdir($top_dir, 'Decrypt');
     $file = "${q}Make*.PL$q";
 
-    chomp($data = qx[$perl $crypt_file -d $top_dir -d $dir3 -d $dir4 -t $file]);
+    chomp($data = qx{$perl $crypt_file -d $top_dir -d $dir3 -d $dir4 -t $file});
     $data = join("\n", sort split /\n/, $data) . "\n";
     is($data, $expected, "-t works with three -d's and a glob");
-    chomp($data = qx[$perl $crypt_file -d $top_dir -d $dir3 -d $dir4 -r -t $file]);
+    chomp($data = qx{$perl $crypt_file -d $top_dir -d $dir3 -d $dir4 -r -t $file});
     $data = join("\n", sort split /\n/, $data) . "\n";
     is($data, $expected, "-t works with three -d's, -r and a glob");
 
