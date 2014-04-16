@@ -16,7 +16,7 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -28,6 +28,7 @@ use File::Basename qw(basename fileparse);
 use File::Copy qw(copy);
 use File::Find qw(find);
 use File::Spec::Functions qw(canonpath catfile file_name_is_absolute rel2abs);
+use File::Temp qw(tempfile);
 use Filter::Crypto;
 use Filter::Crypto::CryptFile qw(:DEFAULT $ErrStr);
 use Getopt::Long qw(GetOptions);
@@ -55,8 +56,12 @@ sub exit_with_error(@);
 # INITIALIZATION
 #===============================================================================
 
-our $VERSION = '1.04';
-our $YEAR    = '2004-2006, 2012, 2014';
+our($VERSION, $YEAR);
+
+BEGIN {
+    $VERSION = '1.05';
+    $YEAR    = '2004-2006, 2012, 2014';
+}
 
 #===============================================================================
 # MAIN PROGRAM
@@ -68,7 +73,7 @@ MAIN: {
 
     # Allow options to be introduced with a "/" character on Windows, as is
     # common on those OSes, as well as the default set of characters.
-    if ($^O =~ /MSWin32/io) {
+    if ($^O eq 'MSWin32') {
         Getopt::Long::Configure('prefix_pattern=(--|-|\+|\/)');
     }
 
@@ -249,22 +254,9 @@ MAIN: {
                             exit 0;
                         };
 
-                        # Delay the loading of File::Temp until it is actually
-                        # required because it is not a standard module in 5.6.0
-                        # so it might not be available.  We would not want to
-                        # stop the rest of the script from working just because
-                        # of this, though.
-                        unless (eval { require File::Temp; 1 }) {
-                            exit_with_error(3,
-                                "Can't use --edit-mode=tempfile without " .
-                                "File::Temp"
-                            );
-                        }
-
                         # Create the temporary file in same directory as the
                         # input file to be sure the rename() done later works.
-                        ($temp_fh, $temp_file) =
-                            File::Temp::tempfile("$file.XXXXXXXX");
+                        ($temp_fh, $temp_file) = tempfile("$file.XXXXXXXX");
 
                         my $num_bytes =
                             crypt_file($file, $temp_fh, $crypt_mode);
@@ -328,7 +320,7 @@ MAIN: {
                         # the following rename() to be writable, so make sure it
                         # is.  (On other systems this is controlled by the
                         # permissions on the parent directory.)
-                        if ($^O =~ /MSWin32/io and not -w $file) {
+                        if ($^O eq 'MSWin32' and not -w $file) {
                             unless (chmod $mode | 0200, $file) {
                                 show_warning($silent, WARNING_TYPE_SEVERE,
                                     $file, "Can't make file writable: %s", $!
@@ -395,7 +387,7 @@ sub get_input_files($$$) {
                 warn "No such file '$spec'\n";
             }
         }
-        elsif ($spec !~ /(?<!\\)[?*[]/) {
+        elsif ($spec !~ /(?<!\\)[?*[]/o) {
             my $found = 0;
             foreach my $dir (@$dirs) {
                 my $file = rel2abs($spec, $dir);
@@ -472,7 +464,7 @@ sub resolve_file_expr($$) {
 
     my $new_file = $expr;
     $new_file =~ s/(?<!\\)\[/$extension/g;
-    $new_file =~ s/\\\[/[/g;
+    $new_file =~ s/\\\[/[/go;
     $new_file =~ s/\*/$filename/g;
     $new_file =~ s/\?/$basename/g;
 
@@ -758,9 +750,6 @@ if at all possible).  Combined with, say, B<--crypt-mode=encrypted>, this mode
 can therefore safely be used to run, and, if necessary, re-run, on a set of
 input files until they have all be successfully encrypted.
 
-Note that the "tempfile" mode requires the File::Temp module, which is only a
-standard module from perl 5.6.1 onwards.
-
 This option only applies when input files are being processed "in-place", and
 implies the B<--in-place> option if that is not already present.
 
@@ -972,13 +961,6 @@ from which to read the list of input file specifiers could not be opened for
 reading.  The system error message corresponding to the standard C library
 C<errno> variable is also given.
 
-=item Can't use --edit-mode=tempfile without File::Temp
-
-(F) The File::Temp module could not be loaded, without which the B<--edit-mode>
-option value "tempfile" cannot be used.  Either install the File::Temp module
-(it is actually a standard module from perl 5.6.1 onwards) or use the "memory"
-option value instead.
-
 =item Caught SIGINT. Cleaning up temporary files before exiting
 
 (W) The script has received an "interrupt" signal, e.g. the user may have
@@ -1124,11 +1106,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.04
+Version 1.05
 
 =head1 DATE
 
-19 Feb 2014
+TODO
 
 =head1 HISTORY
 

@@ -6,13 +6,15 @@
 #   Common XS code for Filter::Crypto modules.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
 #   or the Artistic License, as specified in the LICENCE file.
 #
 #===============================================================================
+
+#include <string.h>                     /* For strcpy and strcat()().         */
 
 #define FILTER_CRYPTO_ERRSTR_VARIABLE "::ErrStr"
 
@@ -72,17 +74,12 @@ DESTROY(self)
 #endif
 
         /* Free the current thread's error queue and all previously loaded error
-         * strings.  ERR_remove_state() was added in SSLeay 0.6.1, but seems to
-         * crash before 0.6.4. */
-#if FILTER_CRYPTO_OPENSSL_VERSION >= 60400
+         * strings. */
         ERR_remove_state(0);
-#endif
         ERR_free_strings();
 
         /* Remove all ciphers and/or digests from the internal lookup table. */
-#if FILTER_CRYPTO_OPENSSL_VERSION >= 80000
         EVP_cleanup();
-#endif
 
         /* Free the PRNG state. */
         RAND_cleanup();

@@ -1,13 +1,13 @@
 #!perl
 #===============================================================================
 #
-# t/01_constants.t
+# t/01_imports_01.t
 #
 # DESCRIPTION
-#   Test script to check autoloading of constants.
+#   Test script to check import options.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -15,7 +15,7 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -34,9 +34,8 @@ BEGIN {
     my $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     if (-f catfile($lib_dir, 'CryptFile.pm')) {
-        require Filter::Crypto::CryptFile;
-        Filter::Crypto::CryptFile->import();
-        plan tests => 5;
+        plan tests => 7;
+        require_ok('Filter::Crypto::CryptFile');
     }
     else {
         plan skip_all => 'CryptFile component not built';
@@ -48,11 +47,12 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-    ok(eval { CRYPT_MODE_AUTO();      1 }, 'CRYPT_MODE_AUTO flag');
-    ok(eval { CRYPT_MODE_DECRYPT();   1 }, 'CRYPT_MODE_DECRYPT flag');
-    ok(eval { CRYPT_MODE_ENCRYPT();   1 }, 'CRYPT_MODE_ENCRYPT flag');
-    ok(eval { CRYPT_MODE_DECRYPTED(); 1 }, 'CRYPT_MODE_DECRYPTED flag');
-    ok(eval { CRYPT_MODE_ENCRYPTED(); 1 }, 'CRYPT_MODE_ENCRYPTED flag');
+    ok(!defined &main::crypt_file, 'crypt_file is not imported');
+    ok(!eval { CRYPT_MODE_AUTO(); 1 }, 'CRYPT_MODE_AUTO is not imported');
+    ok(!eval { CRYPT_MODE_DECRYPT(); 1 }, 'CRYPT_MODE_DECRYPT is not imported');
+    ok(!eval { CRYPT_MODE_ENCRYPT(); 1 }, 'CRYPT_MODE_ENCRYPT is not imported');
+    ok(!eval { CRYPT_MODE_DECRYPTED(); 1 }, 'CRYPT_MODE_DECRYPTED is not imported');
+    ok(!eval { CRYPT_MODE_ENCRYPTED(); 1 }, 'CRYPT_MODE_ENCRYPTED is not imported');
 }
 
 #===============================================================================

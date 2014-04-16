@@ -17,7 +17,7 @@
 
 package Filter::Crypto::CryptFile;
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -55,7 +55,7 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '2.04';
+    $VERSION = '2.05';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -73,7 +73,7 @@ sub AUTOLOAD {
     our $AUTOLOAD;
 
     # Get the name of the constant to generate a subroutine for.
-    (my $constant = $AUTOLOAD) =~ s/^.*:://;
+    (my $constant = $AUTOLOAD) =~ s/^.*:://o;
 
     # Avoid deep recursion on AUTOLOAD() if constant() is not defined.
     croak('Unexpected error in AUTOLOAD(): constant() is not defined')
@@ -885,9 +885,9 @@ L<Filter::Crypto>.
 
 =head1 ACKNOWLEDGEMENTS
 
-The C<_PRNGInit()> and C<_GetRandNum()> functions used by the XS code are based
-on (code taken from) the C<ssl_rand_seed()> and C<ssl_rand_choosenum()>
-functions in mod_ssl (version 2.8.19-1.3.31).
+The C<FilterCrypto_PRNGInit()> and C<FilterCrypto_GetRandNum()> functions used
+by the XS code are based on code taken from the C<ssl_rand_seed()> and
+C<ssl_rand_choosenum()> functions in Apache httpd (version 2.4.9).
 
 Thanks to Steve Henson for help with performing PBE and PKCS#5 v2.0 key
 derivation with arbitrary ciphers and non-default key lengths using the OpenSSL
@@ -909,11 +909,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.04
+Version 2.05
 
 =head1 DATE
 
-19 Feb 2014
+TODO
 
 =head1 HISTORY
 

@@ -3,55 +3,51 @@ abstract: 'Create runnable Perl files encrypted with OpenSSL libcrypto'
 author:
   - 'Steve Hay <shay@cpan.org>'
 build_requires:
-  ExtUtils::MakeMaker: 6.59
-  Test::More: 0
-  blib: 0
+  Config: '0'
+  Cwd: '0'
+  ExtUtils::MakeMaker: '0'
+  File::Copy: '0'
+  File::Spec::Functions: '0'
+  FindBin: '0'
+  Test::More: '0'
+  blib: '0'
+  strict: '0'
+  warnings: '0'
 configure_requires:
-  Carp: 0
-  Config: 0
-  Cwd: 0
-  ExtUtils::MakeMaker: 6.59
-  File::Basename: 0
-  File::Copy: 0
-  File::Find: 0
-  File::Path: 0
-  File::Spec: 0
-  File::Spec::Functions: 0
-  FindBin: 0
-  Getopt::Long: 0
-  Pod::Usage: 1.15
-  Text::Wrap: 0
-  constant: 0
-  parent: 0
-  strict: 0
-  vars: 0
-  warnings: 0
-distribution_type: module
+  Carp: '0'
+  Config: '0'
+  Cwd: '0'
+  ExtUtils::MakeMaker: '6.66'
+  Fcntl: '0'
+  File::Basename: '0'
+  File::Copy: '0'
+  File::Spec::Functions: '0'
+  Getopt::Long: '0'
+  Pod::Usage: '1.15'
+  Text::Wrap: '0'
+  constant: '0'
+  strict: '0'
+  warnings: '0'
 dynamic_config: 1
-generated_by: 'Module::Install version 1.06'
+generated_by: 'ExtUtils::MakeMaker version 6.96, CPAN::Meta::Converter version 2.140640'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+  version: '1.4'
 name: Filter-Crypto
 no_index:
   directory:
-    - inc
     - t
-recommends:
-  File::Temp: 0
-  PAR::Filter: 0
+    - inc
+  package:
+    - Filter::Crypto::_ConfigureBuild
 requires:
-  Archive::Zip: 0
-  Exporter: 0
-  Fcntl: 0
-  File::Temp: 0
-  PAR::Filter: 0
-  Scalar::Util: 0
-  Test::Pod: 1.00
-  Text::ParseWords: 0
-  XSLoader: 0
-  perl: 5.6.0
+  Exporter: '0'
+  Fcntl: '0'
+  Scalar::Util: '0'
+  Text::ParseWords: '0'
+  XSLoader: '0'
+  perl: '5.008001'
 resources:
-  license: http://dev.perl.org/licenses/
-version: 2.04
+  repository: git://github.com/steve-m-hay/Filter-Crypto.git
+version: '2.05'

@@ -1,66 +1,40 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 2.04
+                          Filter::Crypto, Version 2.05
 ________________________________________________________________________________
 
 PREREQUISITES
 
-    Compiler
+    C Compiler
 
         You need a C compiler to build these modules.
 
-        Note that you should try to use the same compiler as was used to build
-        your Perl itself.
-
-        In particular, Windows users should be aware that these modules will not
-        work correctly if they load a different C run-time DLL to that loaded by
-        perl itself.  Note that Visual C++ 6.0 (part of Visual Studio 6.0) and
-        earlier produce binaries that require the system's msvcrt.dll, while
-        Visual C++ .NET (aka Visual C++ 7.0, part of Visual Studio .NET), Visual
-        C++ .NET 2003 (aka Visual C++ 7.1, part of Visual Studio .NET 2003 and
-        the free Visual C++ Toolkit 2003), Visual C++ 2005 (aka Visual C++ 8.0,
-        part of Visual Studio 2005 and the free Visual C++ 2005 Express Edition)
-        and later produce binaries that require compiler-specific DLLs named
-        msvcr70.dll, msvcr71.dll, msvcr80.dll etc.  Therefore, building these
-        modules with anything later than VC6 for use with ActivePerl, which is
-        known currently to be built with VC6, will not work.
-
-        On Windows, the Makefile.PL script will try to detect if a different
-        compiler is being used and will give an error if necessary.  Note,
-        however, that it is not always possible for it to detect which
-        particular compiler version was used to build Perl, especially for Perl
-        version 5.8.6 or older, which did not have this information stored in
-        the standard library module Config.
+        Ideally you should try to use the same compiler as was used to build
+        your perl itself, although this is not essential.  (However, there is a
+        known compatibility problem when building this module with Visual Studio
+        .NET 2002/2003 (VC7) or earlier if your perl was built with Visual
+        Studio 2005 (VC8) or later: see [perl #121448].)
 
     OpenSSL
 
-        OpenSSL (any version), or SSLeay version 0.6.0 or later.
+        OpenSSL version 0.9.6k or 0.9.7c or later.
         The latest version of OpenSSL is available from http://www.openssl.org/.
 
     Perl
 
-        Perl version 5.6.0 or later.
+        Perl version 5.8.1 or later.
         The latest version of Perl is available from http://www.perl.com/.
 
     Perl Modules
 
         There are no non-standard Perl modules required by the two main modules
         in this distribution (Filter::Crypto::CryptFile and
-        Filter::Crypto::Decrypt), but the crypt_file script and the
-        PAR::Filter::Crypto module both require
-
-            File::Temp
-
-        which is only a standard Perl module from Perl version 5.6.1 onwards
-        (crypt_file only requires it when run with the "-e tempfile" option),
-        and the PAR::Filter::Crypto module also requires
+        Filter::Crypto::Decrypt), but the PAR::Filter::Crypto module requires
 
             PAR::Filter
 
-        which is part of the PAR distribution.
-
-        A standalone distribution of the File::Temp module, as well as the PAR
-        distribution, is available from CPAN (http://www.cpan.org/).
+        which is part of the PAR::Packer distribution, available from CPAN
+        (http://www.cpan.org/).
 
 INSTALLATION
 
@@ -83,10 +57,9 @@ INSTALLATION
 
     for more details.
 
-    On Microsoft Windows platforms, you will need to use "nmake" or "dmake"
-    rather than "make" in the commands above, depending on what your Perl was
-    built with.  To determine which make program was used to build your Perl
-    type the following:
+    On Windows, you will need to use "nmake" or "dmake" rather than "make" in
+    the commands above, depending on what your perl was built with.  To
+    determine which make program was used to build your perl type the following:
 
         perl -V:make
 ________________________________________________________________________________

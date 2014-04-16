@@ -1,15 +1,58 @@
 ________________________________________________________________________________
 
-                          Filter::Crypto, Version 2.04
+                          Filter::Crypto, Version 2.05
 ________________________________________________________________________________
 
 Revision history for Perl extension Filter::Crypto.
 _________________
 
+v2.05 TODO
+
+    - Removed the rudimentary checks on the compiler versions in Makefile.PL
+      when building these modules on Windows since it appears that using
+      different compilers (and hence potentially different C RTL DLLs) is safe
+      after all.  Note, however, that there is still a compatibility problem
+      when building this module with Visual Studio .NET 2002/2003 (VC7) or
+      earlier if your perl was built with Visual Studio 2005 (VC8) or later: see
+      [perl #121448].  However, that is quite an unlikely scenario, so it is not
+      worth checking for in Makefile.PL.
+
+    - Changed all PerlLIO_*() function calls to the corresponding lowio
+      functions: they should be redefined as necessary by perl's header files
+      anyway, which is indeed the case in perl-5.8.1 and above, at least -- see
+      the exchanges between myself and Jan Dubois on the "perl5-porters" mailing
+      list, 04-05 Mar 2010, for more details on this.
+
+    - Uploaded source code to GitHub and included repository URLS in meta data.
+
+    - Included META.json file in addition to META.yml.
+
+    - Simplified Makefile.PL commands for making a new distribution archive.
+
+    - Bumped minimum required ExtUtils::MakeMaker version to 6.66 to allow
+      building with 64-bit perl (otherwise the build fails with errors about
+      fakethr.h and perlsfio.h).
+
+    - Reverted to plain old ExtUtils::MakeMaker for building, now that that's
+      more fully maintained again.  Module::Install has virtually died a death,
+      and Module::Build is no better either.  Require a fairly recent version
+      (6.64) to ensure that all parameters used are supported, to save jumping
+      through hoops to support earlier versions.  (This should not be a problem
+      since ExtUtils::MakeMaker 6.64 is easily installed into Perl 5.8.1 and
+      above, that being the whole point of the new choice of minimum supported
+      Perl version.)
+
+    - Set minimum required OpenSSL version to 0.9.6k or 0.9.7c, which are
+      approximately contemporaneous with Perl 5.8.1.
+
+    - Bumped minimum required Perl version from 5.6.0 to 5.8.1.  This is in line
+      with the minimum requirement of the "Perl Toolchain".
+_________________
+
 v2.04 19 Feb 2014
 
     - Fixed crypt_file's "-c encrypted" and "-c decrypted" options when used in
-      conjunction with the "-e tempfile" option. These combinations of options
+      conjunction with the "-e tempfile" option.  These combinations of options
       previously caused the input file to be replaced with a zero length file.
       (Fixes [cpan #93152].)
 _________________
@@ -28,8 +71,8 @@ v2.02 14 Feb 2013
 
     - Removed an sscanf() accidentally left behind after the previous change.
       It should have been removed, and its accidental retention could have been
-      the cause of a CPAN Testers "FAIL" report involving a core dump since it
-      actually caused a buffer overrun.
+      the cause of a CPAN Testers Reports "FAIL" report involving a core dump
+      since it actually caused a buffer overrun.
 _________________
 
 v2.01 07 Feb 2013
@@ -52,7 +95,7 @@ v1.36 20 Mar 2012
 
     - Removed extra diagnostics previously added to t/03_script.t now that the
       cause of the "FAIL" reports has been discovered.  It turns out that the
-      perl installations in question are all development versions of perl (5.X.Y
+      perl installations in question are all development versions of Perl (5.X.Y
       where X is an odd number) with $Config{versiononly} defined and the
       required "perldoc" script consequently named "perldoc5.X.Y" rather than
       the usual "perldoc".
@@ -71,7 +114,7 @@ _________________
 v1.35 05 Mar 2012
 
     - Added extra diagnostics to t/03_script.t to try to discover the cause of
-      persistent CPAN Testers "FAIL" reports regarding test 99.
+      persistent CPAN Testers Reports "FAIL" reports regarding test 99.
 _________________
 
 v1.34 02 Mar 2012
@@ -126,7 +169,7 @@ v1.30 14 Nov 2009
 
     - Fixed t/03_script.t to skip test 99 when run on a Debian-based host
       without perl-doc installed.  (Thanks to C.J. Adams-Collier
-      <cjac@colliertech.org> on the Debian perl mailing list
+      <cjac@colliertech.org> on the Debian Perl mailing list
       (debian-perl@lists.debian.org) for the patch to fix this.)
 
     - Added a note to LICENCE to mention that whilst this distribution is
@@ -140,9 +183,9 @@ v1.29 26 Oct 2009
 
     - The previous changes to check in new locations and for libcrypto.so as
       well as libcrypto.a broke some Solaris 2.10 builds which have a
-      libcrypto.so in /opt/csw/lib/amd64 but aren't using a 64-bit Perl.  Change
+      libcrypto.so in /opt/csw/lib/amd64 but aren't using a 64-bit perl.  Change
       the library file detection code to only consider the 64-bit library file
-      locations if we are using a 64-bit Perl.
+      locations if we are using a 64-bit perl.
 
     - The previous change to update ppport.h broke builds with Perl >= 5.9.5
       because new support for PL_rsfp_filters requires an explicit request for
@@ -151,9 +194,9 @@ _________________
 
 v1.28 25 Oct 2009
 
-    - The previous change to address CPAN Testers "FAIL" reports from Solaris
-      2.11 didn't work, perhaps because, as pointed out on the OpenSSL users
-      mailing list (openssl-users@openssl.org), libcrypto.so must be used
+    - The previous change to address CPAN Testers Reports "FAIL" reports from
+      Solaris 2.11 didn't work, perhaps because, as pointed out on the OpenSSL
+      users mailing list (openssl-users@openssl.org), libcrypto.so must be used
       instead of libcrypto.a.  Therefore, added code to check for libcrypto.so
       where libcrypto.a isn't found.
 
@@ -165,7 +208,7 @@ _________________
 v1.27 22 Oct 2009
 
     - Fixed a double-free error in the Decrypt component when using Perl 5.6.2,
-      which was detected by some CPAN Testers "FAIL" reports.
+      which was detected by some CPAN Testers Reports "FAIL" reports.
 
       The filter's SV contains a pointer to the filter context.  The SV is made
       magical so that when the SV is destroyed the filter context gets
@@ -177,7 +220,7 @@ v1.27 22 Oct 2009
       true in this case (our mg_len is always 0), hence the errors with Perl
       5.6.2.  From Perl 5.7.3 onwards (specifically, perl change #14373),
       Perl_mg_free() only frees the mg_ptr again if mg_len > 0, so the double-
-      free wouldn't occur with those Perls.  However, it is good practice to set
+      free wouldn't occur with those perls.  However, it is good practice to set
       pointers to NULL after freeing them, so this is done in
       FilterCrypto_FilterSvMgFree() for all versions of Perl, and all other
       pointers elsewhere are also set to NULL after being freed.
@@ -187,14 +230,14 @@ v1.27 22 Oct 2009
       library could be found on 64-bit Solaris Intel and 64-bit Solaris Sparc
       systems respectively, according to answers from the OpenSSL users mailing
       list (openssl-users@openssl.org), and should hopefully resolve a couple of
-      CPAN Testers "FAIL" reports from 64-bit Solaris 2.11.
+      CPAN Testers Reports "FAIL" reports from 64-bit Solaris 2.11.
 _________________
 
 v1.26 18 Oct 2009
 
     - Declared a minimum version of 1.15 for Pod::Usage.  (In the course of
       investigating [cpan #50533], which I still haven't resolved as of this
-      writing, I found that t/03_script.t fails test 99 when using a Perl build
+      writing, I found that t/03_script.t fails test 99 when using a perl build
       with an architecture-dependent lib/ folder if Pod[-]Parser is 1.21 or
       older (which contains Pod::Usage 1.14 or older) due to a bug that was
       explicitly fixed in PodParser 1.22 (which contains Pod::Usage 1.15).)
@@ -205,12 +248,13 @@ v1.26 18 Oct 2009
       $SIG{__WARN__} handler when loading it, rather than by not using blib.
       This ensures that the extra work done by blib compared to the simplistic
       "perl -Iblib/arch -Iblib/lib ..." approach is not missed, which might have
-      some bearing on some of the CPAN Testers' "FAIL" reports (most of which
-      relate to a sufficiently old Perl version to have the old blib concerned).
+      some bearing on some of the CPAN Testers Reports "FAIL" reports (most of
+      which relate to a sufficiently old Perl version to have the old blib
+      concerned).
 
-    - Added a check for "debug" mode Perl builds in Makefile.PL when building
-      the "Decrypt" component.  This should ensure that CPAN Testers report
-      "N/A" rather than "UNKNOWN" if their Perl builds are "debug" mode.
+    - Added a check for "debug" mode perl builds in Makefile.PL when building
+      the "Decrypt" component.  This should ensure that CPAN Testers Reports
+      report "N/A" rather than "UNKNOWN" if their perl builds are "debug" mode.
 _________________
 
 v1.25 11 Oct 2009
@@ -263,15 +307,15 @@ _________________
 v1.21 06 Jul 2008
 
     - Added the magic "OS unsupported" phrase to Makefile.PL's die() message so
-      that CPAN Testers report "N/A" rather than "FAIL" on OSes where no OpenSSL
-      or SSLeay installation has been detected.
+      that CPAN Testers Reports report "N/A" rather than "FAIL" on OSes where no
+      OpenSSL or SSLeay installation has been detected.
 
     - Updated Module::Install::PRIVATE to version 1.06 for Makefile.PL
       improvements:
 
       * Added the magic "OS unsupported" phrase to Makefile.PL's die() message
-        so that CPAN Testers report "N/A" rather than "FAIL" on OSes where the
-        appropriate C compiler cannot be found.
+        so that CPAN Testers Reports report "N/A" rather than "FAIL" on OSes
+        where the appropriate C compiler cannot be found.
 
     - Updated Module::Install components from version 0.75 of that distribution.
       Changed Makefile.PL appropriately to cope with a non-backwards-compatible
@@ -320,8 +364,9 @@ v1.19 10 Jul 2007
     - Updated Module::Install::PRIVATE to version 1.05 for Makefile.PL
       improvements:
 
-      * Fixed the compiler version checking on Win32 for Visual C++ 8.x, which
-        now uses four numbers separated by dots for its compiler version.
+      * Fixed the compiler version checking on Win32 for Visual Studio 2005
+       (VC8), which now uses four numbers separated by dots for its compiler
+       version.
         
     - Updated Module::Install components from version 0.65 of that distribution.
 
@@ -425,8 +470,9 @@ v1.15 02 Sep 2005
       improvements:
 
       * Relaxed the compiler version checking so that only the major version
-        numbers have to match (and also the minor version numbers for VC++ 7 and
-        later, which use CRT DLLs named msvcr70.dll, msvcr71.dll, etc)
+        numbers have to match (and also the minor version numbers for Visual
+        Studio .NET 2002/2003 (VC7) and later, which use C RTL DLLs named
+        msvcr70.dll, msvcr71.dll, etc)
         
         (Thanks to Sisyphus <sisyphus1@optusnet.com.au> for drawing attention to
         this problem via the PAR mailing list (par@perl.org));
@@ -488,7 +534,7 @@ v1.12 09 Mar 2005
       produced by "perldoc" on some OSes.
 
       Thanks to <cpan@calaquendi.net> for drawing attention to this problem via
-      CPAN Testers (http://testers.cpan.org/).
+      CPAN Testers Reports (http://www.cpantesters.org/).
 _________________
 
 v1.11 03 Mar 2005
@@ -529,9 +575,9 @@ v1.11 03 Mar 2005
       improvements:
 
       * Added code to try to check that on Win32 the same compiler is being used
-        to build these modules as was used to build Perl itself to avoid
+        to build these modules as was used to build perl itself to avoid
         problems with binaries built by different compiler versions loading
-        different C run-time DLLs.
+        different C RTL DLLs.
 
     - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
       building these modules.

@@ -6,7 +6,7 @@
  *   Common C code for Filter::Crypto modules.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2009, 2012-2013 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2009, 2012-2014 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -36,54 +36,13 @@
 #  include <unistd.h>
 #endif
 
-/* The definition of RAND_screen() is only seen if WINDOWS is #defined, which it
- * is not by default (even on Win32).  The C file containing the definition
- * #includes "e_os.h" first which #define's WINDOWS if it is not aleady #defined
- * and WIN32 is (which is indeed the case on Win32).  However, the header file
- * declaring RAND_screen() does not include "e_os.h" so the declaration (which,
- * before 0.9.5a, is also only seen if WINDOWS #defined) does not get seen.
- * From 0.9.5a onwards the header file declaring RAND_screen() tests if WIN32 is
- * #defined too so it works OK.  Therefore, ensure WINDOWS is #defined if WIN32
- * is so that earlier versions work too. */
-#ifdef WIN32
-#  ifndef WINDOWS
-#    define WINDOWS
-#  endif
-#endif
+/* For the ERR_*(), EVP_*() and RAND_*() functions. */
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 
-/* For the ERR_*(), EVP_*() and RAND_*() functions.
- * The header files were located directly in the OpenSSL include directory prior
- * to 0.9.3, but are now located in an openssl/ sub-directory of that.  The EVP
- * header was called "envelope.h" before 0.8.0, but is now called "evp.h." */
-#if FILTER_CRYPTO_OPENSSL_VERSION < 80000
-#  include <envelope.h>
-#  include <err.h>
-#  include <rand.h>
-#elif FILTER_CRYPTO_OPENSSL_VERSION < 90300
-#  include <err.h>
-#  include <evp.h>
-#  include <rand.h>
-#else
-#  include <openssl/err.h>
-#  include <openssl/evp.h>
-#  include <openssl/rand.h>
-#endif
-
-/* Some early versions of OpenSSL and SSLeay define a "_" symbol in the "des.h"
- * header file.  It is apparently not required, so undefine it since it clashes
- * with the "_" symbol defined in Perl's "config.h" header file.              */
-#ifdef _
-#  undef _
-#endif
-
-#define PERL_NO_GET_CONTEXT             /* See the "perlguts" manpage.        */
-
-#include "patchlevel.h"                 /* Get the version numbers first.     */
-
-#if (PERL_REVISION == 5 && PERL_VERSION > 6)
-#  define PERLIO_NOT_STDIO 0            /* See the "perlapio" manpage.        */
-#endif
-
+#define PERL_NO_GET_CONTEXT             /* To get interp context efficiently. */
+#define PERLIO_NOT_STDIO 0              /* To allow use of PerlIO and stdio.  */
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -112,30 +71,6 @@
 #  define snprintf _snprintf
 #endif
 
-                                        /* PKCS5_SALT_LEN and                 */
-                                        /* PKCS5_DEFAULT_ITER were added in   */
-                                        /* OpenSSL 0.9.4.                     */
-#ifndef PKCS5_SALT_LEN
-#  define PKCS5_SALT_LEN     8
-#endif
-#ifndef PKCS5_DEFAULT_ITER
-#  define PKCS5_DEFAULT_ITER 2048
-#endif
-
-                                        /* EVP_CIPHER_block_size(),           */
-                                        /* EVP_CIPHER_CTX_block_size() and    */
-                                        /* EVP_CIPHER_iv_length() were all    */
-                                        /* added in SSLeay 0.6.5.             */
-#ifndef EVP_CIPHER_block_size
-#  define EVP_CIPHER_block_size(e)     ((e)->block_size)
-#endif
-#ifndef EVP_CIPHER_CTX_block_size
-#  define EVP_CIPHER_CTX_block_size(e) ((e)->cipher->block_size)
-#endif
-#ifndef EVP_CIPHER_iv_length
-#  define EVP_CIPHER_iv_length(e)      ((e)->iv_len)
-#endif
-
 #define FILTER_CRYPTO_OPENSSL_ERR_STR \
     (ERR_reason_error_string(FilterCrypto_GetLastSSLError()))
 
@@ -153,9 +88,7 @@
 } STMT_END
 
 #define FILTER_CRYPTO_NEED_RANDOM_SALT FILTER_CRYPTO_USING_PBE
-#define FILTER_CRYPTO_NEED_RANDOM_IV   FILTER_CRYPTO_NEED_IV   &&            \
-                                     !(FILTER_CRYPTO_USING_PBE &&            \
-                                       FILTER_CRYPTO_OPENSSL_VERSION < 90400)
+#define FILTER_CRYPTO_NEED_RANDOM_IV   FILTER_CRYPTO_NEED_IV
 
                                         /* Convert between bytes and          */
                                         /* lowercase hexadecimal digits,      */
@@ -302,8 +235,7 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
      * for the key derivation.  It must be randomly generated when encrypting,
      * and output with the encrypted data so that it can be read back in and
      * used again for decrypting.  We also need an IV, which must be handled in
-     * the same way, except that the old key derivation algorithm used by
-     * FilterCrypto_CipherInit() before 0.9.4 generates an IV for us. */
+     * the same way. */
 #if (FILTER_CRYPTO_NEED_RANDOM_SALT || FILTER_CRYPTO_NEED_RANDOM_IV)
     switch (ctx->crypt_mode) {
         case FILTER_CRYPTO_MODE_ENCRYPT: {
@@ -321,8 +253,6 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 #  if FILTER_CRYPTO_NEED_RANDOM_SALT
 #    if defined(FILTER_CRYPTO_NO_RAND_BYTES)
             memset(salt_text, '*', ctx->required_salt_len);
-#    elif FILTER_CRYPTO_OPENSSL_VERSION < 90500
-            RAND_bytes(salt_text, ctx->required_salt_len);
 #    else
             if (!RAND_bytes(salt_text, ctx->required_salt_len)) {
                 if (!RAND_pseudo_bytes(salt_text, ctx->required_salt_len)) {
@@ -353,8 +283,6 @@ static bool FilterCrypto_CryptoInitCipher(pTHX_ FILTER_CRYPTO_CCTX *ctx,
 #  if FILTER_CRYPTO_NEED_RANDOM_IV
 #    if defined(FILTER_CRYPTO_NO_RAND_BYTES)
             memset(iv_text, '*', ctx->required_iv_len);
-#    elif FILTER_CRYPTO_OPENSSL_VERSION < 90500
-            RAND_bytes(iv_text, ctx->required_iv_len);
 #    else
             if (!RAND_bytes(iv_text, ctx->required_iv_len)) {
                 if (!RAND_pseudo_bytes(iv_text, ctx->required_iv_len)) {
@@ -543,11 +471,7 @@ static void FilterCrypto_CryptoFree(pTHX_ FILTER_CRYPTO_CCTX *ctx) {
 static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
     SV *iv_sv, FILTER_CRYPTO_MODE crypt_mode)
 {
-#if FILTER_CRYPTO_OPENSSL_VERSION < 90300
-    EVP_CIPHER *cipher_func = FILTER_CRYPTO_CIPHER_FUNC;
-#else
     const EVP_CIPHER *cipher_func = FILTER_CRYPTO_CIPHER_FUNC;
-#endif
 #if FILTER_CRYPTO_KEY_LEN == 0
     unsigned char *key = NULL;
 #else
@@ -555,19 +479,12 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
 #endif
 #if FILTER_CRYPTO_NEED_RANDOM_SALT
     unsigned char *salt = (unsigned char *)SvPVX(salt_sv);
-#  if FILTER_CRYPTO_OPENSSL_VERSION >= 90400
     int salt_len = SvCUR(salt_sv);
-#  endif
 #endif
 #if FILTER_CRYPTO_NEED_RANDOM_IV
     unsigned char *iv = (unsigned char *)SvPVX(iv_sv);
 #else
     unsigned char *iv = NULL;
-#endif
-#if (FILTER_CRYPTO_USING_PBE                && \
-     FILTER_CRYPTO_OPENSSL_VERSION  < 90400 && \
-     FILTER_CRYPTO_OPENSSL_VERSION >= 90000)
-    int derived_key_len;
 #endif
 
     /* Derive the key from the given password.  PBE should really be initialized
@@ -590,76 +507,14 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
      * PKCS5_PBKDF2_HMAC_SHA1() directly ourselves to do the PKCS#5 v2.0 key
      * derivation.
      * See the exchanges between myself and Steve Henson on the "openssl-users"
-     * mailing list, 08-13 Sep 2004, for more details on all of this.
-     * One final fly in the ointment is that PKCS5_PBKDF2_HMAC_SHA1() is only
-     * available as of 0.9.4, so before that we use EVP_BytesToKey() instead.
-     * This is at best PKCS#5 v1.5 compatible and also does not support non-
-     * default key lengths for variable key length ciphers.  In this case,
-     * however, the latter is not an issue because the EVP library only has
-     * facilities for changing the key lengths from 0.9.6 onwards anyway. */
+     * mailing list, 08-13 Sep 2004, for more details on all of this. */
 
-#if FILTER_CRYPTO_OPENSSL_VERSION < 90400
-
-#  if FILTER_CRYPTO_USING_PBE
-    Newxz(iv, EVP_CIPHER_iv_length(cipher_func), unsigned char);
-
-    /* Do not check the return value of EVP_BytesToKey() before 0.9.0: it was
-     * faulty. */
-#    if FILTER_CRYPTO_OPENSSL_VERSION < 90000
-    EVP_BytesToKey(cipher_func, EVP_md5(), salt, filter_crypto_pswd,
-        sizeof(filter_crypto_pswd), PKCS5_DEFAULT_ITER, key, iv);
-#    else
-    if ((derived_key_len = EVP_BytesToKey(cipher_func, EVP_md5(), salt,
-            filter_crypto_pswd, sizeof(filter_crypto_pswd), PKCS5_DEFAULT_ITER,
-            key, iv)) != FILTER_CRYPTO_KEY_LEN)
-    {
-        Safefree(iv);
-        iv = NULL;
-        FilterCrypto_SetErrStr(aTHX_
-            "Derived key length is wrong (%d, expected %d)",
-            derived_key_len, FILTER_CRYPTO_KEY_LEN
-        );
-        return FALSE;
-    }
-#    endif
-#  else
-    Copy(filter_crypto_key, key, FILTER_CRYPTO_KEY_LEN, unsigned char);
-#  endif
-
-    EVP_CipherInit(ctx, cipher_func, key, iv, crypt_mode);
-
-#  if FILTER_CRYPTO_USING_PBE
-    Safefree(iv);
-    iv = NULL;
-#  endif
-
-#elif FILTER_CRYPTO_OPENSSL_VERSION < 90600
-
-#  if FILTER_CRYPTO_USING_PBE
-    if (PKCS5_PBKDF2_HMAC_SHA1(filter_crypto_pswd, sizeof(filter_crypto_pswd),
-            salt, salt_len, PKCS5_DEFAULT_ITER, FILTER_CRYPTO_KEY_LEN, key) !=
-            1)
-    {
-        FilterCrypto_SetErrStr(aTHX_
-            "Can't derive %d-byte key: %s",
-            FILTER_CRYPTO_KEY_LEN, FILTER_CRYPTO_OPENSSL_ERR_STR
-        );
-        return FALSE;
-    }
-#  else
-    Copy(filter_crypto_key, key, FILTER_CRYPTO_KEY_LEN, unsigned char);
-#  endif
-
-    EVP_CipherInit(ctx, cipher_func, key, iv, crypt_mode);
-
-#else
-
-    /* From 0.9.6 onwards the EVP library API does have facilities for modifying
-     * the key length for variable key length ciphers and for modifying other
-     * cipher parameters, so to start with we just specify which cipher we are
-     * using.  Then we can set the key length and other parameters in the cipher
-     * context structure thus created, and then finally derive the key and set
-     * both it and the IV in the cipher context structure. */
+    /* The EVP library API has facilities for modifying the key length for
+     * variable key length ciphers and for modifying other cipher parameters, so
+     * to start with we just specify which cipher we are using.  Then we can set
+     * the key length and other parameters in the cipher context structure thus
+     * created, and then finally derive the key and set both it and the IV in
+     * the cipher context structure. */
 #  if FILTER_CRYPTO_OPENSSL_VERSION < 90700
     if (!EVP_CipherInit(ctx, cipher_func, NULL, NULL, crypt_mode)) {
         FilterCrypto_SetErrStr(aTHX_
@@ -751,8 +606,6 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
     }
 #  endif
 
-#endif
-
     /* Wipe the key from memory now that it has been set in the cipher context.
      * It's still around somewhere, of course, but at least this is one place
      * less that it might be found. */
@@ -796,9 +649,6 @@ static bool FilterCrypto_CipherUpdate(pTHX_ EVP_CIPHER_CTX *ctx, SV *in_sv,
     orig_out_len = SvCUR(out_sv);
     out_text += orig_out_len;
 
-#if FILTER_CRYPTO_OPENSSL_VERSION < 90600
-    EVP_CipherUpdate(ctx, out_text, &out_len, in_text, in_len);
-#else
     if (!EVP_CipherUpdate(ctx, out_text, &out_len, in_text, in_len)) {
         FilterCrypto_SetErrStr(aTHX_
             "Can't update cipher context with %d bytes of in-text: %s",
@@ -806,7 +656,6 @@ static bool FilterCrypto_CipherUpdate(pTHX_ EVP_CIPHER_CTX *ctx, SV *in_sv,
         );
         return FALSE;
     }
-#endif
 
 #ifdef FILTER_CRYPTO_DEBUG_MODE
     FilterCrypto_HexDump(aTHX_ out_text, out_len,
@@ -875,51 +724,44 @@ static bool FilterCrypto_CipherFinal(pTHX_ EVP_CIPHER_CTX *ctx, SV *out_sv) {
 }
 
 /*
- * Function to initialize the OpenSSL/SSLeay PRNG.
+ * Function to initialize the OpenSSL PRNG.
  * Returns a bool to indicate success or failure.
  *
  * This function is based on code taken from the ssl_rand_seed() function in
- * mod_ssl (version 2.8.19-1.3.31).
+ * Apache httpd (version 2.4.9).
  */
 
 static bool FilterCrypto_PRNGInit(pTHX) {
     /* The PRNG is seeded transparently for us on some OSes (e.g. using UNIX's
      * /dev/urandom or /dev/random devices or Win32's Crypto API) in some
      * versions of OpenSSL and SSLeay, but in other cases we must do it
-     * manually.  From 0.9.5 onwards RAND_status() is available to report
-     * whether the PRNG is seeded.  Before 0.9.5 we always seed the PRNG
-     * ourselves just to be sure. */
-#if FILTER_CRYPTO_OPENSSL_VERSION >= 90500
+     * manually.  RAND_status() reports whether the PRNG is seeded. */
     if (RAND_status())
         return TRUE;
-#endif
 
-    /* Win32 has a RAND_screen() function for seeding the PRNG from 0.6.5
-     * onwards.  In other cases we just have to manage ourselves. */
-#if (defined(WIN32) && FILTER_CRYPTO_OPENSSL_VERSION >= 60500)
+    /* Win32 has a RAND_screen() function for seeding the PRNG.  In other cases
+     * we just have to manage ourselves. */
+#ifdef WIN32
     RAND_screen();
 #else
     {
-        time_t t;
-        pid_t pid;
+        struct {
+            time_t t;
+            pid_t pid;
+        } my_seed;
         int n;
         unsigned char stackdata[256];
 
-        t = time(NULL);
-        RAND_seed((unsigned char *)&t, sizeof t);
+        my_seed.t = time(NULL);
+        my_seed.pid = getpid();
+        RAND_seed((unsigned char *)&my_seed, sizeof(my_seed));
 
-        pid = getpid();
-        RAND_seed((unsigned char *)&pid, sizeof pid);
-
-        n = FilterCrypto_GetRandNum(aTHX_ 0, sizeof stackdata - 128 - 1);
+        n = FilterCrypto_GetRandNum(aTHX_ 0, sizeof(stackdata) - 128 - 1);
         RAND_seed(stackdata + n, 128);
     }
 #endif
 
-    /* We cannot check whether we have seeded the PRNG with enough entropy
-     * before 0.9.5, so we just return TRUE in that case and hope for the
-     * best. */
-#if FILTER_CRYPTO_OPENSSL_VERSION >= 90500
+    /* Check whether we have seeded the PRNG with enough entropy. */
     if (RAND_status()) {
         return TRUE;
     }
@@ -927,16 +769,13 @@ static bool FilterCrypto_PRNGInit(pTHX) {
         FilterCrypto_SetErrStr(aTHX_ "Can't initialize PRNG");
         return FALSE;
     }
-#else
-    return TRUE;
-#endif
 }
 
 /*
  * Function to return a random number between min and max.
  *
- * This function is based on the ssl_rand_choosenum() function in mod_ssl
- * (version 2.8.19-1.3.31).
+ * This function is based on the ssl_rand_choosenum() function in Apache httpd
+ * (version 2.4.9).
  */
 
 static int FilterCrypto_GetRandNum(pTHX_ int min, int max) {
@@ -946,7 +785,7 @@ static int FilterCrypto_GetRandNum(pTHX_ int min, int max) {
     seedDrand01((Rand_seed_t)time(NULL));
     PL_srand_called = TRUE;
 
-    snprintf(buf, sizeof buf, "%.0f", Drand01() * (max - min));
+    snprintf(buf, sizeof(buf), "%.0f", Drand01() * (max - min));
 
     n = atoi(buf) + 1;
 
@@ -960,7 +799,7 @@ static int FilterCrypto_GetRandNum(pTHX_ int min, int max) {
 }
 
 /*
- * Function to get the last (most recent) OpenSSL/SSLeay error from the current
+ * Function to get the last (most recent) OpenSSL error from the current
  * thread's error queue.
  */
 

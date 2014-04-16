@@ -18,8 +18,14 @@
  * C CODE SECTION
  *============================================================================*/
 
+
+#ifdef WIN32
+#  include <io.h>                       /* For _chsize().                     */
+#else
+#  include <unistd.h>                   /* For ftruncate().                   */
+#endif
 #include <stdlib.h>                     /* For errno.                         */
-#include <string.h>                     /* For strerror().                    */
+#include <string.h>                     /* For strerror() and strlen().       */
 
 #include "../CryptoCommon-c.inc"
 
@@ -46,14 +52,12 @@ typedef enum {
 
 #include "const-c.inc"
 
-/* Before Perl 5.8.7 PerlLIO_chsize() was defined as chsize() even on systems
- * that do not have chsize().  Therefore, in those situations we define chsize()
- * to be ftruncate() if that's available instead, or else my_chsize() if
- * F_FREESP is defined (see the my_chsize() and pp_truncate() functions in Perl
- * for details).  Failing that we just have to croak() via a macro with a
- * non-void type to match the context in which PerlLIO_chsize() is called. */
-#if (!defined(HAS_CHSIZE) && PERL_REVISION == 5 && \
-     (PERL_VERSION < 8 || (PERL_VERSION == 8 && PERL_SUBVERSION < 7)))
+/* On systems that do not have chsize() we #define chsize() to be ftruncate() if
+ * that's available, or else my_chsize() if F_FREESP is defined (see the
+ * my_chsize() and pp_truncate() functions in Perl for details).  Failing that
+ * we just have to croak() via a macro with a non-void type to match the context
+ * in which chsize() is called. */
+#if (!defined(HAS_CHSIZE))
 #  ifdef HAS_TRUNCATE
 #    define chsize(fd, size) ftruncate((fd), (size))
 #  elif defined(F_FREESP)
@@ -63,15 +67,15 @@ typedef enum {
 #  endif
 #endif
 
-/* On Win32 PerlLIO_chsize() is defined as win32_chsize(), but unfortunately
- * that was mistakenly not exported from the Perl library before Perl 5.8.5.
- * Therefore, in that situation we have to fall back on the standard Microsoft C
- * library function chsize(), referred to by its Microsoft-specific name
- * _chsize() since chsize() is also defined as win32_chsize(). */
-#if (defined(WIN32) && PERL_REVISION == 5 && \
-     (PERL_VERSION < 8 || (PERL_VERSION == 8 && PERL_SUBVERSION < 5)))
-#  undef  PerlLIO_chsize
-#  define PerlLIO_chsize(fd, size) _chsize((fd), (size))
+/* On Win32 chsize() is #defined as win32_chsize() when PERL_IMPLICIT_SYS is not
+ * #defined, but unfortunately that was mistakenly not exported from the Perl
+ * library before Perl 5.8.5.  Therefore, in that situation we have to fall back
+ * on the standard Microsoft C library function chsize(), referred to by its
+ * Microsoft-specific name _chsize(). */
+#if defined(WIN32) && !defined(PERL_IMPLICIT_SYS) && PERL_REVISION == 5 && \
+        PERL_VERSION == 8 && PERL_SUBVERSION < 5
+#  undef  chsize
+#  define chsize(fd, size) _chsize((fd), (size))
 #endif
 
 #define FILTER_CRYPTO_SYS_ERR_STR (strerror(errno))
@@ -80,13 +84,13 @@ typedef enum {
  * InputStream, OutputStream and InOutStream for convenience, so we must provide
  * definitions for these "types".                                             */
 #ifndef InputStream
-  typedef PerlIO * InputStream;
+  typedef PerlIO* InputStream;
 #endif
 #ifndef OutputStream
-  typedef PerlIO * OutputStream;
+  typedef PerlIO* OutputStream;
 #endif
 #ifndef InOutStream
-  typedef PerlIO * InOutStream;
+  typedef PerlIO* InOutStream;
 #endif
 
 static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
@@ -375,7 +379,7 @@ static bool FilterCrypto_CryptFh(pTHX_ PerlIO *in_fh, PerlIO *out_fh,
      * write the output buffer back to the filehandle. */
     if (update_mode) {
         PerlIO_rewind(in_fh);
-        if (PerlLIO_chsize(PerlIO_fileno(in_fh), 0) == -1) {
+        if (chsize(PerlIO_fileno(in_fh), 0) == -1) {
             FilterCrypto_SetErrStr(aTHX_
                 "Can't truncate filehandle: %s", FILTER_CRYPTO_SYS_ERR_STR
             );

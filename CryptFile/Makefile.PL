@@ -7,7 +7,7 @@
 #   Makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004, 2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004, 2006, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -15,11 +15,12 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
 
+use ExtUtils::MakeMaker 6.66;
 use ExtUtils::MakeMaker qw(WriteMakefile);
 use File::Copy qw(copy);
 use File::Spec::Functions qw(catfile updir);
@@ -46,7 +47,7 @@ MAIN: {
         },
 
         clean => {
-            FILES => 'const-c.inc const-xs.inc'
+            FILES => 'const-*.inc'
         }
     );
 

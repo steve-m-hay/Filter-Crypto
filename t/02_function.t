@@ -7,7 +7,7 @@
 #   Test script to check crypt_file() function (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2009 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2009, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -15,7 +15,7 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -53,8 +53,6 @@ BEGIN {
 
 MAIN: {
     my $fh;
-    my $mbfile = 'myblib.pm';
-    my $mbname = 'myblib';
     my $ifile  = 'test.pl';
     my $ofile  = 'test.enc.pl';
     my $iofile = $ifile;
@@ -65,17 +63,11 @@ MAIN: {
     my $scrsrc = qq[use Carp;\nuse Foo;\nFoo::foo();\n];
     my $modsrc = qq[package Foo;\nsub foo() { print "$str\\n" }\n1;\n];
     my $head   = 'use Filter::Crypto::Decrypt;';
-    my $qrhead = qr/^\Q$head\E/;
+    my $qrhead = qr/^\Q$head\E/o;
     my $buf    = '';
 
-    # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which looks
-    # ugly when we spawn a child perl process and breaks the --silent test.
-    open $fh, ">$mbfile" or die "Can't create file '$mbfile': $!\n";
-    print $fh qq[local \$SIG{__WARN__} = sub { };\neval 'use blib';\n1;\n];
-    close $fh;
-
     my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
-    my $perl = qq[$perl_exe -M$mbname];
+    my $perl = qq[$perl_exe -Mblib];
 
     my($ifh, $ofh, $iofh, $contents, $saved_contents, $line, $i, $n);
 
@@ -566,7 +558,7 @@ MAIN: {
         is($line, $str, '... and decrypted output file runs OK');
     }
 
-    $prog =~ s/\n$//;
+    $prog =~ s/\n$//o;
     open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
     print $fh $prog;
     close $fh;
@@ -750,7 +742,6 @@ MAIN: {
         is($line, $str, '... and encrypted module runs OK with Carp loaded');
     }
 
-    unlink $mbfile;
     unlink $ifile;
     unlink $ofile;
     unlink $script;

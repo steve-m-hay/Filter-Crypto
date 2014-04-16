@@ -7,7 +7,7 @@
 #   been encrypted via Filter::Crypto::CryptFile.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009, 2012, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -17,7 +17,7 @@
 
 package Filter::Crypto::Decrypt;
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -31,7 +31,7 @@ use XSLoader qw();
 our($VERSION);
 
 BEGIN {
-    $VERSION = '2.02';
+    $VERSION = '2.03';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -108,13 +108,13 @@ maintain state could not be found.
 
 =item Can't run with DEBUGGING flags
 
-(F) The encrypted Perl file is being run by a Perl with DEBUGGING flags enabled,
+(F) The encrypted Perl file is being run by a perl with DEBUGGING flags enabled,
 e.g. C<perl -Dp F<file>>.  This is not allowed since it may assist in retrieving
 the original unencrypted source code.
 
-=item Can't run with DEBUGGING Perl
+=item Can't run with DEBUGGING perl
 
-(F) The encrypted Perl file is being run by a Perl that was built with DEBUGGING
+(F) The encrypted Perl file is being run by a perl that was built with DEBUGGING
 enabled, i.e. C<-DDEBUGGING>.  This is not allowed since it may assist in
 retrieving the original unencrypted source code.
 
@@ -126,13 +126,13 @@ allowed since it may assist in retrieving the original unencrypted source code.
 
 =item Can't run with Perl compiler backend
 
-(F) The encrypted Perl file is being run by a Perl with the Perl compiler
+(F) The encrypted Perl file is being run by a perl with the Perl compiler
 backend enabled, e.g. C<perl -MO=Deparse F<file>>.  This is not allowed since it
 may assist in retrieving the original unencrypted source code.
 
 =item Can't run with Perl debugger
 
-(F) The encrypted Perl file is being run by a Perl with the Perl debugger
+(F) The encrypted Perl file is being run by a perl with the Perl debugger
 enabled, e.g. C<perl -d:ptkdb F<file>>.  This is not allowed since it may assist
 in retrieving the original unencrypted source code.
 
@@ -188,7 +188,7 @@ is written in XS and C.)
 =head1 ACKNOWLEDGEMENTS
 
 Much of the XS code is based on that in the Filter::decrypt module (version
-1.04), written by Paul Marquess.
+1.49), written by Paul Marquess.
 
 Thanks to Nick Ing-Simmons for help in getting the MAGIC attached to the
 decryption filter's SV working.
@@ -199,7 +199,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2009, 2012-2013 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009, 2012-2014 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -209,11 +209,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.02
+Version 2.03
 
 =head1 DATE
 
-14 Feb 2013
+TODO
 
 =head1 HISTORY
 

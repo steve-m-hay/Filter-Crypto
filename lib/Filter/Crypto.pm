@@ -7,7 +7,7 @@
 #   distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2010, 2012 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2010, 2012, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -17,7 +17,7 @@
 
 package Filter::Crypto;
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -29,7 +29,7 @@ use warnings;
 our($VERSION);
 
 BEGIN {
-    $VERSION = '2.04';
+    $VERSION = '2.05';
 }
 
 1;
@@ -116,7 +116,7 @@ itself.
 This technique can I<never> completely hide the original unencrypted source code
 from people sufficiently determined to get it.  The most it can hope for is to
 hide it from casual prying eyes, and to outdo everyone who is using a
-precompiled Perl (at least from "regular" sources) and everyone who is not
+precompiled perl (at least from "regular" sources) and everyone who is not
 knowledgeable enough to suitably modify the Perl source code before compiling
 their own.
 
@@ -127,9 +127,9 @@ it must be decrypted, otherwise the script cannot be run.  This means that at
 some stage every part of the script must be held in memory in an unencrypted
 state, so anyone with the appropriate debugging skills will be able to get it.
 
-If Perl was built with DEBUGGING then running the script with the Perl's B<-Dp>
-command-line option makes this much easier.  Even without a DEBUGGING Perl, the
-script can still be run under the Perl debugger (Perl's B<-d> command-line
+If perl was built with DEBUGGING then running the script with the perl's B<-Dp>
+command-line option makes this much easier.  Even without a DEBUGGING perl, the
+script can still be run under the Perl debugger (perl's B<-d> command-line
 option), whose C<l> command will list the (decrypted) source code that was fed
 to the parser.
 
@@ -153,11 +153,11 @@ following:
 
 =item *
 
-Running under a Perl that was built with DEBUGGING (C<-DDEBUGGING>);
+Running under a perl that was built with DEBUGGING (C<-DDEBUGGING>);
 
 =item *
 
-Running under a Perl with DEBUGGING flags enabled (B<-D> or $^D);
+Running under a perl with DEBUGGING flags enabled (B<-D> or $^D);
 
 =item *
 
@@ -169,23 +169,23 @@ Running under the Perl compiler backend (B<-MO=Deparse>).
 
 =back
 
-You should also not use a Perl that was built with C debugging support enabled
+You should also not use a perl that was built with C debugging support enabled
 (e.g. B<gcc>'s B<-g> option, or B<cl.exe>'s B</Zi> option) and should strip the
-Perl executable to remove all symbols (e.g. B<gcc>'s B<-s> option).
+perl executable to remove all symbols (e.g. B<gcc>'s B<-s> option).
 
 None of the above checks are infallible, however, because unless the source code
-decryption filter module is statically linked against the Perl executable then
-users can always replace the Perl executable being used to run the script with
+decryption filter module is statically linked against the perl executable then
+users can always replace the perl executable being used to run the script with
 their own version, perhaps hacked in such a way as to work around the above
 checks, and thus with debugging/deparsing capabilities enabled.  Such a hacked
-version of the Perl executable can certainly be produced since Perl is open
+version of the perl executable can certainly be produced since Perl is open
 source itself.
 
 In fact, it is not difficult for suitably experienced hackers to produce a
-modified Perl executable that makes it absolutely trivial for them to retrieve
+modified perl executable that makes it absolutely trivial for them to retrieve
 the I<original> unencrypted source code with comments, whitespace and all (i.e.
 not just a deparsed reconstruction of it).  One example that was mentioned in
-the perl5-porters thread cited above is to modify the Perl executable to simply
+the perl5-porters thread cited above is to modify the perl executable to simply
 print each line of the decrypted source stream that is fed to the parser, rather
 than parsing and running it!
 
@@ -219,16 +219,16 @@ EXISTING ENCRYPTED FILES WILL NEED TO BE RE-ENCRYPTED.>
 Patches, bug reports, suggestions or any other feedback is welcome.
 
 Bugs can be reported on the CPAN Request Tracker at
-F<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Filter-Crypto>.
+F<https://rt.cpan.org/Public/Bug/Report.html?Queue=Filter-Crypto>.
 
 Open bugs on the CPAN Request Tracker can be viewed at
-F<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Filter-Crypto>.
+F<https://rt.cpan.org/Public/Dist/Display.html?Status=Active;Dist=Filter-Crypto>.
 
-Please test this distribution.  See CPAN Testers at F<http://testers.cpan.org/>
-for details of how to get involved.
+Please test this distribution.  See CPAN Testers Reports at
+F<http://www.cpantesters.org/> for details of how to get involved.
 
-Previous test results on CPAN Testers can be viewed at
-F<http://testers.cpan.org/search?request=dist&dist=Filter-Crypto>.
+Previous test results on CPAN Testers Reports can be viewed at
+F<http://www.cpantesters.org/distro/F/Filter-Crypto.html>.
 
 Please rate this distribution on CPAN Ratings at
 F<http://cpanratings.perl.org/rate/?distribution=Filter-Crypto>.
@@ -256,6 +256,10 @@ Filter::Crypto::Decrypt module itself was based.
 The latest version of this module is available from CPAN (see
 L<perlmodlib/"CPAN"> for details) at
 
+F<https://metacpan.org/release/Filter-Crypto> or
+
+F<http://search.cpan.org/dist/Filter-Crypto/> or
+
 F<http://www.cpan.org/authors/id/S/SH/SHAY/> or
 
 F<http://www.cpan.org/modules/by-module/Filter/>.
@@ -280,11 +284,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.04
+Version 2.05
 
 =head1 DATE
 
-19 Feb 2014
+TODO
 
 =head1 HISTORY
 

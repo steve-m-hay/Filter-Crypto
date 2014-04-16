@@ -1,13 +1,13 @@
 #!perl
 #===============================================================================
 #
-# t/05_errstr.t
+# t/01_imports_02.t
 #
 # DESCRIPTION
-#   Test script to check $ErrStr variable in Filter::Crypto::CryptFile.
+#   Test script to check import options.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2014 Steve Hay.  All rights reserved.
+#   Copyright (C) 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -29,22 +29,17 @@ use Test::More;
 # INITIALIZATION
 #===============================================================================
 
-my($top_dir);
-our($ErrStr);
-
 BEGIN {
-    $top_dir = canonpath(abs_path(catdir($Bin, updir())));
+    my $top_dir = canonpath(abs_path(catdir($Bin, updir())));
     my $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     if (-f catfile($lib_dir, 'CryptFile.pm')) {
-        require Filter::Crypto::CryptFile;
-        Filter::Crypto::CryptFile->import(qw(:DEFAULT $ErrStr));
-        plan tests => 4;
+        plan tests => 7;
+        use_ok('Filter::Crypto::CryptFile');
     }
     else {
         plan skip_all => 'CryptFile component not built';
     }
-
 }
 
 #===============================================================================
@@ -52,32 +47,12 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-    my $iofile = 'test.pl';
-
-    my $crypt_file = catfile($top_dir, 'blib', 'script', 'crypt_file');
-
-    my $fh;
-
-    open $fh, ">$iofile";
-    close $fh;
-
-    crypt_file($iofile, CRYPT_MODE_DECRYPTED());
-    is($ErrStr, 'Input data was already decrypted',
-       '$ErrStr is set correctly when crypt_file() skips decryption');
-
-    crypt_file($iofile);
-    is($ErrStr, '',
-       '$ErrStr is blank when crypt_file() succeeds');
-
-    crypt_file($iofile, CRYPT_MODE_ENCRYPTED());
-    is($ErrStr, 'Input data was already encrypted',
-       '$ErrStr is set correctly when crypt_file() skips encryption');
-
-    unlink $iofile;
-
-    crypt_file($iofile);
-    like($ErrStr, qr/^Can't open file '\Q$iofile\E'/o,
-         '$ErrStr is set correctly when crypt_file() fails');
+    ok(defined &main::crypt_file, 'crypt_file is imported');
+    ok(eval { CRYPT_MODE_AUTO(); 1 }, 'CRYPT_MODE_AUTO is imported');
+    ok(eval { CRYPT_MODE_DECRYPT(); 1 }, 'CRYPT_MODE_DECRYPT is imported');
+    ok(eval { CRYPT_MODE_ENCRYPT(); 1 }, 'CRYPT_MODE_ENCRYPT is imported');
+    ok(eval { CRYPT_MODE_DECRYPTED(); 1 }, 'CRYPT_MODE_DECRYPTED is imported');
+    ok(eval { CRYPT_MODE_ENCRYPTED(); 1 }, 'CRYPT_MODE_ENCRYPTED is imported');
 }
 
 #===============================================================================

@@ -6,7 +6,7 @@
  *   C and XS portions of Filter::Crypto::Decrypt module.
  *
  * COPYRIGHT
- *   Copyright (C) 2004-2009, 2012 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2004-2009, 2012, 2014 Steve Hay.  All rights reserved.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -288,7 +288,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
     while (1) {
         /* If there is anything currently in the decrypt buffer then write (part
          * of) it to the output stream buffer.  How much we write depends on
-         * what Perl has asked for. */
+         * what perl has asked for. */
         if ((m = SvCUR(ctx->decrypt_sv)) > 0) {
             out_ptr = (const unsigned char *)SvPVX_const(ctx->decrypt_sv);
 
@@ -316,7 +316,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
             else {
                 /* Perl has asked for a complete line of source code.  We must
                  * not return here if the decrypt buffer does not hold at least
-                 * one complete line because Perl compiles each line as it is
+                 * one complete line because perl compiles each line as it is
                  * returned and hence would generate a syntax error if we have
                  * written only part of a line to the output stream buffer.
                  * Instead, we must carry on and read some more data from the
@@ -450,9 +450,9 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 }
 
 /*
- * Function to determine whether the Perl running it is a DEBUGGING build.  This
+ * Function to determine whether the perl running it is a DEBUGGING build.  This
  * is tested by trying out the "hash dump" debugging feature, which should usurp
- * the built-in values() function if and only if this is a DEBUGGING Perl, thus
+ * the built-in values() function if and only if this is a DEBUGGING perl, thus
  * providing a more reliable (though clearly still not infallible) indicator
  * than inspecting the contents of Config.pm.
  *
@@ -490,24 +490,24 @@ INCLUDE: ../CryptoCommon-xs.inc
 BOOT:
 {
 #ifndef FILTER_CRYPTO_DEBUG_MODE
-    /* C compile-time check that this not a DEBUGGING Perl.
+    /* C compile-time check that this not a DEBUGGING perl.
      * i.e. built with -DDEBUGGING. */
 #  ifdef DEBUGGING
-#    error Do not build with DEBUGGING Perl!
+#    error Do not build with DEBUGGING perl!
 #  endif
 
     /* Check that we are not running with DEBUGGING flags enabled.
      * e.g. perl -Dp <script>
-     * Do this check before the check for a DEBUGGING Perl below because that
+     * Do this check before the check for a DEBUGGING perl below because that
      * check currently seems to always trigger this check to fail even though
      * its alteration of $^D is local()ized. */
     if (PL_debug)
         croak("Can't run with DEBUGGING flags");
 
-    /* Check that we are not running under a DEBUGGING Perl.
+    /* Check that we are not running under a DEBUGGING perl.
      * i.e. built with -DDEBUGGING. */
     if (FilterCrypto_IsDebugPerl(aTHX))
-        croak("Can't run with DEBUGGING Perl");
+        croak("Can't run with DEBUGGING perl");
 
     /* Check that we are not running with the Perl debugger enabled.
      * e.g. perl -d:ptkdb <script> */
@@ -523,7 +523,7 @@ BOOT:
 #endif
 }
 
-# Import function, automatically called by Perl when processing the
+# Import function, automatically called by perl when processing the
 # "use Filter::Crypto::Decrypt;" line, to initialize the decryption filter's
 # context.
 
@@ -553,28 +553,9 @@ import(module, ...)
          * be automatically freed when the SV is destroyed, and store the
          * pointer within the MAGIC (specifically, as the mg_ptr member) so that
          * it cannot be messed with.
-         * From Perl 5.7.3 onwards we can use sv_magicext().  Pass 0 as the
-         * length of the mg_ptr member-to-be so that it is stored as-is, rather
-         * than a savepvn() copy of it being stored.
-         * Before 5.7.3 we have to do it the hard way, using sv_magic().  Note
-         * that this stores a savepvn() copy of the mg_ptr member-to-be for all
-         * lengths >= 0, so instead we just pass ((char *)NULL, 0) and assign
-         * ctx to the mg_ptr member later.  (We cannot pass (ctx, sizeof(*ctx))
-         * and then assign mg->mg_ptr back to ctx because the original ctx would
-         * need to be freed, but we cannot use FilterCrypto_FilterFree() to free
-         * it since savepvn() will only have made a shallow copy.) */
+         * Pass 0 as the length of the mg_ptr member-to-be so that it is stored
+         * as-is, rather than a savepvn() copy of it being stored. */
         filter_sv = newSV(0);
-#if (PERL_REVISION == 5 && \
-     (PERL_VERSION < 7 || (PERL_VERSION == 7 && PERL_SUBVERSION < 3)))
-        sv_magic(filter_sv, (SV *)NULL, PERL_MAGIC_ext, (char *)NULL, 0);
-        if (!(mg = mg_find(filter_sv, PERL_MAGIC_ext))) {
-            FilterCrypto_FilterFree(aTHX_ ctx);
-            ctx = NULL;
-            croak("Can't add MAGIC to decryption filter's SV");
-        }
-        mg->mg_ptr = (char *)ctx;
-        mg->mg_virtual = (MGVTBL *)&FilterCrypto_FilterSvMgVTBL;
-#else
         if (!(mg = sv_magicext(filter_sv, (SV *)NULL, PERL_MAGIC_ext,
                 (MGVTBL *)&FilterCrypto_FilterSvMgVTBL, (char *)ctx, 0)))
         {
@@ -582,7 +563,6 @@ import(module, ...)
             ctx = NULL;
             croak("Can't add MAGIC to decryption filter's SV");
         }
-#endif
 
         /* Store a pointer back to the MAGIC within the filter context structure
          * itself so that we can verify later that we have retrieved the correct

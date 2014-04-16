@@ -8,7 +8,7 @@
 #   use in creating PAR archives in which the Perl files are encrypted.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2008, 2012 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2008, 2012, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -18,7 +18,7 @@
 
 package PAR::Filter::Crypto;
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -38,7 +38,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(PAR::Filter);
 
-    $VERSION = '1.07';
+    $VERSION = '1.08';
 }
 
 #===============================================================================
@@ -46,7 +46,7 @@ BEGIN {
 #===============================================================================
 
 # This method is based on the apply() method in the PAR::Filter::Bytecode module
-# in the PAR distribution (version 0.85).
+# in the PAR::Packer distribution (version 1.017).
 
 sub apply {
     my($class, $ref, $filename, $name) = @_;
@@ -245,7 +245,7 @@ L<Filter::Crypto>.
 =head1 ACKNOWLEDGEMENTS
 
 The C<apply()> method is based on that in the PAR::Filter::Bytecode module in
-the PAR distribution (version 0.85), written by Autrijus Tang.
+the PAR::Packer distribution (version 1.017), written by Audrey Tang.
 
 =head1 AUTHOR
 
@@ -253,7 +253,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, 2012 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2008, 2012, 2014 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -263,11 +263,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.07
+Version 1.08
 
 =head1 DATE
 
-02 Mar 2012
+TODO
 
 =head1 HISTORY
 

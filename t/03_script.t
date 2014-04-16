@@ -15,7 +15,7 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -23,6 +23,7 @@ use warnings;
 use Cwd qw(abs_path cwd);
 use File::Copy qw(copy);
 use File::Spec::Functions qw(canonpath catdir catfile devnull rel2abs updir);
+use File::Temp qw(tempfile);
 use FindBin qw($Bin);
 use Test::More;
 
@@ -33,19 +34,7 @@ use Test::More;
 my($top_dir, $lib_dir);
 
 BEGIN {
-    if ($] < 5.006001) {
-        # Before 5.6.1, Cwd::abs_path() did not correctly clean-up Win32 paths
-        # like C:\Temp\.., which breaks the -d/-r/-t tests, so do it the hard
-        # way instead.  Do it for all OSes just in case.
-        my $cwd = cwd();
-        chdir $Bin or die "Can't cd to test script directory: $!\n";
-        chdir updir() or die "Can't cd to parent directory: $!\n";
-        $top_dir = canonpath(cwd());
-        chdir $cwd or die "Can't cd to original directory: $!\n";
-    }
-    else {
-        $top_dir = canonpath(abs_path(catdir($Bin, updir())));
-    }
+    $top_dir = canonpath(abs_path(catdir($Bin, updir())));
     $lib_dir = catfile($top_dir, 'blib', 'lib', 'Filter', 'Crypto');
 
     if (-f catfile($lib_dir, 'CryptFile.pm')) {
@@ -62,8 +51,6 @@ BEGIN {
 
 MAIN: {
     my $fh;
-    my $mbfile = 'myblib.pm';
-    my $mbname = 'myblib';
     my $ifile  = 'test.pl';
     my $ofile  = 'test.enc.pl';
     my $iofile = $ifile;
@@ -79,21 +66,14 @@ MAIN: {
     my $scrsrc = qq[use Foo;\nFoo::foo();\n];
     my $modsrc = qq[package Foo;\nsub foo() { print "$str\\n" }\n1;\n];
     my $head   = 'use Filter::Crypto::Decrypt;';
-    my $qrhead = qr/^\Q$head\E/;
-    my $q      = $^O =~ /MSWin32/io ? '' : "'";
+    my $qrhead = qr/^\Q$head\E/o;
+    my $q      = $^O eq 'MSWin32' ? '' : "'";
     my $null   = devnull();
 
-    # Before 5.7.3, -Mblib emitted a "Using ..." message on STDERR, which looks
-    # ugly when we spawn a child perl process and breaks the --silent test.
-    open $fh, ">$mbfile" or die "Can't create file '$mbfile': $!\n";
-    print $fh qq[local \$SIG{__WARN__} = sub { };\neval 'use blib';\n1;\n];
-    close $fh;
-
     my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
-    my $perl = qq[$perl_exe -M$mbname];
+    my $perl = qq[$perl_exe -Mblib];
 
     my $have_decrypt   = -f catfile($lib_dir, 'Decrypt.pm');
-    my $have_file_temp = eval { require File::Temp; 1 };
 
     my $crypt_file = catfile($top_dir, 'blib', 'script', 'crypt_file');
 
@@ -146,10 +126,7 @@ MAIN: {
 
     unlink $ofile;
 
-    # Explicitly terminate crypt_file's (empty) options list with a "--" since
-    # Getopt::Long's handling of a lone "-" is broken before version 2.25, which
-    # was first distributed in Perl 5.6.1.
-    qx{$perl $cat <$ifile | $perl $crypt_file -- - 2>$null | $perl $cat >$ofile};
+    qx{$perl $cat <$ifile | $perl $crypt_file - 2>$null | $perl $cat >$ofile};
     is($?, 0, 'crypt_file ran OK when using STD handle pipelines');
 
     open $fh, $ifile or die "Can't read file '$ifile': $!\n";
@@ -458,23 +435,13 @@ MAIN: {
         is($line, $str, '... and encrypted file runs OK');
     }
 
-    SKIP: {
-        skip 'File::Temp required to test -e tempfile', 2
-            unless $have_file_temp;
-        qx{$perl $crypt_file -i -e tempfile $iofile 2>$null};
-        is($?, 0, 'crypt_file ran OK with -e tempfile option');
+    qx{$perl $crypt_file -i -e tempfile $iofile 2>$null};
+    is($?, 0, 'crypt_file ran OK with -e tempfile option');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
-        $contents = do { local $/; <$fh> };
-        close $fh;
-        is($contents, $prog, '... and decrypted file OK');
-    }
-
-    unless ($have_file_temp) {
-        open $fh, ">$iofile" or die "Can't recreate file '$iofile': $!\n";
-        print $fh $prog;
-        close $fh;
-    }
+    open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+    $contents = do { local $/; <$fh> };
+    close $fh;
+    is($contents, $prog, '... and decrypted file OK');
 
     qx{$perl $crypt_file -i -b $q*.bak$q $iofile 2>$null};
     is($?, 0, 'crypt_file ran OK with -b option');
@@ -656,7 +623,6 @@ MAIN: {
              '-m option works');
     }
 
-    unlink $mbfile;
     unlink $ifile;
     unlink $ofile;
     unlink $lfile;
