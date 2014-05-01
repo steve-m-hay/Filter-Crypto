@@ -32,7 +32,9 @@ typedef enum {
 typedef struct {
     MAGIC *mg_ptr;
     FILTER_CRYPTO_CCTX *crypto_ctx;
+    SV *encrypt_sv;
     SV *decrypt_sv;
+    SV *encode_sv;
     int filter_count;
     FILTER_CRYPTO_STATUS filter_status;
 } FILTER_CRYPTO_FCTX;
@@ -41,8 +43,7 @@ static I32 FilterCrypto_ReadBlock(pTHX_ int idx, SV *sv, int want_size);
 static FILTER_CRYPTO_FCTX *FilterCrypto_FilterAlloc(pTHX);
 static bool FilterCrypto_FilterInit(pTHX_ FILTER_CRYPTO_FCTX *ctx,
     FILTER_CRYPTO_MODE crypt_mode);
-static bool FilterCrypto_FilterUpdate(pTHX_ FILTER_CRYPTO_FCTX *ctx,
-    SV *encrypt_sv);
+static bool FilterCrypto_FilterUpdate(pTHX_ FILTER_CRYPTO_FCTX *ctx);
 static bool FilterCrypto_FilterFinal(pTHX_ FILTER_CRYPTO_FCTX *ctx);
 static void FilterCrypto_FilterFree(pTHX_ FILTER_CRYPTO_FCTX *ctx);
 static int FilterCrypto_FilterSvMgFree(pTHX_ SV *sv, MAGIC *mg);
@@ -129,9 +130,13 @@ static FILTER_CRYPTO_FCTX *FilterCrypto_FilterAlloc(pTHX) {
     /* Allocate the crypto context. */
     ctx->crypto_ctx = FilterCrypto_CryptoAlloc(aTHX);
 
-    /* Allocate the decrypt buffer. */
+    /* Allocate the encrypt, decrypt and encode buffers. */
+    ctx->encrypt_sv = newSV(BUFSIZ);
     ctx->decrypt_sv = newSV(BUFSIZ);
+    ctx->encode_sv = newSV(BUFSIZ * 2);
+    SvPOK_only(ctx->encrypt_sv);
     SvPOK_only(ctx->decrypt_sv);
+    SvPOK_only(ctx->encode_sv);
 
     return ctx;
 }
@@ -148,8 +153,10 @@ static bool FilterCrypto_FilterInit(pTHX_ FILTER_CRYPTO_FCTX *ctx,
     if (!FilterCrypto_CryptoInit(aTHX_ ctx->crypto_ctx, crypt_mode))
         return FALSE;
 
-    /* Initialize the decrypt buffer. */
+    /* Initialize the encrypt, decrypt and encode buffers. */
+    FilterCrypto_SvSetCUR(ctx->encrypt_sv, 0);
     FilterCrypto_SvSetCUR(ctx->decrypt_sv, 0);
+    FilterCrypto_SvSetCUR(ctx->encode_sv, 0);
 
     /* Initialize the filter count and status. */
     ctx->filter_count = FILTER_CRYPTO_FILTER_COUNT;
@@ -159,17 +166,16 @@ static bool FilterCrypto_FilterInit(pTHX_ FILTER_CRYPTO_FCTX *ctx,
 }
 
 /*
- * Function to update the given filter context with encrypted data in the given
- * encrypt SV.  This data is not assumed to be null-terminated, so the correct
- * length must be set in SvCUR(encrypt_sv).  The decrypted output data will be
- * written into an SV within the filter context.
+ * Function to update the given filter context with encrypted data given in an
+ * SV within the filter context.  This data is not assumed to be
+ * null-terminated, so the correct length must be set in SvCUR(ctx->encrypt_sv).
+ * The decrypted output data will be written into an SV within the filter
+ * context.
  * Returns a bool to indicate success or failure.
  */
 
-static bool FilterCrypto_FilterUpdate(pTHX_ FILTER_CRYPTO_FCTX *ctx,
-    SV *encrypt_sv)
-{
-    return FilterCrypto_CryptoUpdate(aTHX_ ctx->crypto_ctx, encrypt_sv,
+static bool FilterCrypto_FilterUpdate(pTHX_ FILTER_CRYPTO_FCTX *ctx) {
+    return FilterCrypto_CryptoUpdate(aTHX_ ctx->crypto_ctx, ctx->encrypt_sv,
             ctx->decrypt_sv);
 }
 
@@ -188,8 +194,11 @@ static bool FilterCrypto_FilterFinal(pTHX_ FILTER_CRYPTO_FCTX *ctx) {
  */
 
 static void FilterCrypto_FilterFree(pTHX_ FILTER_CRYPTO_FCTX *ctx) {
-    /* Free the decrypt buffer by decrementing its reference count (to zero). */
+    /* Free the encode, decrypt and encrypt buffers by decrementing their
+     * reference counts (to zero). */
+    SvREFCNT_dec(ctx->encode_sv);
     SvREFCNT_dec(ctx->decrypt_sv);
+    SvREFCNT_dec(ctx->encrypt_sv);
 
     /* Free the crypto context. */
     FilterCrypto_CryptoFree(aTHX_ ctx->crypto_ctx);
@@ -219,10 +228,11 @@ static int FilterCrypto_FilterSvMgFree(pTHX_ SV *sv, MAGIC *mg) {
 
 /*
  * Function to perform the source code decryption filtering.  Data is first read
- * from the input stream into an encode buffer containing a plain ASCII encoding
- * of the encrypted data, and then decoded into an encrypt buffer.  It is then
- * decrypted into a decrypt buffer within the filter context, and is finally
- * written to the output stream buffer (which is the buf_sv argument).
+ * from the input stream into an encode buffer within the filter context
+ * containing a plain ASCII encoding of the encrypted data, and then decoded
+ * into an encrypt buffer within the filter context.  It is then decrypted into
+ * a decrypt buffer within the filter context, and is finally written to the
+ * output stream buffer (which is the buf_sv argument).
  * Returns the number of bytes written to the output stream buffer, or 0 if EOF
  * was reached before anything was written, or croak()s on failure.
  * The filter is deleted when the decryption is finished or an error occurs.
@@ -240,8 +250,6 @@ static int FilterCrypto_FilterSvMgFree(pTHX_ SV *sv, MAGIC *mg) {
 static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
     FILTER_CRYPTO_FCTX *ctx;
     SV *filter_sv = FILTER_DATA(idx);
-    SV *encode_sv = sv_2mortal(newSV(BUFSIZ * 2));
-    SV *encrypt_sv = sv_2mortal(newSV(BUFSIZ));
     MAGIC *mg;
     I32 m;
     I32 n;
@@ -250,8 +258,9 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
     const char *nl = "\n";
     char *p;
 
-    SvPOK_only(encode_sv);
-    SvPOK_only(encrypt_sv);
+    /* Reinitialize the encode and encrypt buffers. */
+    FilterCrypto_SvSetCUR(ctx->encode_sv, 0);
+    FilterCrypto_SvSetCUR(ctx->encrypt_sv, 0);
 
     /* Recover the filter context pointer that is held within the MAGIC of the
      * filter's SV, and verify that we have found the correct MAGIC. */
@@ -396,13 +405,13 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
         FilterCrypto_SvSetCUR(ctx->decrypt_sv, 0);
         SvOOK_off(ctx->decrypt_sv);
 
-        n = FilterCrypto_ReadBlock(aTHX_ idx + 1, encode_sv, BUFSIZ * 2);
+        n = FilterCrypto_ReadBlock(aTHX_ idx + 1, ctx->encode_sv, BUFSIZ * 2);
         if (n > 0) {
             /* We have read a new block of data from the input stream into the
              * encode buffer, so set the length of the encode buffer and decode
              * it into the encrypt buffer. */
-            FilterCrypto_SvSetCUR(encode_sv, n);
-            if (!FilterCrypto_DecodeSV(aTHX_ encode_sv, encrypt_sv)) {
+            FilterCrypto_SvSetCUR(ctx->encode_sv, n);
+            if (!FilterCrypto_DecodeSV(aTHX_ ctx->encode_sv, ctx->encrypt_sv)) {
                 filter_del(FilterCrypto_FilterDecrypt);
                 croak("Can't continue decryption: %s",
                       FilterCrypto_GetErrStr(aTHX));
@@ -410,11 +419,11 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 
             /* The decoding succeeded, so zero the encode buffer's length ready
              * for the next call to FilterCrypto_ReadBlock(). */
-            FilterCrypto_SvSetCUR(encode_sv, 0);
+            FilterCrypto_SvSetCUR(ctx->encode_sv, 0);
 
             /* We have decoded a new block of data from the encode buffer into
              * the encrypt buffer, so decrypt it into the decrypt buffer. */
-            if (!FilterCrypto_FilterUpdate(aTHX_ ctx, encrypt_sv)) {
+            if (!FilterCrypto_FilterUpdate(aTHX_ ctx)) {
                 filter_del(FilterCrypto_FilterDecrypt);
                 croak("Can't continue decryption: %s",
                       FilterCrypto_GetErrStr(aTHX));
@@ -422,7 +431,7 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
 
             /* The decryption succeeded, so zero the encrypt buffer's length
              * ready for the next call to FilterCrypto_ReadBlock(). */
-            FilterCrypto_SvSetCUR(encrypt_sv, 0);
+            FilterCrypto_SvSetCUR(ctx->encrypt_sv, 0);
         }
         else if (n == 0) {
             /* We did not read any data from the input stream, and have now

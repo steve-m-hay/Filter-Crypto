@@ -8,6 +8,10 @@ _________________
 
 v2.05 TODO
 
+    - Reduced memory fragmentation when running encrypted Perl scripts.  (Fixes
+      [cpan #95021].  Thanks to Kevin Groeneveld <kgroeneveld@gmail.com> for the
+      patch.)
+
     - Removed the rudimentary checks on the compiler versions in Makefile.PL
       when building these modules on Windows since it appears that using
       different compilers (and hence potentially different C RTL DLLs) is safe
