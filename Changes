@@ -8,6 +8,10 @@ _________________
 
 v2.05 TODO
 
+    - Avoided possible test failures in t/02_function.t, t/03_script.t and
+      t/04_par.t by avoiding the problem of trying to open a file with a pending
+      delete.
+
     - Reduced memory fragmentation when running encrypted Perl scripts.  (Fixes
       [cpan #95021].  Thanks to Kevin Groeneveld <kgroeneveld@gmail.com> for the
       patch.)

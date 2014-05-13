@@ -72,9 +72,6 @@ MAIN: {
 
     my($fh, $interrupted, $i);
 
-    unlink $file1 or die "Can't delete file '$file1': $!\n" if -e $file1;
-    unlink $file2 or die "Can't delete file '$file2': $!\n" if -e $file2;
-
     open $fh, ">$file1" or die "Can't create file '$file1': $!\n";
     print $fh $prog1;
     close $fh;
