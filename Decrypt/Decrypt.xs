@@ -258,10 +258,6 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
     const char *nl = "\n";
     char *p;
 
-    /* Reinitialize the encode and encrypt buffers. */
-    FilterCrypto_SvSetCUR(ctx->encode_sv, 0);
-    FilterCrypto_SvSetCUR(ctx->encrypt_sv, 0);
-
     /* Recover the filter context pointer that is held within the MAGIC of the
      * filter's SV, and verify that we have found the correct MAGIC. */
     if (!(mg = mg_find(filter_sv, PERL_MAGIC_ext))) {
@@ -277,6 +273,10 @@ static I32 FilterCrypto_FilterDecrypt(pTHX_ int idx, SV *buf_sv, int max_len) {
         croak("Found wrong MAGIC in decryption filter's SV: Wrong mg_ptr "
               "\"signature\"");
     }
+
+    /* Reinitialize the encode and encrypt buffers. */
+    FilterCrypto_SvSetCUR(ctx->encode_sv, 0);
+    FilterCrypto_SvSetCUR(ctx->encrypt_sv, 0);
 
     /* Check if this is the first time through. */
     if (ctx->filter_status == FILTER_CRYPTO_STATUS_NOT_STARTED) {
