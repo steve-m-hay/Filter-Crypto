@@ -6,7 +6,7 @@ ________________________________________________________________________________
 Revision history for Perl extension Filter::Crypto.
 _________________
 
-v2.05 TODO
+v2.05 16 May 2014
 
     - Avoided possible test failures in t/02_function.t, t/03_script.t and
       t/04_par.t by avoiding the problem of trying to open a file with a pending
