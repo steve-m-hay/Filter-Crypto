@@ -90,11 +90,7 @@ MAIN: {
             },
 
             resources => {
-                repository => {
-                    type => 'git',
-                    url  => 'git://github.com/steve-m-hay/Filter-Crypto.git',
-                    web  => 'https://github.com/steve-m-hay/Filter-Crypto'
-                }
+                repository => 'https://github.com/steve-m-hay/Filter-Crypto'
             }
         },
 
