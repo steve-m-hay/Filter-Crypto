@@ -288,7 +288,7 @@ Version 2.06
 
 =head1 DATE
 
-TODO
+30 May 2014
 
 =head1 HISTORY
 
