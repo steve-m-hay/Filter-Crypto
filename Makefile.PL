@@ -30,7 +30,7 @@ use ExtUtils::MakeMaker qw(WriteMakefile);
 our($VERSION, $YEAR);
 
 BEGIN {
-    $VERSION = '1.12';
+    $VERSION = '1.13';
     $YEAR = '2004-2009, 2012, 2014';
 }
 
@@ -90,58 +90,102 @@ MAIN: {
             },
 
             resources => {
-                repository => 'https://github.com/steve-m-hay/Filter-Crypto'
+                repository => {
+                    type => 'git',
+                    url  => 'https://github.com/steve-m-hay/Filter-Crypto.git'
+                }
+            },
+
+            optional_features => {
+                parfilter => {
+                    description => 'PAR::Filter support',
+                    prereqs => {
+                        runtime => {
+                            requires => {
+                                'PAR::Filter' => '0',
+                                'File::Temp'  => '0'
+                            }
+                        },
+
+                        test => {
+                            requires => {
+                                'Archive::Zip' => '0',
+                                'PAR::Filter'  => '0'
+                            }
+                        }
+                    }
+                },
+
+                tempfile => {
+                    description => 'crypt_file -e tempfile support',
+                    prereqs => {
+                        runtime => {
+                            requires => {
+                                'File::Temp' => '0',
+                            }
+                        },
+
+                        test => {
+                            requires => {
+                                'File::Temp' => '0',
+                            }
+                        }
+                    }
+                },
+
+                podtest => {
+                    description => 'POD testing',
+                    prereqs => {
+                        runtime => {
+                            requires => {
+                                'Test::Pod' => '1.00',
+                            }
+                        }
+                    }
+                }
             }
         },
 
         MIN_PERL_VERSION => '5.008001',
 
         CONFIGURE_REQUIRES => {
-            'Carp'                  => 0,
-            'Config'                => 0,
-            'Cwd'                   => 0,
+            'Carp'                  => '0',
+            'Config'                => '0',
+            'Cwd'                   => '0',
             'ExtUtils::MakeMaker'   => '6.66',
-            'Fcntl'                 => 0,
-            'File::Basename'        => 0,
-            'File::Copy'            => 0,
-            'File::Spec::Functions' => 0,
-            'Getopt::Long'          => 0,
+            'Fcntl'                 => '0',
+            'File::Basename'        => '0',
+            'File::Copy'            => '0',
+            'File::Spec::Functions' => '0',
+            'Getopt::Long'          => '0',
             'Pod::Usage'            => '1.15',
-            'Text::Wrap'            => 0,
-            'constant'              => 0,
-            'strict'                => 0,
-            'warnings'              => 0
+            'Text::Wrap'            => '0',
+            'constant'              => '0',
+            'perl'                  => '5.008001',
+            'strict'                => '0',
+            'warnings'              => '0'
         },
 
         TEST_REQUIRES => {
-          # 'Archive::Zip'          => 0,      # Recommended for fuller testing
-                                               # of PAR::Filter support
-            'Config'                => 0,
-            'Cwd'                   => 0,
-            'File::Copy'            => 0,
-            'File::Spec::Functions' => 0,
-          # 'File::Temp'            => 0,      # Only required for testing of
-                                               # crypt_file -e tempfile
-            'FindBin'               => 0,
-          # 'PAR::Filter'           => 0,      # Only required for testing of
-                                               # PAR::Filter support
-            'Test::More'            => 0,
-          # 'Test::Pod'             => '1.00', # Only required for POD testing
-            'blib'                  => 0,
-            'strict'                => 0,
-            'warnings'              => 0
+            'Config'                => '0',
+            'Cwd'                   => '0',
+            'File::Copy'            => '0',
+            'File::Spec::Functions' => '0',
+            'FindBin'               => '0',
+            'Test::More'            => '0',
+            'blib'                  => '0',
+            'perl'                  => '5.008001',
+            'strict'                => '0',
+            'warnings'              => '0'
         },
 
         PREREQ_PM => {
-            'Exporter'              => 0,
-            'Fcntl'                 => 0,
-          # 'File::Temp'            => 0,      # Recommended for crypt_file -e
-                                               # tempfile support and for
-                                               # PAR::Filter support
-          # 'PAR::Filter'           => 0,      # Recommended
-            'Scalar::Util'          => 0,
-            'Text::ParseWords'      => 0,
-            'XSLoader'              => 0
+            'Exporter'         => '0',
+            'Fcntl'            => '0',
+            'Scalar::Util'     => '0',
+            'Text::ParseWords' => '0',
+            'XSLoader'         => '0',
+            'perl'             => '5.008001'
         },
 
         DIR => $dir,
@@ -153,8 +197,8 @@ MAIN: {
         },
 
         dist => {
-            PREOP   => 'find $(DISTVNAME) -type f -print|xargs chmod 0644 && ' .
-                       'find $(DISTVNAME) -type d -print|xargs chmod 0755 && ' .
+            PREOP   => 'find $(DISTVNAME) -type d -print|xargs chmod 0755 && ' .
+                       'find $(DISTVNAME) -type f -print|xargs chmod 0644 && ' .
                        'chmod 0755 $(DISTVNAME)/script/crypt_file',
             TO_UNIX => 'find $(DISTVNAME) -type f -print|xargs dos2unix'
         }
@@ -2901,11 +2945,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.12
+Version 1.13
 
 =head1 DATE
 
-16 May 2014
+30 May 2014
 
 =head1 HISTORY
 
