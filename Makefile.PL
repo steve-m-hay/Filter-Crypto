@@ -30,7 +30,7 @@ use ExtUtils::MakeMaker qw(WriteMakefile);
 our($VERSION, $YEAR);
 
 BEGIN {
-    $VERSION = '1.13';
+    $VERSION = '1.14';
     $YEAR = '2004-2009, 2012, 2014';
 }
 
@@ -73,6 +73,9 @@ MAIN: {
 
     $cb->setup_env();
 
+    my %configure_requires = ();
+    $configure_requires{'VMS::DCLsym'} = '0' if $^O eq 'VMS';
+
     WriteMakefile(
         NAME          => 'Filter::Crypto',
         ABSTRACT_FROM => 'lib/Filter/Crypto.pm',
@@ -102,32 +105,13 @@ MAIN: {
                     prereqs => {
                         runtime => {
                             requires => {
-                                'PAR::Filter' => '0',
-                                'File::Temp'  => '0'
+                                'PAR::Filter' => '0'
                             }
                         },
 
                         test => {
                             requires => {
-                                'Archive::Zip' => '0',
-                                'PAR::Filter'  => '0'
-                            }
-                        }
-                    }
-                },
-
-                tempfile => {
-                    description => 'crypt_file -e tempfile support',
-                    prereqs => {
-                        runtime => {
-                            requires => {
-                                'File::Temp' => '0',
-                            }
-                        },
-
-                        test => {
-                            requires => {
-                                'File::Temp' => '0',
+                                'Archive::Zip' => '0'
                             }
                         }
                     }
@@ -136,9 +120,9 @@ MAIN: {
                 podtest => {
                     description => 'POD testing',
                     prereqs => {
-                        runtime => {
+                        test => {
                             requires => {
-                                'Test::Pod' => '1.00',
+                                'Test::Pod' => '1.00'
                             }
                         }
                     }
@@ -149,6 +133,7 @@ MAIN: {
         MIN_PERL_VERSION => '5.008001',
 
         CONFIGURE_REQUIRES => {
+            %configure_requires,
             'Carp'                  => '0',
             'Config'                => '0',
             'Cwd'                   => '0',
@@ -167,25 +152,32 @@ MAIN: {
         },
 
         TEST_REQUIRES => {
-            'Config'                => '0',
-            'Cwd'                   => '0',
-            'File::Copy'            => '0',
-            'File::Spec::Functions' => '0',
-            'FindBin'               => '0',
-            'Test::More'            => '0',
-            'blib'                  => '0',
-            'perl'                  => '5.008001',
-            'strict'                => '0',
-            'warnings'              => '0'
+            'FindBin'    => '0',
+            'Test::More' => '0',
+            'blib'       => '0'
         },
 
         PREREQ_PM => {
-            'Exporter'         => '0',
-            'Fcntl'            => '0',
-            'Scalar::Util'     => '0',
-            'Text::ParseWords' => '0',
-            'XSLoader'         => '0',
-            'perl'             => '5.008001'
+            'Carp'                  => '0',
+            'Config'                => '0',
+            'Cwd'                   => '0',
+            'Exporter'              => '0',
+            'ExtUtils::MakeMaker'   => '6.66',
+            'Fcntl'                 => '0',
+            'File::Basename'        => '0',
+            'File::Copy'            => '0',
+            'File::Find'            => '0',
+            'File::Spec::Functions' => '0',
+            'File::Temp'            => '0',
+            'Getopt::Long'          => '0',
+            'Pod::Usage'            => '1.15',
+            'Scalar::Util'          => '0',
+            'Text::ParseWords'      => '0',
+            'Text::Wrap'            => '0',
+            'XSLoader'              => '0',
+            'constant'              => '0',
+            'strict'                => '0',
+            'warnings'              => '0'
         },
 
         DIR => $dir,
@@ -2945,11 +2937,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.13
+Version 1.14
 
 =head1 DATE
 
-30 May 2014
+31 May 2014
 
 =head1 HISTORY
 
