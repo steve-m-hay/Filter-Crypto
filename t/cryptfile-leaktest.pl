@@ -63,7 +63,7 @@ MAIN: {
 
     my($fh, $interrupted, $i);
 
-    open $fh, ">$file" or die "Can't create file '$file': $!\n";
+    open $fh, '>', $file or die "Can't create file '$file': $!\n";
     print $fh $prog;
     close $fh;
 

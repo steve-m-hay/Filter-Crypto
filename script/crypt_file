@@ -42,6 +42,8 @@ use constant EDIT_MODE_TEMP_FILE => 1;
 use constant WARNING_TYPE_NORMAL => 0;
 use constant WARNING_TYPE_SEVERE => 1;
 
+## no critic (Subroutines::ProhibitSubroutinePrototypes)
+
 sub get_input_files($$$);
 sub resolve_file_expr($$);
 sub show_result();
@@ -59,7 +61,7 @@ sub exit_with_error(@);
 our($VERSION, $YEAR);
 
 BEGIN {
-    $VERSION = '1.05';
+    $VERSION = '1.06';
     $YEAR    = '2004-2006, 2012, 2014';
 }
 
@@ -321,6 +323,7 @@ MAIN: {
                         # is.  (On other systems this is controlled by the
                         # permissions on the parent directory.)
                         if ($^O eq 'MSWin32' and not -w $file) {
+                            ## no critic (ValuesAndExpressions::ProhibitLeadingZeros)
                             unless (chmod $mode | 0200, $file) {
                                 show_warning($silent, WARNING_TYPE_SEVERE,
                                     $file, "Can't make file writable: %s", $!
@@ -1106,11 +1109,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.05
+Version 1.06
 
 =head1 DATE
 
-16 May 2014
+03 Jun 2014
 
 =head1 HISTORY
 

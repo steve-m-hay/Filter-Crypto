@@ -298,7 +298,7 @@ BEGIN {
         cipher_name cipher_func cipher_needs_iv key_len rc2_key_bits rc5_rounds
         pswd key
     )) {
-        no strict 'refs';
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *$prop = sub {
             use strict 'refs';
             my $self = shift;
@@ -708,6 +708,7 @@ sub use_default_response {
 
 sub isa_tty {
     my $self = shift;
+    ## no critic (InputOutput::ProhibitInteractiveTest)
     return(-t STDIN and (-t STDOUT or not (-f STDOUT or -c STDOUT)));
 }
 

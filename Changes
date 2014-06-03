@@ -8,6 +8,7 @@ _________________
 
 v2.07 TODO
 
+    - Made code Perl::Critic clean.
     - Simplified and corrected Makefile.PL requirements.
 _________________
 

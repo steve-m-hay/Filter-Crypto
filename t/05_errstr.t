@@ -58,7 +58,7 @@ MAIN: {
 
     my $fh;
 
-    open $fh, ">$iofile";
+    open $fh, '>', $iofile;
     close $fh;
 
     crypt_file($iofile, CRYPT_MODE_DECRYPTED());

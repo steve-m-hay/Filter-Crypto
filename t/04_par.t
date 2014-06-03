@@ -27,6 +27,8 @@ use File::Spec::Functions qw(canonpath catdir catfile curdir updir);
 use FindBin qw($Bin);
 use Test::More;
 
+## no critic (Subroutines::ProhibitSubroutinePrototypes)
+
 sub new_filename();
 
 #===============================================================================
@@ -100,7 +102,7 @@ MAIN: {
 
     my($fh, $ofile, $line, $cur_ofile);
 
-    open $fh, ">$ifile" or die "Can't create file '$ifile': $!\n";
+    open $fh, '>', $ifile or die "Can't create file '$ifile': $!\n";
     print $fh $prog;
     close $fh;
 

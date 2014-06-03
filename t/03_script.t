@@ -27,6 +27,8 @@ use File::Temp qw(tempfile);
 use FindBin qw($Bin);
 use Test::More;
 
+## no critic (Subroutines::ProhibitSubroutinePrototypes)
+
 sub new_ofilename();
 
 #===============================================================================
@@ -89,23 +91,23 @@ MAIN: {
     my($fh, $ofile, $contents, $line, $dfile, $rdir, $abs_ifile, $cdir, $ddir);
     my($dir3, $dir4, $dir5, $expected, $file, $data);
 
-    open $fh, ">$ifile" or die "Can't create file '$ifile': $!\n";
+    open $fh, '>', $ifile or die "Can't create file '$ifile': $!\n";
     print $fh $prog;
     close $fh;
 
-    open $fh, ">$lfile" or die "Can't create file '$lfile': $!\n";
+    open $fh, '>', $lfile or die "Can't create file '$lfile': $!\n";
     print $fh "$ifile\n";
     close $fh;
 
-    open $fh, ">$script" or die "Can't create file '$script': $!\n";
+    open $fh, '>', $script or die "Can't create file '$script': $!\n";
     print $fh $scrsrc;
     close $fh;
 
-    open $fh, ">$module" or die "Can't create file '$module': $!\n";
+    open $fh, '>', $module or die "Can't create file '$module': $!\n";
     print $fh $modsrc;
     close $fh;
 
-    open $fh, ">$cat" or die "Can't create file '$cat': $!\n";
+    open $fh, '>', $cat or die "Can't create file '$cat': $!\n";
     print $fh "binmode STDIN; binmode STDOUT; print while <>;\n";
     close $fh;
 
@@ -115,11 +117,11 @@ MAIN: {
         qx{$perl $crypt_file <$ifile >$ofile 2>$null};
         is($?, 0, 'crypt_file ran OK when using STD handle re-directions');
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -139,11 +141,11 @@ MAIN: {
         qx{$perl $cat <$ifile | $perl $crypt_file - 2>$null | $perl $cat >$ofile};
         is($?, 0, 'crypt_file ran OK when using STD handle pipelines');
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -164,11 +166,11 @@ MAIN: {
         qx{$perl $crypt_file $ifile >$ofile 2>$null};
         is($?, 0, 'crypt_file ran OK with file spec input');
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -188,11 +190,11 @@ MAIN: {
         qx{$perl $crypt_file -l $lfile >$ofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -l option');
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -218,11 +220,11 @@ MAIN: {
         is($?, 0, 'crypt_file ran OK with -d option');
 
         $dfile = catfile($dir1, $ifile);
-        open $fh, $dfile or die "Can't read file '$dfile': $!\n";
+        open $fh, '<', $dfile or die "Can't read file '$dfile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -249,11 +251,11 @@ MAIN: {
         is($?, 0, 'crypt_file ran OK with -r option');
 
         $dfile = catfile($rdir, $ifile);
-        open $fh, $dfile or die "Can't read file '$dfile': $!\n";
+        open $fh, '<', $dfile or die "Can't read file '$dfile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -276,7 +278,7 @@ MAIN: {
         is($?, 0, 'crypt_file ran OK with -t option');
         is($data, $abs_ifile, '... and output correct file path');
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
@@ -351,11 +353,11 @@ MAIN: {
             is($line, "$abs_ifile: OK", '... and output correct file path');
         }
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -379,11 +381,11 @@ MAIN: {
             is($line, '', "... and didn't output a file path");
         }
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -401,7 +403,7 @@ MAIN: {
         qx{$perl $crypt_file -i $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -i option');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted input file OK');
@@ -415,7 +417,7 @@ MAIN: {
         qx{$perl $crypt_file -i $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK again with -i option');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted input file OK');
@@ -428,7 +430,7 @@ MAIN: {
         qx{$perl $crypt_file -i $script 2>$null};
         is($?, 0, 'crypt_file ran OK with unencrypted script + module');
 
-        open $fh, $script or die "Can't read file '$script': $!\n";
+        open $fh, '<', $script or die "Can't read file '$script': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted script OK');
@@ -442,7 +444,7 @@ MAIN: {
         qx{$perl $crypt_file -i $module 2>$null};
         is($?, 0, 'crypt_file ran OK with unencrypted module');
 
-        open $fh, $module or die "Can't read file '$module': $!\n";
+        open $fh, '<', $module or die "Can't read file '$module': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted module OK');
@@ -456,7 +458,7 @@ MAIN: {
         qx{$perl $crypt_file -i $script 2>$null};
         is($?, 0, 'crypt_file ran OK with encrypted script + module');
 
-        open $fh, $script or die "Can't read file '$script': $!\n";
+        open $fh, '<', $script or die "Can't read file '$script': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $scrsrc, '... and decrypted script OK');
@@ -475,7 +477,7 @@ MAIN: {
         qx{$perl $crypt_file -i -e memory $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -e memory option');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted file OK');
@@ -489,7 +491,7 @@ MAIN: {
         qx{$perl $crypt_file -i -e tempfile $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -e tempfile option');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted file OK');
@@ -499,11 +501,11 @@ MAIN: {
         qx{$perl $crypt_file -i -b $q*.bak$q $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -b option');
 
-        open $fh, $bfile or die "Can't read file '$bfile': $!\n";
+        open $fh, '<', $bfile or die "Can't read file '$bfile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and created unencrypted backup file');
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted file OK');
@@ -523,11 +525,11 @@ MAIN: {
         qx{$perl $crypt_file -o $q?.enc.[$q $ifile 2>$null};
         is($?, 0, 'crypt_file ran OK with -o option');
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and created encrypted output file OK');
@@ -545,7 +547,7 @@ MAIN: {
         qx{$perl $crypt_file -i -c auto $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -c auto option');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted file OK');
@@ -559,7 +561,7 @@ MAIN: {
         qx{$perl $crypt_file -i -c auto $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK again with -c auto option');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted file OK');
@@ -570,7 +572,7 @@ MAIN: {
         qx{$perl $crypt_file -i -c encrypt $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -c encrypt option');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted file OK');
@@ -584,7 +586,7 @@ MAIN: {
         qx{$perl $crypt_file -i -c encrypted $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -c encrypted option (working in memory)');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left file encrypted');
@@ -598,7 +600,7 @@ MAIN: {
         qx{$perl $crypt_file -i -e tempfile -c encrypted $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -c encrypted option (using a tempfile)');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left file encrypted');
@@ -612,7 +614,7 @@ MAIN: {
         qx{$perl $crypt_file -i -c decrypt $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -c decrypt option');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted file OK');
@@ -623,7 +625,7 @@ MAIN: {
         qx{$perl $crypt_file -i -c decrypted $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -c decrypted option (working in memory)');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left file decrypted');
@@ -634,7 +636,7 @@ MAIN: {
         qx{$perl $crypt_file -i -e tempfile -c decrypted $iofile 2>$null};
         is($?, 0, 'crypt_file ran OK with -c decrypted option (using a tempfile)');
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left file decrypted');

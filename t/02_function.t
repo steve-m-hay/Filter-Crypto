@@ -25,6 +25,8 @@ use File::Spec::Functions qw(canonpath catdir catfile updir);
 use FindBin qw($Bin);
 use Test::More;
 
+## no critic (Subroutines::ProhibitSubroutinePrototypes)
+
 sub new_ifilename();
 sub new_ofilename();
 
@@ -86,17 +88,17 @@ MAIN: {
         $ifile = new_ifilename();
         $iofile = $ifile;
 
-        open $fh, ">$ifile" or die "Can't create file '$ifile': $!\n";
+        open $fh, '>', $ifile or die "Can't create file '$ifile': $!\n";
         print $fh $prog;
         close $fh;
 
-        open $iofh, "+<$iofile" or die "Can't update file '$iofile': $!\n";
+        open $iofh, '+<', $iofile or die "Can't update file '$iofile': $!\n";
         binmode $iofh;
         ok(crypt_file($iofh), 'crypt_file($fh) returned OK') or
             diag("\$ErrStr = '$ErrStr'");
         close $iofh;
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted file OK');
@@ -110,7 +112,7 @@ MAIN: {
         ok(crypt_file($iofile), 'crypt_file($file) returned OK') or
             diag("\$ErrStr = '$ErrStr'");
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted file OK');
@@ -118,14 +120,14 @@ MAIN: {
         chomp($line = qx{$perl $iofile});
         is($line, $str, '... and decrypted file runs OK');
 
-        open $iofh, "+<$iofile" or die "Can't update file '$iofile': $!\n";
+        open $iofh, '+<', $iofile or die "Can't update file '$iofile': $!\n";
         binmode $iofh;
         ok(crypt_file($iofh, CRYPT_MODE_AUTO()),
            'crypt_file($fh, CRYPT_MODE_AUTO) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
         close $iofh;
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted file OK');
@@ -140,7 +142,7 @@ MAIN: {
            'crypt_file($file, CRYPT_MODE_AUTO) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted file OK');
@@ -148,14 +150,14 @@ MAIN: {
         chomp($line = qx{$perl $iofile});
         is($line, $str, '... and decrypted file runs OK');
 
-        open $iofh, "+<$iofile" or die "Can't update file '$iofile': $!\n";
+        open $iofh, '+<', $iofile or die "Can't update file '$iofile': $!\n";
         binmode $iofh;
         ok(crypt_file($iofh, CRYPT_MODE_ENCRYPT()),
            'crypt_file($fh, CRYPT_MODE_ENCRYPT) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
         close $iofh;
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted file OK');
@@ -168,14 +170,14 @@ MAIN: {
 
         $saved_contents = $contents;
 
-        open $iofh, "+<$iofile" or die "Can't update file '$iofile': $!\n";
+        open $iofh, '+<', $iofile or die "Can't update file '$iofile': $!\n";
         binmode $iofh;
         ok(crypt_file($iofh, CRYPT_MODE_ENCRYPTED()),
            'crypt_file($fh, CRYPT_MODE_ENCRYPTED) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
         close $iofh;
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $saved_contents, '... and left file encrypted');
@@ -190,7 +192,7 @@ MAIN: {
            'crypt_file($file, CRYPT_MODE_DECRYPT) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted file OK');
@@ -202,7 +204,7 @@ MAIN: {
            'crypt_file($file, CRYPT_MODE_DECRYPTED) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left file decrypted');
@@ -212,20 +214,20 @@ MAIN: {
 
         $ofile = new_ofilename();
 
-        open $ifh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $ifh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         binmode $ifh;
-        open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
+        open $ofh, '>', $ofile or die "Can't write file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ifh, $ofh), 'crypt_file($fh1, $fh2) returned OK') or
             diag("\$ErrStr = '$ErrStr'");
         close $ofh;
         close $ifh;
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -239,17 +241,17 @@ MAIN: {
         unlink $ifile;
         $ifile = new_ifilename();
 
-        open $ofh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $ofh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ofh, $ifile), 'crypt_file($fh, $file) returned OK') or
             diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left input file encrypted');
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted output file OK');
@@ -260,17 +262,17 @@ MAIN: {
         unlink $ofile;
         $ofile = new_ofilename();
 
-        open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
+        open $ofh, '>', $ofile or die "Can't write file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ifile, $ofh), 'crypt_file($file, $fh) returned OK') or
             diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -287,11 +289,11 @@ MAIN: {
         ok(crypt_file($ofile, $ifile), 'crypt_file($file1, $file2) returned OK') or
             diag("\$ErrStr = '$ErrStr'");
 
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left input file encrypted');
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted output file OK');
@@ -302,9 +304,9 @@ MAIN: {
         unlink $ofile;
         $ofile = new_ofilename();
 
-        open $ifh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $ifh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         binmode $ifh;
-        open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
+        open $ofh, '>', $ofile or die "Can't write file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ifh, $ofh, CRYPT_MODE_AUTO()),
            'crypt_file($fh1, $fh2, CRYPT_MODE_AUTO) returned OK') or
@@ -312,11 +314,11 @@ MAIN: {
         close $ofh;
         close $ifh;
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -330,18 +332,18 @@ MAIN: {
         unlink $ifile;
         $ifile = new_ifilename();
 
-        open $ofh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $ofh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ofh, $ifile, CRYPT_MODE_AUTO()),
            'crypt_file($fh, $file, CRYPT_MODE_AUTO) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left input file encrypted');
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted output file OK');
@@ -352,18 +354,18 @@ MAIN: {
         unlink $ofile;
         $ofile = new_ofilename();
 
-        open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
+        open $ofh, '>', $ofile or die "Can't write file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ifile, $ofh, CRYPT_MODE_AUTO()),
            'crypt_file($file, $fh, CRYPT_MODE_AUTO) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -382,11 +384,11 @@ MAIN: {
            diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left input file encrypted');
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted output file OK');
@@ -397,9 +399,9 @@ MAIN: {
         unlink $ofile;
         $ofile = new_ofilename();
 
-        open $ifh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $ifh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         binmode $ifh;
-        open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
+        open $ofh, '>', $ofile or die "Can't write file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ifh, $ofh, CRYPT_MODE_ENCRYPT()),
            'crypt_file($fh1, $fh2, CRYPT_MODE_ENCRYPT) returned OK') or
@@ -407,11 +409,11 @@ MAIN: {
         close $ofh;
         close $ifh;
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left intput file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -425,9 +427,9 @@ MAIN: {
         unlink $ofile;
         $ofile = new_ofilename();
 
-        open $ifh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $ifh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         binmode $ifh;
-        open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
+        open $ofh, '>', $ofile or die "Can't write file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ifh, $ofh, CRYPT_MODE_ENCRYPTED()),
            'crypt_file($fh1, $fh2, CRYPT_MODE_ENCRYPTED) returned OK') or
@@ -435,11 +437,11 @@ MAIN: {
         close $ofh;
         close $ifh;
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -453,18 +455,18 @@ MAIN: {
         unlink $ifile;
         $ifile = new_ifilename();
 
-        open $ofh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $ofh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ofh, $ifile, CRYPT_MODE_DECRYPT()),
            'crypt_file($fh, $file, CRYPT_MODE_DECRYPT) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left intput file encrypted');
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted output file OK');
@@ -475,18 +477,18 @@ MAIN: {
         unlink $ifile;
         $ifile = new_ifilename();
 
-        open $ofh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $ofh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ofh, $ifile, CRYPT_MODE_DECRYPTED()),
            'crypt_file($fh, $file, CRYPT_MODE_DECRYPTED) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left input file encrypted');
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted output file OK');
@@ -497,18 +499,18 @@ MAIN: {
         unlink $ofile;
         $ofile = new_ofilename();
 
-        open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
+        open $ofh, '>', $ofile or die "Can't write file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ifile, $ofh, CRYPT_MODE_ENCRYPT()),
            'crypt_file($file, $fh, CRYPT_MODE_ENCRYPT) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -522,18 +524,18 @@ MAIN: {
         unlink $ofile;
         $ofile = new_ofilename();
 
-        open $ofh, ">$ofile" or die "Can't write file '$ofile': $!\n";
+        open $ofh, '>', $ofile or die "Can't write file '$ofile': $!\n";
         binmode $ofh;
         ok(crypt_file($ifile, $ofh, CRYPT_MODE_ENCRYPTED()),
            'crypt_file($file, $fh, CRYPT_MODE_ENCRYPTED) returned OK') or
            diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and left input file unencrypted');
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and encrypted output file OK');
@@ -552,11 +554,11 @@ MAIN: {
            diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left input file encrypted');
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted output file OK');
@@ -572,11 +574,11 @@ MAIN: {
            diag("\$ErrStr = '$ErrStr'");
         close $ofh;
 
-        open $fh, $ofile or die "Can't read file '$ofile': $!\n";
+        open $fh, '<', $ofile or die "Can't read file '$ofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and left input file encrypted');
-        open $fh, $ifile or die "Can't read file '$ifile': $!\n";
+        open $fh, '<', $ifile or die "Can't read file '$ifile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         is($contents, $prog, '... and decrypted output file OK');
@@ -595,14 +597,14 @@ MAIN: {
         $iofile = new_ifilename();
 
         $prog =~ s/\n$//o;
-        open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
+        open $fh, '>', $iofile or die "Can't create file '$iofile': $!\n";
         print $fh $prog;
         close $fh;
 
         ok(crypt_file($iofile), 'file without newline at EOF: OK') or
            diag("\$ErrStr = '$ErrStr'");
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and file encrypted OK');
@@ -614,7 +616,7 @@ MAIN: {
         }
 
         for ($i = 1; $i <= 16; $i++) {
-            open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
+            open $fh, '>', $iofile or die "Can't create file '$iofile': $!\n";
             binmode $fh;
             print $fh +(';' x ($i - 1)) . "\n";
             close $fh;
@@ -622,7 +624,7 @@ MAIN: {
             ok(crypt_file($iofile), "$i byte file with newline at EOF: OK") or
                 diag("\$ErrStr = '$ErrStr'");
 
-            open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+            open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
             $contents = do { local $/; <$fh> };
             close $fh;
             like($contents, $qrhead, '... and file encrypted OK');
@@ -635,14 +637,14 @@ MAIN: {
         }
 
         for ($i = 1; $i <= 16; $i++) {
-            open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
+            open $fh, '>', $iofile or die "Can't create file '$iofile': $!\n";
             print $fh ';' x $i;
             close $fh;
 
             ok(crypt_file($iofile), "$i byte file without newline at EOF: OK") or
                 diag("\$ErrStr = '$ErrStr'");
 
-            open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+            open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
             $contents = do { local $/; <$fh> };
             close $fh;
             like($contents, $qrhead, '... and file encrypted OK');
@@ -656,7 +658,7 @@ MAIN: {
 
         for ($i = 1; $i <= 16; $i++) {
             $buf = ';' x $i;
-            open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
+            open $fh, '>', $iofile or die "Can't create file '$iofile': $!\n";
             print $fh qq[print "$buf";\n];
             close $fh;
 
@@ -664,7 +666,7 @@ MAIN: {
             ok(crypt_file($iofile), "$n byte file with newline at EOF: OK") or
                 diag("\$ErrStr = '$ErrStr'");
 
-            open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+            open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
             $contents = do { local $/; <$fh> };
             close $fh;
             like($contents, $qrhead, '... and file encrypted OK');
@@ -678,7 +680,7 @@ MAIN: {
 
         for ($i = 1; $i <= 16; $i++) {
             $buf = ';' x $i;
-            open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
+            open $fh, '>', $iofile or die "Can't create file '$iofile': $!\n";
             print $fh qq[print "$buf";];
             close $fh;
 
@@ -686,7 +688,7 @@ MAIN: {
             ok(crypt_file($iofile), "$n byte file without newline at EOF: OK") or
                 diag("\$ErrStr = '$ErrStr'");
 
-            open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+            open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
             $contents = do { local $/; <$fh> };
             close $fh;
             like($contents, $qrhead, '... and file encrypted OK');
@@ -699,7 +701,7 @@ MAIN: {
         }
 
         $buf = ';' x 4096;
-        open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
+        open $fh, '>', $iofile or die "Can't create file '$iofile': $!\n";
         print $fh qq[print "$buf";\n];
         close $fh;
 
@@ -707,7 +709,7 @@ MAIN: {
         ok(crypt_file($iofile), "$n byte file with newline at EOF: OK") or
             diag("\$ErrStr = '$ErrStr'");
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and file encrypted OK');
@@ -719,7 +721,7 @@ MAIN: {
         }
 
         $buf = ';' x 4096;
-        open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
+        open $fh, '>', $iofile or die "Can't create file '$iofile': $!\n";
         print $fh qq[print "$buf";];
         close $fh;
 
@@ -727,7 +729,7 @@ MAIN: {
         ok(crypt_file($iofile), "$n byte file without newline at EOF: OK") or
             diag("\$ErrStr = '$ErrStr'");
 
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and file encrypted OK');
@@ -738,14 +740,14 @@ MAIN: {
             is($line, $buf, '... and encrypted file runs OK');
         }
 
-        open $fh, ">$iofile" or die "Can't create file '$iofile': $!\n";
+        open $fh, '>', $iofile or die "Can't create file '$iofile': $!\n";
         print $fh $prog;
         close $fh;
     
         ok(crypt_file($iofile), 'crypt_file($file) returned OK') or
             diag("\$ErrStr = '$ErrStr'");
     
-        open $fh, $iofile or die "Can't read file '$iofile': $!\n";
+        open $fh, '<', $iofile or die "Can't read file '$iofile': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and file encrypted OK');
@@ -760,18 +762,18 @@ MAIN: {
     }
 
     {
-        open $fh, ">$script" or die "Can't create file '$script': $!\n";
+        open $fh, '>', $script or die "Can't create file '$script': $!\n";
         print $fh $scrsrc;
         close $fh;
     
-        open $fh, ">$module" or die "Can't create file '$module': $!\n";
+        open $fh, '>', $module or die "Can't create file '$module': $!\n";
         print $fh $modsrc;
         close $fh;
     
         ok(crypt_file($module), 'crypt_file($file) returned OK') or
             diag("\$ErrStr = '$ErrStr'");
     
-        open $fh, $module or die "Can't read file '$module': $!\n";
+        open $fh, '<', $module or die "Can't read file '$module': $!\n";
         $contents = do { local $/; <$fh> };
         close $fh;
         like($contents, $qrhead, '... and module encrypted OK');

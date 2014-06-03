@@ -28,6 +28,8 @@ use Fcntl qw(:DEFAULT :flock);
 use Scalar::Util qw(reftype);
 use XSLoader qw();
 
+## no critic (Subroutines::ProhibitSubroutinePrototypes)
+
 sub crypt_file($;$$);
 sub _isa_cryptmode($);
 sub _isa_filehandle($);
@@ -55,7 +57,7 @@ BEGIN {
         $ErrStr
     );
 
-    $VERSION = '2.05';
+    $VERSION = '2.06';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -86,7 +88,7 @@ sub AUTOLOAD {
 
     # Generate an in-line subroutine returning the required value.
     {
-        no strict 'refs';
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *$AUTOLOAD = sub { return $value };
     }
 
@@ -909,11 +911,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.05
+Version 2.06
 
 =head1 DATE
 
-16 May 2014
+03 Jun 2014
 
 =head1 HISTORY
 

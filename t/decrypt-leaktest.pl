@@ -72,11 +72,11 @@ MAIN: {
 
     my($fh, $interrupted, $i);
 
-    open $fh, ">$file1" or die "Can't create file '$file1': $!\n";
+    open $fh, '>', $file1 or die "Can't create file '$file1': $!\n";
     print $fh $prog1;
     close $fh;
 
-    open $fh, ">$file2" or die "Can't create file '$file2': $!\n";
+    open $fh, '>', $file2 or die "Can't create file '$file2': $!\n";
     print $fh $prog2;
     close $fh;
 
