@@ -32,5 +32,6 @@ t/04_par.t                               See if PAR::Filter::Crypto module (and 
 t/05_errstr.t                            See if $ErrStr variable works
 t/06_critic.t                            See if coding style is OK
 t/07_pod.t                               See if POD is OK
+t/08_pod_coverage.t                      See if POD coverage is OK
 t/cryptfile-leaktest.pl                  Manually see if crypt_file() function leaks
 t/decrypt-leaktest.pl                    Manually see if decryption filter leaks
