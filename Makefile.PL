@@ -1008,7 +1008,7 @@ sub determine_ver_num {
 
     my $ver_num = $major * 1000000 + $minor * 10000 + $fix * 100 + $patch;
     my $ver_str = "$major.$minor.$fix";
-    $ver_str .= ('', 'a' .. 'z')[$patch];
+    $ver_str .= ('', 'a' .. 'y', 'za' .. 'zz')[$patch];
     $ver_str .= $status_str;
 
     my $package = $ver_num >= 90100 ? 'OpenSSL' : 'SSLeay';
