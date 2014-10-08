@@ -38,7 +38,7 @@ our(@ISA, $VERSION);
 BEGIN {
     @ISA = qw(PAR::Filter);
 
-    $VERSION = '1.08';
+    $VERSION = '2.07';
 }
 
 #===============================================================================
@@ -263,11 +263,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.08
+Version 2.07
 
 =head1 DATE
 
-16 May 2014
+TODO
 
 =head1 HISTORY
 
