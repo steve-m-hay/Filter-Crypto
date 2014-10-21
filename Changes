@@ -8,6 +8,7 @@ _________________
 
 v2.07 TODO
 
+    - Made Perl Critic, Pod and Pod Coverage tests skip unless AUTHOR_TESTING.
     - Added optional POD coverage testing.
     - Added optional Perl::Critic testing.
     - Made code Perl::Critic clean.
