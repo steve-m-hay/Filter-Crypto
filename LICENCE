@@ -1,8 +1,3 @@
-________________________________________________________________________________
-
-                          Filter::Crypto, Version 2.07
-________________________________________________________________________________
-
 This distribution is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself, i.e. under the terms of either:
 
@@ -239,4 +234,3 @@ httpd (version 2.4.9), which is subject to the following terms:
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-________________________________________________________________________________

@@ -1,8 +1,3 @@
-________________________________________________________________________________
-
-                          Filter::Crypto, Version 2.07
-________________________________________________________________________________
-
 NAME
 
     Filter::Crypto - Create runnable Perl files encrypted with OpenSSL libcrypto
@@ -101,4 +96,3 @@ LICENCE
     under the same terms as Perl itself, i.e. under the terms of either the GNU
     General Public License or the Artistic License, as specified in the LICENCE
     file.
-________________________________________________________________________________

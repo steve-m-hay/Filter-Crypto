@@ -1,8 +1,3 @@
-________________________________________________________________________________
-
-                          Filter::Crypto, Version 2.07
-________________________________________________________________________________
-
 PREREQUISITES
 
     C Compiler
@@ -62,4 +57,3 @@ INSTALLATION
     determine which make program was used to build your perl type the following:
 
         perl -V:make
-________________________________________________________________________________
