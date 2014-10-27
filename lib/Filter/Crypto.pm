@@ -203,7 +203,7 @@ Before version 2.00 of this distribution, encrypted source code was simply the
 raw output of the chosen encryption algorithm, which is typically "binary" data
 and therefore susceptible to breakage caused by perl reading source files in
 "text" mode, which has become the default on Windows since Perl 5.13.11
-(specifically, perl change #270ca148cf).
+(specifically, Perl core commit #270ca148cf).
 
 As of version 2.00 of this distribution, each byte of encrypted source code is
 now output as a pair of hexadecimal digits and therefore no longer susceptible

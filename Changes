@@ -1,29 +1,31 @@
-Revision history for Perl extension Filter::Crypto.
-_________________
+Revision history for Perl distribution Filter-Crypto
 
-v2.07 TODO
+2.07 Development
+
+    - Reformatted Changes file as per CPAN::Changes::Spec.
 
     - Made Perl Critic, Pod and Pod Coverage tests skip unless AUTHOR_TESTING.
-    - Added optional POD coverage testing.
-    - Added optional Perl::Critic testing.
-    - Made code Perl::Critic clean.
-    - Simplified and corrected Makefile.PL requirements.
-_________________
 
-v2.06 30 May 2014
+    - Added optional POD coverage testing.
+
+    - Added optional Perl::Critic testing.
+
+    - Made code Perl::Critic clean.
+
+    - Simplified and corrected Makefile.PL requirements.
+
+2.06 2014-05-30
 
     - Simplified repository metadata for cleaner appearance on search.cpan.org.
-_________________
 
-v2.05 16 May 2014
+2.05 2014-05-16
 
     - Avoided possible test failures in t/02_function.t, t/03_script.t and
       t/04_par.t by avoiding the problem of trying to open a file with a pending
       delete.
 
-    - Reduced memory fragmentation when running encrypted Perl scripts.  (Fixes
-      [cpan #95021].  Thanks to Kevin Groeneveld <kgroeneveld@gmail.com> for the
-      patch.)
+    - Reduced memory fragmentation when running encrypted Perl scripts.  [Kevin
+      Groeneveld <kgroeneveld@gmail.com>, CPAN RT#95021]
 
     - Removed the rudimentary checks on the compiler versions in Makefile.PL
       when building these modules on Windows since it appears that using
@@ -31,7 +33,7 @@ v2.05 16 May 2014
       after all.  Note, however, that there is still a compatibility problem
       when building this module with Visual Studio .NET 2002/2003 (VC7) or
       earlier if your perl was built with Visual Studio 2005 (VC8) or later: see
-      [perl #121448].  However, that is quite an unlikely scenario, so it is not
+      Perl RT#121448.  However, that is quite an unlikely scenario, so it is not
       worth checking for in Makefile.PL.
 
     - Changed all PerlLIO_*() function calls to the corresponding lowio
@@ -64,51 +66,44 @@ v2.05 16 May 2014
 
     - Bumped minimum required Perl version from 5.6.0 to 5.8.1.  This is in line
       with the minimum requirement of the "Perl Toolchain".
-_________________
 
-v2.04 19 Feb 2014
+2.04 2014-02-19
 
     - Fixed crypt_file's "-c encrypted" and "-c decrypted" options when used in
       conjunction with the "-e tempfile" option.  These combinations of options
       previously caused the input file to be replaced with a zero length file.
-      (Fixes [cpan #93152].)
-_________________
+      [CPAN RT#93152]
 
-v2.03 08 Jul 2013
+2.03 2013-07-08
 
     - Improved crypto library detection so that the library is now correctly
-      located on Debian Multiarch systems such as Ubuntu >= 11.04.  (Fixes [cpan
-      #86632].  Thanks to Stas Ivaschenko <ivaschenko.stas@gmail.com> for the
-      patch.)
+      located on Debian Multiarch systems such as Ubuntu >= 11.04.  [Stas
+      Ivaschenko <ivaschenko.stas@gmail.com>, CPAN RT#86632]
 
     - Corrected typo in a comment.
-_________________
 
-v2.02 14 Feb 2013
+2.02 2013-02-14
 
     - Removed an sscanf() accidentally left behind after the previous change.
       It should have been removed, and its accidental retention could have been
       the cause of a CPAN Testers Reports "FAIL" report involving a core dump
       since it actually caused a buffer overrun.
-_________________
 
-v2.01 07 Feb 2013
+2.01 2013-02-07
 
     - Fixed decoding of bytes from pairs of hexadecimal digits to work on
-      big-endian systems.  (Fixes [cpan #83122].  Thanks to Jörg Weber
-      <joerg.weber@meta-level.de> for the solution.)
-_________________
+      big-endian systems.  [Jörg Weber <joerg.weber@meta-level.de>, CPAN
+      RT#83122]
 
-v2.00 19 May 2012
+2.00 2012-05-19
 
     - Changed the formatting of encrypted source code, with each byte of the
       typically "binary" data now output as a pair of hexadecimal digits and
       therefore no longer susceptible to breakage caused by perl reading source
       files in "text" mode, which has become the default on Windows since Perl
-      5.13.11 (specifically, perl change #270ca148cf).
-_________________
+      5.13.11 (specifically, Perl core commit #270ca148cf).
 
-v1.36 20 Mar 2012
+1.36 2012-03-20
 
     - Removed extra diagnostics previously added to t/03_script.t now that the
       cause of the "FAIL" reports has been discovered.  It turns out that the
@@ -117,24 +112,22 @@ v1.36 20 Mar 2012
       required "perldoc" script consequently named "perldoc5.X.Y" rather than
       the usual "perldoc".
       It is really up to Pod::Usage to handle this situation, so I have raised
-      [cpan #75598] reporting the problem.  However, in the meantime I have also
+      CPAN RT#75598 reporting the problem.  However, in the meantime I have also
       modified script/crypt_file to workaround the problem itself.  Hopefully
       this will resolve the long-running "FAIL" reports relating to this issue.
 
     - Updated Module::Install::PRIVATE to version 1.07 and
-      Module::Install::PRIVATE::Filter::Crypto to version 1.11 now that
-      [cpan #5849] is fixed.
+      Module::Install::PRIVATE::Filter::Crypto to version 1.11 now that CPAN
+      RT#5849 is fixed.
 
     - Updated Module::Install components from version 1.06 of that distribution.
-_________________
 
-v1.35 05 Mar 2012
+1.35 2012-03-05
 
     - Added extra diagnostics to t/03_script.t to try to discover the cause of
       persistent CPAN Testers Reports "FAIL" reports regarding test 99.
-_________________
 
-v1.34 02 Mar 2012
+1.34 2012-03-02
 
     - Reverted changes made in version 1.32 which caused PAR::Filter::Crypto to
       abort (and t/04_par.t to skip corresponding tests) with certain versions
@@ -144,26 +137,24 @@ v1.34 02 Mar 2012
       Note that the problem did not only affect the execution of encrypted files
       within a PAR archive: it actually affected the execution of any encrypted
       file being loaded after Carp has already been loaded.  The new approach
-      fixes those scenarios too.  (Fixes [cpan #75443].)
-_________________
+      fixes those scenarios too.  [CPAN RT#75443]
 
-v1.33 29 Feb 2012
+1.33 2012-02-29
 
     - Reverted changes made in version 1.32 which accidentally unconditionally
       used the Module::ScanDeps module.  (It is a prerequisite of the PAR-Packer
       distribution which contains PAR::Filter, but PAR::Filter is only a
       recommendation, not a prerequisite, of this distribution.)
-_________________
 
-v1.32 28 Feb 2012
+1.32 2012-02-28
 
     - Modified PAR::Filter::Crypto to stop with an error when using certain
       versions of Carp (and fixed t/04_par.t to skip all tests accordingly): its
       caller_info() function used to autovivify the B:: stash, causing the
       generated PAR archive to fail to run due to its restriction on not running
       with the Perl compiler backend enabled.  The problem was introduced in
-      Carp 1.18 by perl change #bf236c8ee5 and fixed in Carp 1.21 by perl change
-      #1a6d530815.  (Fixes [cpan #67516].)
+      Carp 1.18 by Perl core commit #bf236c8ee5 and fixed in Carp 1.21 by Perl
+      core commit #1a6d530815.  [CPAN RT#67516]
 
     - Removed documentation of a formerly known failure in t/04_par.t when using
       Module::ScanDeps version 0.75 since the failing test(s) have been skipped
@@ -172,31 +163,27 @@ v1.32 28 Feb 2012
     - Updated Module::Install components from version 1.04 of that distribution.
 
     - Updated ppport.h using version 3.20 of the Devel::PPPort distribution.
-_________________
 
-v1.31 25 Jul 2010
+1.31 2010-07-25
 
-    - Added support for building on Mac.  (Thanks to Dan Waldheim
-      <dan.waldheim@toolcase.com>) for the patch to enable this.)
+    - Added support for building on Mac.  [Dan Waldheim
+      <dan.waldheim@toolcase.com>
 
     - Updated Module::Install components from version 1.00 of that distribution.
-_________________
 
-v1.30 14 Nov 2009
+1.30 2009-11-14
 
     - Fixed t/03_script.t to skip test 99 when run on a Debian-based host
-      without perl-doc installed.  (Thanks to C.J. Adams-Collier
-      <cjac@colliertech.org> on the Debian Perl mailing list
-      (debian-perl@lists.debian.org) for the patch to fix this.)
+      without perl-doc installed.  [C.J. Adams-Collier <cjac@colliertech.org> on
+      the Debian Perl mailing list (debian-perl@lists.debian.org)]
 
     - Added a note to LICENCE to mention that whilst this distribution is
       licensed under the same terms as Perl itself, it depends on OpenSSL (or
       SSLeay), which are licensed under BSD-style licences that are incompatible
-      with the GPL option of this distribution's licensing.  (Thanks again to
-      C.J. Adams-Collier for suggesting this.)
-_________________
+      with the GPL option of this distribution's licensing.  [C.J.
+      Adams-Collier]
 
-v1.29 26 Oct 2009
+1.29 2009-10-26
 
     - The previous changes to check in new locations and for libcrypto.so as
       well as libcrypto.a broke some Solaris 2.10 builds which have a
@@ -207,9 +194,8 @@ v1.29 26 Oct 2009
     - The previous change to update ppport.h broke builds with Perl >= 5.9.5
       because new support for PL_rsfp_filters requires an explicit request for
       support of PL_parser.
-_________________
 
-v1.28 25 Oct 2009
+1.28 2009-10-25
 
     - The previous change to address CPAN Testers Reports "FAIL" reports from
       Solaris 2.11 didn't work, perhaps because, as pointed out on the OpenSSL
@@ -220,9 +206,8 @@ v1.28 25 Oct 2009
     - Updated Module::Install components from version 0.91 of that distribution.
 
     - Updated ppport.h using version 3.19 of the Devel::PPPort distribution.
-_________________
 
-v1.27 22 Oct 2009
+1.27 2009-10-22
 
     - Fixed a double-free error in the Decrypt component when using Perl 5.6.2,
       which was detected by some CPAN Testers Reports "FAIL" reports.
@@ -235,7 +220,7 @@ v1.27 22 Oct 2009
       (Perl_mg_free()) potentially tried to free the mg_ptr again.  Prior to
       Perl 5.7.3 it would indeed free the mg_ptr again if mg_len >= 0, which is
       true in this case (our mg_len is always 0), hence the errors with Perl
-      5.6.2.  From Perl 5.7.3 onwards (specifically, perl change #14373),
+      5.6.2.  From Perl 5.7.3 onwards (specifically, Perl core change #14373),
       Perl_mg_free() only frees the mg_ptr again if mg_len > 0, so the double-
       free wouldn't occur with those perls.  However, it is good practice to set
       pointers to NULL after freeing them, so this is done in
@@ -248,12 +233,11 @@ v1.27 22 Oct 2009
       systems respectively, according to answers from the OpenSSL users mailing
       list (openssl-users@openssl.org), and should hopefully resolve a couple of
       CPAN Testers Reports "FAIL" reports from 64-bit Solaris 2.11.
-_________________
 
-v1.26 18 Oct 2009
+1.26 2009-10-18
 
     - Declared a minimum version of 1.15 for Pod::Usage.  (In the course of
-      investigating [cpan #50533], which I still haven't resolved as of this
+      investigating CPAN RT#50533, which I still haven't resolved as of this
       writing, I found that t/03_script.t fails test 99 when using a perl build
       with an architecture-dependent lib/ folder if Pod[-]Parser is 1.21 or
       older (which contains Pod::Usage 1.14 or older) due to a bug that was
@@ -272,43 +256,36 @@ v1.26 18 Oct 2009
     - Added a check for "debug" mode perl builds in Makefile.PL when building
       the "Decrypt" component.  This should ensure that CPAN Testers Reports
       report "N/A" rather than "UNKNOWN" if their perl builds are "debug" mode.
-_________________
 
-v1.25 11 Oct 2009
+1.25 2009-10-11
 
     - Declare all core module dependencies in the Makefile.PL as well as the
-      existing CPAN module dependencies.  (Fixes [cpan #50107].  Thanks to
-      Andreas Koenig <ANDK@cpan.org> for persuading me of the merits of doing
-      this.)
-_________________
+      existing CPAN module dependencies.  [Andreas Koenig <ANDK@cpan.org>, CPAN
+      RT#50107]
 
-v1.24 06 Sep 2009
+1.24 2009-09-06
 
     - Use Scalar::Util::reftype() instead of UNIVERSAL::isa().  The latter is
       explicitly warned against in the UNIVERSAL documentation, and this also
       avoids a deprecation warning from UNIVERSAL->import() in Perl 5.11.x which
       caused t/03_script.t tests 42 and 47 to fail.
-_________________
 
-v1.23 28 Aug 2008
+1.23 2008-08-28
 
     - Improved crypto library detection so that the library is now correctly
       located in the Win32 OpenSSL Installations produced by Shining Light
       Productions (see http://www.slproweb.com/products/Win32OpenSSL.html).
-      (Fixes [cpan #38780].  Thanks to Erik Weidel <erikweidel@web.de> for
-      assistance with this.)
-_________________
+      [Erik Weidel <erikweidel@web.de>, CPAN RT#38780]
 
-v1.22 25 Aug 2008
+1.22 2008-08-25
 
     - Fixed PAR::Filter::Crypto so that it doesn't encrypt the
       Filter/Crypto/Decrypt.pm module, otherwise programs created using
-      "pp -F Crypto ..." don't run.  Added new tests to check this.  (Fixes
-      [cpan #38638].)
+      "pp -F Crypto ..." don't run.  Added new tests to check this. [CPAN
+      RT#38638]
 
     - Updated Module::Install components from version 0.77 of that distribution.
-      (That includes a fix for [cpan #29866], which in turn fixes [cpan #29795]
-      in this distribution.)
+      [CPAN RT#29866/29795]
 
     - Skipped a couple of tests in t/04_par.t that are known to fail when using
       Module::ScanDeps 0.75 (see changes below for version 1.20).
@@ -317,11 +294,10 @@ v1.22 25 Aug 2008
       since under certain circumstances $@ can end up undefined after a failed
       eval.
 
-    - Changed all Nullxx macros to (XX *)NULL as per perl change #33051 and
+    - Changed all Nullxx macros to (XX *)NULL as per Perl core change #33051 and
       various earlier changes.
-_________________
 
-v1.21 06 Jul 2008
+1.21 2008-07-06
 
     - Added the magic "OS unsupported" phrase to Makefile.PL's die() message so
       that CPAN Testers Reports report "N/A" rather than "FAIL" on OSes where no
@@ -341,9 +317,8 @@ v1.21 06 Jul 2008
     - Added full paths to Cygwin tools used when creating the distribution.
         
     - Updated ppport.h using version 3.14 of the Devel::PPPort distribution.
-_________________
 
-v1.20 25 Jul 2007
+1.20 2007-07-25
 
     - Fixed the decryption filter code to not crash when there is nothing to
       decrypt.  This allows a file containing just
@@ -358,14 +333,13 @@ v1.20 25 Jul 2007
       version of Module::ScanDeps is detected since the generated PAR archive
       will probably be missing Filter::Crypto::Decrypt's shared library file in
       that case.
-_________________
 
-v1.19 10 Jul 2007
+1.19 2007-07-10
 
     - Introduced a new FILTER_CRYPTO_FILTER_COUNT macro to determine the number
       of filters currently installed rather than querying PL_rsfp_filters
-      directly because that variable no longer exists as of perl change #31200
-      which moved it into the PL_parser structure.
+      directly because that variable no longer exists as of Perl core change
+      #31200 which moved it into the PL_parser structure.
 
     - Changed Perl_my_chsize() to my_chsize() as suggested by the output from
       running "perl ppport.h --compat-version=5.6.0 --copy=.new".
@@ -376,7 +350,8 @@ v1.19 10 Jul 2007
     - Removed definitions of PERL_MAGIC_ext and Poison() for those older Perls
       that don't have them because they are now supplied by ppport.h.
 
-    - Made FilterCrypto_SvSetCUR() safer as per perl changes #26952 and #26953.
+    - Made FilterCrypto_SvSetCUR() safer as per Perl core changes #26952 and
+      #26953.
 
     - Updated Module::Install::PRIVATE to version 1.05 for Makefile.PL
       improvements:
@@ -390,41 +365,38 @@ v1.19 10 Jul 2007
     - Updated ppport.h using version 3.11 of the Devel::PPPort distribution.
 
     - Added comments to MANIFEST file.
-_________________
 
-v1.18 27 Sep 2006
+1.18 2006-09-27
 
     - Fixed a PATH problem that caused t/04_par.t to fail on some platforms.
+      [Jakub Holy <JHOLY@at.ibm.com>]
 
-      Thanks to Jakub Holy <JHOLY@at.ibm.com> for drawing attention to this
-      failure and for suggesting a solution.
-_________________
-
-v1.17 14 Feb 2006
+1.17 2006-02-14
 
     - Fixed two off-by-one errors in the call to ninstr() in the
-      Filter::Crypto::Decrypt code as per perl change #26509.
+      Filter::Crypto::Decrypt code as per Perl core change #26509.
 
       This code was only working due to a bug in how ninstr() treated empty
-      search strings.  However, that bug was fixed in perl change #26510 so the
-      call to ninstr() must be fixed for Perls that contain that change.
+      search strings.  However, that bug was fixed in Perl core change #26510 so
+      the call to ninstr() must be fixed for Perls that contain that change.
 
     - Changed the handling of the salt and the initialization vector in the
       encryption/decryption code so that it does not rely on perl allocating
       exactly the amount of memory requested.
 
-      This was an unsafe assumption to have made, and, in fact, as of perl
+      This was an unsafe assumption to have made, and, in fact, as of Perl core
       change #24665, is no longer true.  Perl has always been at liberty to
       allocate more memory than was requested if it thinks that would be a good
       idea, and that is exactly what it now does in order to reduce the number
       of realloc()s that might be required.
 
     - Changed all Newz() and NEWSV() calls to the cleaner Newxz() and newSV()
-      respectively, as per perl changes #25101 and #26901, and included ppport.h
-      from version 3.08 of the Devel::PPPort distribution to make this possible.
+      respectively, as per Perl core changes #25101 and #26901, and included
+      ppport.h from version 3.08 of the Devel::PPPort distribution to make this
+      possible.
 
     - Simplified the definition and initialization of the magic virtual table
-      used by the decryption filter in the light of perl change #26735.
+      used by the decryption filter in the light of Perl core change #26735.
 
     - Changed various "use MODULE;" lines to be explicit about what is being
       imported, and in particular to not import things that are not required.
@@ -459,24 +431,21 @@ v1.17 14 Feb 2006
 
     - Corrected spelling mistakes and improved the grammar in some of the
       documentation.
-_________________
 
-v1.16 06 Sep 2005
+1.16 2005-09-06
 
     - Changed all files back to UNIX end-of-line format.  The previous release
       had accidentally made them all Windows format, which caused t/03_script.t
-      test 98 to fail.  Thanks to <COSIMO@cpan.org> for the spot.
+      test 98 to fail.  [<COSIMO@cpan.org>]
 
     - Modified PREOP key in the dist option in Makefile.PL to ensure files are
       all UNIX format in the future to stop this from happening again.
-_________________
 
-v1.15 02 Sep 2005
+1.15 2005-09-02
 
     - Improved crypto library detection so that the library is now correctly
       located on 64-bit systems that have both $PREFIX/lib and $PREFIX/lib64.
-      (Fixes [cpan #14397].  Thanks to <COSIMO@cpan.org> for assistance with
-      this.)
+      [<COSIMO@cpan.org>, CPAN RT#14397]
 
       Also improved the binary executable detection along the same lines.
 
@@ -489,23 +458,20 @@ v1.15 02 Sep 2005
       * Relaxed the compiler version checking so that only the major version
         numbers have to match (and also the minor version numbers for Visual
         Studio .NET 2002/2003 (VC7) and later, which use C RTL DLLs named
-        msvcr70.dll, msvcr71.dll, etc)
-        
-        (Thanks to Sisyphus <sisyphus1@optusnet.com.au> for drawing attention to
-        this problem via the PAR mailing list (par@perl.org));
+        msvcr70.dll, msvcr71.dll, etc)  [Sisyphus <sisyphus1@optusnet.com.au> on
+        the PAR mailing list (par@perl.org)];
 
-      * Fixed the parsing of bcc32's output as per perl change #24855.
+      * Fixed the parsing of bcc32's output as per Perl core change #24855.
 
     - Dropped the use of I<> for Perl variables in POD, in line with changes
-      made (some time ago) to the perlpod manpage (perl change #12542).
+      made (some time ago) to the perlpod manpage (Perl core change #12542).
 
     - Corrected spelling mistake: INITIALISATION should be INITIALIZATION.
 
     - Updated Module::Install and ExtUtils::AutoInstall components from versions
       0.37 and 0.62 of those distributions respectively.
-_________________
 
-v1.14 01 Jun 2005
+1.14 2005-06-01
 
     - Added an --unsafe-mode option to Makefile.PL to specify that the "Decrypt"
       component should be built in an "unsafe" mode in which the Perl compiler
@@ -534,27 +500,22 @@ v1.14 01 Jun 2005
           # Looks like your test died before it could output anything.
 
         in the event of any subsequent error that causes Makefile.PL to croak().
-_________________
 
-v1.13 14 Mar 2005
+1.13 2005-03-14
 
     - The previous fix to t/03_script.t did not do the job for the original bug
       reporter, so try a different approach: rather than trying to cope with the
       various format outputs produced by "perldoc" on different OSes, use the
       PERLDOC environment variable to ask for plain text output (-t).  We can
       also avoid involving a pager (-T).
-_________________
 
-v1.12 09 Mar 2005
+1.12 2005-03-09
 
     - Fixed t/03_script.t test 99 to account for different format output
-      produced by "perldoc" on some OSes.
+      produced by "perldoc" on some OSes.  [<cpan@calaquendi.net> on CPAN
+      Testers Reports (http://www.cpantesters.org/)]
 
-      Thanks to <cpan@calaquendi.net> for drawing attention to this problem via
-      CPAN Testers Reports (http://www.cpantesters.org/).
-_________________
-
-v1.11 03 Mar 2005
+1.11 2005-03-03
 
     - Fixed crypt_file so that it now sets STDIN to "binary mode" if it is
       reading input from STDIN.
@@ -602,9 +563,8 @@ v1.11 03 Mar 2005
     - Corrected spelling mistakes: finalise, initialise, localise, recognise and
       utilise are more properly spelled finalize, initialize, localize,
       recognize and utilize respectively.
-_________________
 
-v1.10 12 Dec 2004
+1.10 2004-12-12
 
     - Fix for running encrypted scripts in a mod_perl Apache::Registry set-up.
 
@@ -627,14 +587,12 @@ v1.10 12 Dec 2004
     - Modified t/*-leaktest.pl to output the PID of the perl process running
       them so that it is easier to see which process to watch the memory usage
       of.
-_________________
 
-v1.00 01 Nov 2004
+1.00 2004-11-01
 
     - First released version.
-_________________
 
-v0.01 08 Feb 2004
+0.01 2004-02-08
 
     - Original version; created by h2xs 1.23 with options:
       -n Filter::Crypto -b 5.6.0 -A

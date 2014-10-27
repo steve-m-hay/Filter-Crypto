@@ -529,7 +529,7 @@ sub exit_with_help() {
 
 sub exit_with_manpage() {
     # Tell pod2usage() not to use perldoc if it doesn't exist, at least until
-    # [cpan #75598] is resolved.  It looks for perldoc in $Config{scriptdirexp}
+    # CPAN RT#75598 is resolved.  It looks for perldoc in $Config{scriptdirexp}
     # (if set) from 1.50 onwards; otherwise in $Config{scriptdir}.
     my $script_dir;
     if ($Pod::Usage::VERSION >= 1.50) {
