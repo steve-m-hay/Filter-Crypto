@@ -1,10 +1,10 @@
 #!perl
 #===============================================================================
 #
-# t/06_critic.t
+# t/06_changes.t
 #
 # DESCRIPTION
-#   Test script to check Perl::Critic conformance.
+#   Test script to check CPAN::Changes conformance.
 #
 # COPYRIGHT
 #   Copyright (C) 2014 Steve Hay.  All rights reserved.
@@ -30,16 +30,16 @@ MAIN: {
     plan skip_all => 'Author testing only' unless $ENV{AUTHOR_TESTING};
 
     my $ok = eval {
-        require Test::Perl::Critic;
-        Test::Perl::Critic->import(-profile => '');
+        require Test::CPAN::Changes;
+        Test::CPAN::Changes->import();
         1;
     };
 
     if (not $ok) {
-        plan skip_all => 'Test::Perl::Critic required to test with Perl::Critic';
+        plan skip_all => 'Test::CPAN::Changes required to test Changes';
     }
     else {
-        all_critic_ok('.');
+        changes_ok();
     }
 }
 

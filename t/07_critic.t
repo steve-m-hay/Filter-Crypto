@@ -1,10 +1,10 @@
 #!perl
 #===============================================================================
 #
-# t/08_pod_coverage.t
+# t/07_critic.t
 #
 # DESCRIPTION
-#   Test script to check POD coverage.
+#   Test script to check Perl::Critic conformance.
 #
 # COPYRIGHT
 #   Copyright (C) 2014 Steve Hay.  All rights reserved.
@@ -30,23 +30,16 @@ MAIN: {
     plan skip_all => 'Author testing only' unless $ENV{AUTHOR_TESTING};
 
     my $ok = eval {
-        require Test::Pod::Coverage;
-        Test::Pod::Coverage->import();
+        require Test::Perl::Critic;
+        Test::Perl::Critic->import(-profile => '');
         1;
     };
 
     if (not $ok) {
-        plan skip_all => 'Test::Pod::Coverage required to test POD coverage';
-    }
-    elsif ($Test::Pod::Coverage::VERSION < 0.08) {
-        plan skip_all => 'Test::Pod::Coverage 0.08 or higher required to test POD coverage';
+        plan skip_all => 'Test::Perl::Critic required to test with Perl::Critic';
     }
     else {
-        # all_pod_coverage_ok(); - Fails require()ing Filter::Crypto::Decrypt
-        plan tests => 3;
-        pod_coverage_ok('Filter::Crypto');
-        pod_coverage_ok('Filter::Crypto::CryptFile');
-        pod_coverage_ok('PAR::Filter::Crypto');
+        all_critic_ok('.');
     }
 }
 
