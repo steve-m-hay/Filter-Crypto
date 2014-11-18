@@ -88,8 +88,8 @@ sub AUTOLOAD {
 
     # Generate an in-line subroutine returning the required value.
     {
-        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
-        *$AUTOLOAD = sub { return $value };
+    no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
+    *$AUTOLOAD = sub { return $value };
     }
 
     # Switch to the subroutine that we have just generated.

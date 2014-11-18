@@ -318,8 +318,8 @@ BEGIN {
         define inc libs opts
         prefix_dir inc_dir ver_num ver_str lib_dir lib_name bin_file
         cipher_name cipher_func cipher_needs_iv key_len rc2_key_bits rc5_rounds
-        pswd key
-    )) {
+        pswd key))
+    {
         no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *$prop = sub {
             use strict 'refs';
