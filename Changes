@@ -2,6 +2,8 @@ Revision history for Perl distribution Filter-Crypto
 
 2.07 Development
 
+    - Fixed broken link for active bugs on the CPAN Request Tracker.
+
     - Added optional Changes testing (skipped unless AUTHOR_TESTING).
 
     - Reformatted Changes file as per CPAN::Changes::Spec.
