@@ -51,7 +51,7 @@ MAIN: {
         }
     );
 
-    if  (eval { require ExtUtils::Constant; 1 }) {
+    if  (eval { require ExtUtils::Constant }) {
         ExtUtils::Constant::WriteConstants(
             NAME => 'Filter::Crypto::CryptFile',
 

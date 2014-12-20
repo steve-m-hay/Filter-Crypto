@@ -55,7 +55,7 @@ sub apply {
     # encrypt the decryption module.
     return 1 if $filename eq 'Filter/Crypto/Decrypt.pm';
 
-    if (eval { require Module::ScanDeps; 1 } and
+    if (eval { require Module::ScanDeps } and
         $Module::ScanDeps::VERSION eq '0.75')
     {
         carp('Detected Module::ScanDeps version 0.75, which may not work ' .

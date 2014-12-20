@@ -1875,13 +1875,13 @@ sub query_rng {
         [ RNG_PERL_RAND, "Perl's built-in rand() function" ]
     );
 
-    if (eval { require Crypt::Random; 1 }) {
+    if (eval { require Crypt::Random }) {
         push @rngs, (
             [ RNG_CRYPT_RANDOM, 'Crypt::Random' ]
         );
     }
 
-    if (eval { require Math::Random; 1 }) {
+    if (eval { require Math::Random }) {
         push @rngs, (
             [ RNG_MATH_RANDOM, 'Math::Random' ]
         );

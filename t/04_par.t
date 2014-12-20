@@ -55,7 +55,7 @@ BEGIN {
         plan skip_all => 'Decrypt component not built';
     }
 
-    unless (eval { require PAR::Filter; 1 }) {
+    unless (eval { require PAR::Filter }) {
         plan skip_all => 'PAR::Filter required to test PAR::Filter::Crypto';
     }
 
@@ -94,9 +94,9 @@ MAIN: {
     my $perl_exe = $^X =~ / /o ? qq["$^X"] : $^X;
     my $perl = qq[$perl_exe -Mblib];
 
-    my $have_archive_zip = eval { require Archive::Zip; 1 };
+    my $have_archive_zip = eval { require Archive::Zip };
     my $have_broken_module_scandeps;
-    if (eval { require Module::ScanDeps; 1 }) {
+    if (eval { require Module::ScanDeps }) {
         $have_broken_module_scandeps = ($Module::ScanDeps::VERSION eq '0.75');
     }
 
