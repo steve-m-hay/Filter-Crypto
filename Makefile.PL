@@ -7,7 +7,7 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009, 2012, 2014 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009, 2012, 2014, 2015 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -31,7 +31,7 @@ our($VERSION, $YEAR);
 
 BEGIN {
     $VERSION = '2.07';
-    $YEAR = '2004-2009, 2012, 2014';
+    $YEAR = '2004-2009, 2012, 2014, 2015';
 }
 
 #===============================================================================
@@ -926,7 +926,7 @@ sub determine_ver_num {
     my $ver_define;
     if (open my $ver_fh, '<', $ver_file) {
         while (<$ver_fh>) {
-            if (/^\#define\s+(?:OPENSSL|SSLEAY)_VERSION_NUMBER\s+
+            if (/^\#\s*define\s+(?:OPENSSL|SSLEAY)_VERSION_NUMBER\s+
                  0x([0-9a-f]+)/iox)
             {
                 $ver_define = $1;
@@ -2950,7 +2950,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2009, 2012, 2014 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009, 2012, 2014, 2015 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 

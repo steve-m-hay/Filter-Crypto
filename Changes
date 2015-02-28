@@ -2,6 +2,9 @@ Revision history for Perl distribution Filter-Crypto
 
 2.07 Development
 
+    - Fixed parsing of OPENSSL_VERSION_NUMBER in openssl-1.0.2.  [Dmytro
+      Zagashev <ZDM@cpan.org>, CPAN RT#102421]
+
     - Fixed broken link for active bugs on the CPAN Request Tracker.
 
     - Added optional Changes testing (skipped unless AUTHOR_TESTING).
