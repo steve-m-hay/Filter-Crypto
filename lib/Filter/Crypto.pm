@@ -7,7 +7,7 @@
 #   distribution.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2010, 2012, 2014 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2010, 2012, 2014, 2015 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -274,7 +274,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2010, 2012-2014 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2010, 2012-2015 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -288,7 +288,7 @@ Version 2.07
 
 =head1 DATE
 
-TODO
+28 Feb 2015
 
 =head1 HISTORY
 
