@@ -5,9 +5,9 @@ CryptoCommon-c.inc                       Filter::Crypto::* extensions common C c
 CryptoCommon-xs.inc                      Filter::Crypto::* extensions common external subroutines
 INSTALL                                  Detailed installation instructions
 LICENCE                                  The Licence
-Makefile.PL                              Filter::Crypto makefile writer
 MANIFEST                                 This list of files
 MANIFEST.SKIP                            Manifest skip specs
+Makefile.PL                              Filter::Crypto makefile writer
 README                                   The Instructions
 ppport.h                                 Perl/Pollution/Portability header
 CryptFile/CryptFile.xs                   Filter::Crypto::CryptFile extension external subroutines
