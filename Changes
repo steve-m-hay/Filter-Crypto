@@ -2,7 +2,9 @@ Revision history for Perl distribution Filter-Crypto
 
 2.08 Development
 
-    - TODO
+    - Check that 'pp' really is PAR Packager to avoid possible test failures in
+      t/04_par.t if a different 'pp' is found instead (e.g. from App-Adenosine
+      or the FreeBSD ports collection).  [Slaven Rezic, CPAN RT#111423]
 
 2.07 2015-02-28
 

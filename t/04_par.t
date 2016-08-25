@@ -7,7 +7,7 @@
 #   Test script to check PAR::Filter::Crypto module (and decryption filter).
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006, 2008-2009, 2012, 2014 Steve Hay.  All rights
+#   Copyright (C) 2004-2006, 2008-2009, 2012, 2014, 2016 Steve Hay.  All rights
 #   reserved.
 #
 # LICENCE
@@ -25,7 +25,7 @@ use warnings;
 
 use Config qw(%Config);
 use Cwd qw(abs_path);
-use File::Spec::Functions qw(canonpath catdir catfile curdir updir);
+use File::Spec::Functions qw(canonpath catdir catfile curdir devnull updir);
 use FindBin qw($Bin);
 use Test::More;
 
@@ -75,7 +75,15 @@ BEGIN {
     }
 
     if (defined $pp) {
-        plan tests => 16;
+        my $null = devnull();
+        chomp(my $line = qx{$pp --version 2>$null});
+
+        if ($line =~ /PAR Packager/io) {
+            plan tests => 16;
+        }
+        else {
+            plan skip_all => "PAR Packager required to test PAR::Filter::Crypto";
+        }
     }
     else {
         plan skip_all => "'pp' required to test PAR::Filter::Crypto";
