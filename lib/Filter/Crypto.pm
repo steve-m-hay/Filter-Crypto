@@ -220,10 +220,13 @@ EXISTING ENCRYPTED FILES WILL NEED TO BE RE-ENCRYPTED.>
 
 Patches, bug reports, suggestions or any other feedback is welcome.
 
-Bugs can be reported on the CPAN Request Tracker at
+Patches can be sent as GitHub pull requests at
+F<https://github.com/steve-m-hay/Filter-Crypto/pulls>.
+
+Bug reports and suggestions can be made on the CPAN Request Tracker at
 F<https://rt.cpan.org/Public/Bug/Report.html?Queue=Filter-Crypto>.
 
-Active bugs on the CPAN Request Tracker can be viewed at
+Currently active requests on the CPAN Request Tracker can be viewed at
 F<https://rt.cpan.org/Public/Dist/Display.html?Status=Active;Queue=Filter-Crypto>.
 
 Please test this distribution.  See CPAN Testers Reports at
@@ -265,6 +268,9 @@ F<http://search.cpan.org/dist/Filter-Crypto/> or
 F<http://www.cpan.org/authors/id/S/SH/SHAY/> or
 
 F<http://www.cpan.org/modules/by-module/Filter/>.
+
+The latest source code is available from GitHub at
+F<https://github.com/steve-m-hay/Filter-Crypto>.
 
 =head1 INSTALLATION
 
