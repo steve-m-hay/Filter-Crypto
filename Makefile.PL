@@ -2959,7 +2959,7 @@ maintained by Michael G Schwern.
 
 =head1 AUTHOR
 
-Steve Hay E<lt>shay@cpan.orgE<gt>
+Steve Hay E<lt>F<shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 

@@ -251,7 +251,7 @@ the PAR::Packer distribution (version 1.017), written by Audrey Tang.
 
 =head1 AUTHOR
 
-Steve Hay E<lt>shay@cpan.orgE<gt>
+Steve Hay E<lt>F<shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
