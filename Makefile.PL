@@ -7,7 +7,8 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009, 2012, 2014, 2015 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2009, 2012, 2014, 2015, 2017 Steve Hay.  All rights
+#   reserved.
 #
 # LICENCE
 #   This script is free software; you can redistribute it and/or modify it under
@@ -33,7 +34,7 @@ our($VERSION, $YEAR);
 
 BEGIN {
     $VERSION = '2.08';
-    $YEAR = '2004-2009, 2012, 2014, 2015';
+    $YEAR = '2004-2009, 2012, 2014, 2015, 2017';
 }
 
 #===============================================================================
@@ -1176,8 +1177,10 @@ sub probe_for_lib_file {
     # 11 doesn't even ship static libraries for OpenSSL, so libcrypto.so must be
     # used instead where that exists in place of libcrypto.a.
     # On "native" Windows platforms built with Visual C++ (cl) or Borland C++
-    # (bcc32) they are called ssleay32.lib and libeay32.lib and are specified as
-    # -lssleay32 and -llibeay32.
+    # (bcc32) they were called ssleay32.lib and libeay32.lib and were specified
+    # as -lssleay32 and -llibeay32 but from 1.1.0 onwards are now called
+    # libssl.lib and libcrypto.lib and are specified as -llibssl and
+    # -llibcrypto.
     # It is also possible to produce "native" Windows builds (i.e. binaries and
     # libraries that are linked against the Microsoft C RTL msvcrt.dll rather
     # than Cygwin's POSIX C RTL cygwin1.dll) via MinGW/MinGW-w64 (gcc).  In that
@@ -1222,6 +1225,10 @@ sub probe_for_lib_file {
             {
                 $lib_file = $file;
                 $lib_name = 'libeay32MDd';
+            }
+            elsif (-f ($file = catfile($candidate_lib_dir, 'libcrypto.lib'))) {
+                $lib_file = $file;
+                $lib_name = 'libcrypto';
             }
         }
     }
@@ -2963,7 +2970,7 @@ Steve Hay E<lt>F<shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2009, 2012, 2014, 2015 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009, 2012, 2014, 2015, 2017 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
