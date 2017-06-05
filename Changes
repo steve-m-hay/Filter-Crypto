@@ -2,6 +2,11 @@ Revision history for Perl distribution Filter-Crypto
 
 2.08 Development
 
+    - Improved compatibility with OpenSSL 1.1.0 by changing Newxz()/Safefree()
+      to EVP_CIPHER_CTX_new()/EVP_CIPHER_CTX_free().  These functions for opaque
+      EVP_CIPHER_CTX handling were added in OpenSSL 0.9.8b, but their use now
+      seems to be necessary on some systems.  [kmx, CPAN RT#121970]
+
     - Added support for new library file name on Windows arising from unified
       build system changes in OpenSSL 1.1.0.
 
