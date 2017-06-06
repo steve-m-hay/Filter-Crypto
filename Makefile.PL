@@ -1255,7 +1255,17 @@ sub set_libs {
 
     my $lib_dir  = $self->lib_dir();
     my $lib_name = $self->lib_name();
-    $self->libs("-L$lib_dir -l$lib_name");
+
+    # The Crypto API library is required for static builds of OpenSSL on Windows
+    # from version 1.1.0 onwards (unless the no-capieng build option was used),
+    # so include it in the list of libraries just in case it is required. See:
+    # https://mta.openssl.org/pipermail/openssl-users/2016-May/003759.html
+    if ($self->is_win32()) {
+        $self->libs("-L$lib_dir -l$lib_name -lcrypt32.lib");
+    }
+    else {
+        $self->libs("-L$lib_dir -l$lib_name");
+    }
 }
 
 sub locate_bin_file {
