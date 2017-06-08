@@ -749,9 +749,9 @@ static bool FilterCrypto_PRNGInit(pTHX) {
     if (RAND_status())
         return TRUE;
 
-    /* Win32 has a RAND_screen() function for seeding the PRNG.  In other cases
-     * we just have to manage ourselves. */
-#ifdef WIN32
+    /* Win32 had a RAND_screen() function (deprecated in OpenSSL 1.1.0) for
+     * seeding the PRNG.  In other cases we just have to manage ourselves. */
+#if (defined(WIN32) && FILTER_CRYPTO_OPENSSL_VERSION < 101000)
     RAND_screen();
 #else
     {

@@ -2,6 +2,9 @@ Revision history for Perl distribution Filter-Crypto
 
 2.08 Development
 
+    - Dropped use of RAND_screen() on Windows for OpenSSL 1.1.0 onwards since it
+      is now marked as deprecated.
+
     - Further improved compatibility with OpenSSL 1.1.0 on Windows by always
       linking against crypt32.lib, which is now required for static builds of
       OpenSSL on Windows (unless the no-capieng build option was used).
