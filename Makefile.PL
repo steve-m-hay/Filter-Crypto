@@ -2976,7 +2976,7 @@ maintained by Michael G Schwern.
 
 =head1 AUTHOR
 
-Steve Hay E<lt>F<shay@cpan.org>E<gt>.
+Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
