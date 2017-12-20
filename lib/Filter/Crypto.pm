@@ -75,11 +75,20 @@ Perl source code filter that decrypts the remaining (encrypted) part of the Perl
 file on the fly when it is run.  See L<perlfilter> if you want to know more
 about how Perl source code filters work.
 
+These two modules can be built and installed separately, so it is possible to
+set-up two separate Perl installations: one containing the
+Filter::Crypto::CryptFile module to be used for encrypting your Perl files, and
+another containing only the Filter::Crypto::Decrypt module for distributing with
+your encrypted Perl files so that they can be run but not easily decrypted.
+(Well, not very easily, anyway.  Please see the WARNING below.)
+
 Encrypted files can also be produced more conveniently using the B<crypt_file>
 script, or (if you also have the L<PAR|PAR> module available) using the
 L<PAR::Filter::Crypto|PAR::Filter::Crypto> module.  The latter can be utilized
 by the standard L<PAR|PAR> tools to produce PAR archives in which your Perl
-files are encrypted.
+files are encrypted.  The Filter::Crypto::Decrypt module (only) can also be
+automatically included in these PAR archives, so this is perhaps the easiest
+way to produce redistributable, encrypted Perl files.
 
 The actual encryption and decryption is performed using one of the symmetric
 cipher algorithms provided by the OpenSSL libcrypto library.  The EVP library
