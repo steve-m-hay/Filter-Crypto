@@ -852,10 +852,6 @@ I<None>.
 
 =back
 
-=head1 KNOWN BUGS
-
-I<None>.
-
 =head1 CAVEATS
 
 =over 4

@@ -234,10 +234,6 @@ version 0.76 or higher.
 
 I<None>.
 
-=head1 KNOWN BUGS
-
-I<None>.
-
 =head1 SEE ALSO
 
 L<PAR::Filter>;
