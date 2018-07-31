@@ -272,8 +272,6 @@ L<perlmodlib/"CPAN"> for details) at
 
 L<https://metacpan.org/release/Filter-Crypto> or
 
-L<http://search.cpan.org/dist/Filter-Crypto/> or
-
 L<http://www.cpan.org/authors/id/S/SH/SHAY/> or
 
 L<http://www.cpan.org/modules/by-module/Filter/>.
