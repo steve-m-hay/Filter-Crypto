@@ -776,7 +776,7 @@ sub query_prefix_dir {
                 # Find out (if we can) which platform this binary was built for.
                 # This information is normally contained in the output of the
                 # binary's "version -a" command, labelled "platform: ".
-                my $bin_cmd = "$bin_file version -a 2>&1";
+                my $bin_cmd = "\"$bin_file\" version -a 2>&1";
 
                 my $bin_output = `$bin_cmd`;
                 my $bin_rc = $? >> 8;
@@ -1343,7 +1343,7 @@ sub query_cipher_name {
     # contained in the output of the main binary executable's "version -a"
     # command, labelled "compiler: " and not always on a line of its own.
     my $bin_file = $self->bin_file();
-    my $bin_cmd = "$bin_file version -a 2>&1";
+    my $bin_cmd = "\"$bin_file\" version -a 2>&1";
 
     my $bin_output = `$bin_cmd`;
     my $bin_rc = $? >> 8;
@@ -1853,7 +1853,7 @@ sub generate_rand_octets_hex {
         my $bin_file = $self->bin_file();
         my $out_filename = 'rand.out';
 
-        my $bin_cmd = "$bin_file rand -out $out_filename $num_octets 2>&1";
+        my $bin_cmd = "\"$bin_file\" rand -out $out_filename $num_octets 2>&1";
 
         my $bin_output = `$bin_cmd`;
         my $bin_rc = $? >> 8;
