@@ -172,6 +172,10 @@ been set-up with a crypt mode that it does not recognize.
 
 I<None>.
 
+=head1 KNOWN BUGS
+
+I<None>.
+
 =head1 SEE ALSO
 
 L<Filter::Crypto>;

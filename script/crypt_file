@@ -1090,6 +1090,10 @@ corresponding command-line.
 
 =back
 
+=head1 KNOWN BUGS
+
+I<None>.
+
 =head1 SEE ALSO
 
 L<Filter::Crypto>,

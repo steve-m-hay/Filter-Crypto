@@ -225,6 +225,20 @@ ABLE TO DECRYPT FILES ENCRYPTED WITH VERSIONS OF THESE MODULES PRIOR TO VERSION
 2.00 OF THIS DISTRIBUTION, EVEN WHEN BUILT WITH THE SAME CONFIGURATION OPTIONS.
 EXISTING ENCRYPTED FILES WILL NEED TO BE RE-ENCRYPTED.>
 
+=head1 KNOWN BUGS
+
+=over
+
+=item C<__DATA__> is not accessible when running encrypted files.
+
+See L<https://rt.cpan.org/Ticket/Display.html?id=54370>.
+
+=item Compatibility issue with the "lazy" attribute in Moo-based classes.
+
+See L<https://rt.cpan.org/Ticket/Display.html?id=102788>.
+
+=back
+
 =head1 FEEDBACK
 
 Patches, bug reports, suggestions or any other feedback is welcome.
