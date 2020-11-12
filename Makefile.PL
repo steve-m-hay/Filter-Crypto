@@ -7,7 +7,7 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009, 2012, 2014, 2015, 2017 Steve Hay.  All rights
+#   Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020 Steve Hay.  All rights
 #   reserved.
 #
 # LICENCE
@@ -33,8 +33,8 @@ use ExtUtils::MakeMaker qw(WriteMakefile);
 our($VERSION, $YEAR);
 
 BEGIN {
-    $VERSION = '2.09';
-    $YEAR = '2004-2009, 2012, 2014, 2015, 2017';
+    $VERSION = '2.10';
+    $YEAR = '2004-2009, 2012, 2014, 2015, 2017, 2020';
 }
 
 #===============================================================================
@@ -1255,17 +1255,23 @@ sub set_libs {
 
     my $lib_dir  = $self->lib_dir();
     my $lib_name = $self->lib_name();
+    my $libs = "-L$lib_dir -l$lib_name";
 
-    # The Crypto API library is required for static builds of OpenSSL on Windows
+    # The CryptoAPI library is required for static builds of OpenSSL on Windows
     # from version 1.1.0 onwards (unless the no-capieng build option was used),
     # so include it in the list of libraries just in case it is required. See:
     # https://mta.openssl.org/pipermail/openssl-users/2016-May/003759.html
+    # For Windows 7 onwards BCryptGenRandom is used instead of the legacy
+    # CryptoAPI, although CryptoAPI is still used for Certificate functions too.
+    # See: https://github.com/openssl/openssl/commit/fa64e63373
     if ($self->is_win32()) {
-        $self->libs("-L$lib_dir -l$lib_name -lcrypt32.lib");
+        $libs .= ' -lcrypt32.lib';
+        my @osver = Win32::GetOSVersion();
+        my $osver = 0 + "$osver[1].$osver[2]";
+        $libs .= ' -lbcrypt.lib' if $osver >= 6.1;
     }
-    else {
-        $self->libs("-L$lib_dir -l$lib_name");
-    }
+
+    $self->libs($libs);
 }
 
 sub locate_bin_file {
@@ -2980,7 +2986,7 @@ Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2009, 2012, 2014, 2015, 2017 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -2990,7 +2996,7 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.09
+Version 2.10
 
 =head1 DATE
 
