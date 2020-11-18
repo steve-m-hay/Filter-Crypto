@@ -188,6 +188,7 @@ MAIN: {
         },
 
         TEST_REQUIRES => {
+            'File::Path' => '0',
             'FindBin'    => '0',
             'Test::More' => '0',
             'blib'       => '0'
