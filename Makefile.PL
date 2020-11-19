@@ -575,7 +575,18 @@ sub query_build {
 #-------------------------------------------------------------------------------
 
 sub is_win32 {
-    return $^O eq 'MSWin32';
+    return $^O =~ /^MSWin32$/io;
+}
+
+sub quote_str {
+    my($self, $string) = @_;
+
+    if ($string =~ / /o) {
+        my $q = ($^O =~ /^(?:MSWin32|NetWare|VMS)$/io) ? '"' : "'";
+        $string = $q . $string . $q;
+    }
+
+    return $string;
 }
 
 sub prompt_yes_no {
@@ -777,7 +788,8 @@ sub query_prefix_dir {
                 # Find out (if we can) which platform this binary was built for.
                 # This information is normally contained in the output of the
                 # binary's "version -a" command, labelled "platform: ".
-                my $bin_cmd = "$bin_file version -a 2>&1";
+                my $quoted_bin_file = $self->quote_str($bin_file);
+                my $bin_cmd = "$quoted_bin_file version -a 2>&1";
 
                 my $bin_output = `$bin_cmd`;
                 my $bin_rc = $? >> 8;
@@ -892,7 +904,7 @@ sub locate_inc_dir {
 sub set_inc {
     my $self = shift;
 
-    my $inc_dir = $self->inc_dir();
+    my $inc_dir = $self->quote_str($self->inc_dir());
     $self->inc("-I$inc_dir");
 }
 
@@ -1254,7 +1266,7 @@ sub probe_for_lib_file {
 sub set_libs {
     my $self = shift;
 
-    my $lib_dir  = $self->lib_dir();
+    my $lib_dir  = $self->quote_str($self->lib_dir());
     my $lib_name = $self->lib_name();
     my $libs = "-L$lib_dir -l$lib_name";
 
@@ -1349,7 +1361,7 @@ sub query_cipher_name {
     # "RC2", "BF", "RC5", "CAST" or "AES".  This information is normally
     # contained in the output of the main binary executable's "version -a"
     # command, labelled "compiler: " and not always on a line of its own.
-    my $bin_file = $self->bin_file();
+    my $bin_file = $self->quote_str($self->bin_file());
     my $bin_cmd = "$bin_file version -a 2>&1";
 
     my $bin_output = `$bin_cmd`;
@@ -1857,7 +1869,7 @@ sub generate_rand_octets_hex {
                        map { chr } random_uniform_integer($num_octets, 0, 255);
     }
     elsif (lc $rng eq lc RNG_OPENSSL_RAND) {
-        my $bin_file = $self->bin_file();
+        my $bin_file = $self->quote_str($self->bin_file());
         my $out_filename = 'rand.out';
 
         my $bin_cmd = "$bin_file rand -out $out_filename $num_octets 2>&1";
