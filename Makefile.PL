@@ -1078,7 +1078,8 @@ sub locate_lib_dir_and_file {
     # sub-directories as well, so check in lib64/ etc. first, but only check for
     # 64-bit libraries if we are using a 64-bit perl.  Under Debian Multiarch
     # (e.g. Ubuntu >= 11.04) the libraries are migrated to lib/i386-linux-gnu/
-    # and lib/x86_64-linux-gnu/ sub-directories.
+    # and lib/x86_64-linux-gnu/ sub-directories.  On an ARM-based Debian machine
+    # the libraries may be found in /lib/arm-linux/gnueabihf/.
     # Again, build directories on "native" Windows platforms may have the files
     # in a different sub-directory, in this case out32/, out32dll/, out32.dbg/
     # or out32dll.dbg/ (depending on whether static or dynamic libraries were
@@ -1158,6 +1159,11 @@ sub locate_lib_dir_and_file {
             $lib_dir = $dir;
         }
         elsif (-d ($dir = catdir($prefix_dir, 'lib', 'i386-linux-gnu')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+            $lib_dir = $dir;
+        }
+        elsif (-d ($dir = catdir($prefix_dir, 'lib', 'arm-linux-gnueabihf')) and
                ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
         {
             $lib_dir = $dir;
