@@ -1,6 +1,6 @@
 Revision history for Perl distribution Filter-Crypto
 
-2.09 Development
+2.09 2020-12-08
 
     - Fix build on ARM-based Debian Linux.  [Alexander Zangerl, CPAN RT#132267]
 
