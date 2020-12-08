@@ -227,17 +227,7 @@ EXISTING ENCRYPTED FILES WILL NEED TO BE RE-ENCRYPTED.>
 
 =head1 KNOWN BUGS
 
-=over
-
-=item C<__DATA__> is not accessible when running encrypted files.
-
-See L<https://rt.cpan.org/Ticket/Display.html?id=54370>.
-
-=item Compatibility issue with the "lazy" attribute in Moo-based classes.
-
-See L<https://rt.cpan.org/Ticket/Display.html?id=102788>.
-
-=back
+See L<Filter::Crypto::Decrypt/"KNOWN BUGS">.
 
 =head1 FEEDBACK
 

@@ -174,7 +174,17 @@ I<None>.
 
 =head1 KNOWN BUGS
 
-I<None>.
+=over
+
+=item C<__DATA__> is not accessible when running encrypted files.
+
+See L<https://rt.cpan.org/Ticket/Display.html?id=54370>.
+
+=item Infinite loop when running a program using an encrypted Data::Alias.
+
+See L<https://rt.cpan.org/Ticket/Display.html?id=122951>.
+
+=back
 
 =head1 SEE ALSO
 
