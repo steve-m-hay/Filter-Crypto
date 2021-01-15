@@ -574,6 +574,10 @@ sub query_build {
 # PROTECTED API
 #-------------------------------------------------------------------------------
 
+sub is_cygwin {
+    return $^O eq "cygwin";
+}
+
 sub is_win32 {
     return $^O =~ /^MSWin32$/io;
 }
@@ -1129,6 +1133,13 @@ sub locate_lib_dir_and_file {
             $lib_dir = $dir;
         }
     }
+    elsif ($self->is_cygwin) {
+        if (-d ($dir = catdir($prefix_dir, 'lib')) and
+               ($lib_file, $lib_name) = $self->probe_for_lib_file($dir))
+        {
+           $lib_dir = $dir;
+        }
+    }
     if (not defined $lib_dir) {
         if (defined $Config{use64bitint} and
             $Config{use64bitint} eq 'define' and
@@ -1249,6 +1260,12 @@ sub probe_for_lib_file {
                 $lib_file = $file;
                 $lib_name = 'libcrypto';
             }
+        }
+    }
+    elsif ($self->is_cygwin) {
+         if (-f ($file = catfile($candidate_lib_dir, 'libcrypto.dll.a'))) {
+            $lib_file = $file;
+            $lib_name = 'crypto';
         }
     }
     else {
