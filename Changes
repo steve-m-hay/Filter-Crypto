@@ -2,7 +2,7 @@ Revision history for Perl distribution Filter-Crypto
 
 2.10 Development
 
-    - TODO
+    - Fix build on Cygwin.  [Håkon Hægland, PR#4]
 
 2.09 2020-12-08
 

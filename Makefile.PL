@@ -7,8 +7,8 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020 Steve Hay.  All rights
-#   reserved.
+#   Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020, 2021 Steve Hay.  All
+#   rights reserved.
 #
 # LICENCE
 #   This script is free software; you can redistribute it and/or modify it under
@@ -34,7 +34,7 @@ our($VERSION, $YEAR);
 
 BEGIN {
     $VERSION = '2.10';
-    $YEAR = '2004-2009, 2012, 2014, 2015, 2017, 2020';
+    $YEAR = '2004-2009, 2012, 2014, 2015, 2017, 2020, 2021';
 }
 
 #===============================================================================
@@ -576,6 +576,10 @@ sub query_build {
 
 sub is_win32 {
     return $^O =~ /^MSWin32$/io;
+}
+
+sub is_cygwin {
+    return $^O =~ /^cygwin$/io;
 }
 
 sub quote_str {
@@ -1189,12 +1193,13 @@ sub probe_for_lib_file {
     my $self = shift;
     my $candidate_lib_dir = shift;
 
-    # The libraries on UNIX-type platforms (which includes Cygwin) are called
-    # libssl.a (which contains the SSL and TLS implmentations) and libcrypto.a
-    # (which contains the ciphers, digests, etc) and are specified as -lssl and
-    # -lcrypto respectively.  Solaris 10 discourages static linking and Solaris
-    # 11 doesn't even ship static libraries for OpenSSL, so libcrypto.so must be
-    # used instead where that exists in place of libcrypto.a.
+    # The libraries on UNIX-type platforms are called libssl.a (which contains
+    # the SSL and TLS implmentations) and libcrypto.a (which contains the
+    # ciphers, digests, etc) and are specified as -lssl and -lcrypto
+    # respectively. Cygwin is similar but names the libraries libssl.dll.a and
+    # libcrypto.dll.a respectively. Solaris 10 discourages static linking and
+    # Solaris 11 doesn't even ship static libraries for OpenSSL, so libcrypto.so
+    # must be used instead where that exists in place of libcrypto.a.
     # On "native" Windows platforms built with Visual C++ (cl) or Borland C++
     # (bcc32) they were called ssleay32.lib and libeay32.lib and were specified
     # as -lssleay32 and -llibeay32 but from 1.1.0 onwards are now called
@@ -1249,6 +1254,12 @@ sub probe_for_lib_file {
                 $lib_file = $file;
                 $lib_name = 'libcrypto';
             }
+        }
+    }
+    elsif ($self->is_cygwin()) {
+        if (-f ($file = catfile($candidate_lib_dir, 'libcrypto.dll.a'))) {
+            $lib_file = $file;
+            $lib_name = 'crypto';
         }
     }
     else {
@@ -3005,7 +3016,8 @@ Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020, 2021 Steve Hay.  All
+rights reserved.
 
 =head1 LICENCE
 

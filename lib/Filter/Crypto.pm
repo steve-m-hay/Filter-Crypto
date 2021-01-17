@@ -293,7 +293,8 @@ Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2010, 2012-2015, 2017, 2020 Steve Hay.  All rights reserved.
+Copyright (C) 2004-2010, 2012-2015, 2017, 2020, 2021 Steve Hay.  All rights
+reserved.
 
 =head1 LICENCE
 
