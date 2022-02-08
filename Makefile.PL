@@ -930,7 +930,9 @@ sub determine_ver_num {
         $inc_files_dir = $inc_dir;
     }
 
-    # The version number is now specified by an OPENSSL_VERSION_NUMBER #define
+    # The version number is now specified by OPENSSL_VERSION_(MAJOR|MINOR|PATCH)
+    # #defines in the opensslv.h header file (3.0.0 onwards).
+    # The version number was specified by an OPENSSL_VERSION_NUMBER #define
     # in the opensslv.h header file (0.9.2 onwards).  That #define was in the
     # crypto.h header file (0.9.1s), and was called SSLEAY_VERSION_NUMBER (from
     # 0.6.0 to 0.9.0b inclusive).  Earlier versions do not seem to have a
@@ -954,14 +956,13 @@ sub determine_ver_num {
         );
     }
 
-    my $ver_define;
+    my %version;
     if (open my $ver_fh, '<', $ver_file) {
         while (<$ver_fh>) {
-            if (/^\#\s*define\s+(?:OPENSSL|SSLEAY)_VERSION_NUMBER\s+
-                 0x([0-9a-f]+)/iox)
+            if (/^\#\s*define\s+(?:OPENSSL|SSLEAY)_VERSION_([A-Z]*)\s+
+                 ([^\s].*)/iox)
             {
-                $ver_define = $1;
-                last;
+                $version{$1} = $2;
             }
         }
         close $ver_fh;
@@ -973,8 +974,22 @@ sub determine_ver_num {
         );
     }
 
-    my($major, $minor, $fix, $patch, $status_str);
-    if (defined $ver_define) {
+    my($major, $minor, $fix, $patch, $ver_str, $status_str);
+    if (defined $version{MAJOR} && $version{MAJOR} =~ /\d+/ &&
+        defined $version{MINOR} && $version{MINOR} =~ /\d+/ &&
+        defined $version{PATCH} && $version{PATCH} =~ /\d+/ &&
+        defined $version{STR} && $version{STR} =~ s/^"(.*)"$/$1/)
+    {
+        $major   = int($version{MAJOR});
+        $minor   = int($version{MINOR});
+        $fix     = 0;
+        $patch   = int($version{PATCH});
+        $ver_str = $version{STR};
+    }
+    elsif (defined $version{NUMBER} &&
+        $version{NUMBER} =~ /0x([0-9a-f]+)/i)
+    {
+        my $ver_define = $1;
         if (length $ver_define == 8 and
             $ver_define =~ /^([0-9a-f])([0-9a-f]{2})([0-9a-f]{2})/io)
         {
@@ -1038,9 +1053,11 @@ sub determine_ver_num {
     }
 
     my $ver_num = $major * 1000000 + $minor * 10000 + $fix * 100 + $patch;
-    my $ver_str = "$major.$minor.$fix";
-    $ver_str .= ('', 'a' .. 'y', 'za' .. 'zz')[$patch];
-    $ver_str .= $status_str;
+    if (!defined $ver_str) {
+        $ver_str = "$major.$minor.$fix";
+        $ver_str .= ('', 'a' .. 'y', 'za' .. 'zz')[$patch];
+        $ver_str .= $status_str;
+    }
 
     my $package = $ver_num >= 90100 ? 'OpenSSL' : 'SSLeay';
 
