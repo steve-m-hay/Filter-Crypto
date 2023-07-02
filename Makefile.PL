@@ -33,7 +33,7 @@ use ExtUtils::MakeMaker qw(WriteMakefile);
 our($VERSION, $YEAR);
 
 BEGIN {
-    $VERSION = '2.10';
+    $VERSION = '2.11';
     $YEAR = '2004-2009, 2012, 2014, 2015, 2017, 2020, 2021, 2023';
 }
 
@@ -3043,11 +3043,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.10
+Version 2.11
 
 =head1 DATE
 
-02 Jul 2023
+TODO
 
 =head1 HISTORY
 
