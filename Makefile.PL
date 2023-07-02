@@ -7,8 +7,8 @@
 #   Top-level makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020, 2021 Steve Hay.  All
-#   rights reserved.
+#   Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020, 2021, 2023 Steve Hay.
+#   All rights reserved.
 #
 # LICENCE
 #   This script is free software; you can redistribute it and/or modify it under
@@ -34,7 +34,7 @@ our($VERSION, $YEAR);
 
 BEGIN {
     $VERSION = '2.10';
-    $YEAR = '2004-2009, 2012, 2014, 2015, 2017, 2020, 2021';
+    $YEAR = '2004-2009, 2012, 2014, 2015, 2017, 2020, 2021, 2023';
 }
 
 #===============================================================================
@@ -932,8 +932,8 @@ sub determine_ver_num {
 
     # The version number is now specified by OPENSSL_VERSION_(MAJOR|MINOR|PATCH)
     # #defines in the opensslv.h header file (3.0.0 onwards).
-    # The version number was specified by an OPENSSL_VERSION_NUMBER #define
-    # in the opensslv.h header file (0.9.2 onwards).  That #define was in the
+    # The version number was specified by an OPENSSL_VERSION_NUMBER #define in
+    # the opensslv.h header file (0.9.2 onwards).  That #define was in the
     # crypto.h header file (0.9.1s), and was called SSLEAY_VERSION_NUMBER (from
     # 0.6.0 to 0.9.0b inclusive).  Earlier versions do not seem to have a
     # version number defined in this way, but we do not support anything earlier
@@ -975,20 +975,19 @@ sub determine_ver_num {
     }
 
     my($major, $minor, $fix, $patch, $ver_str, $status_str);
-    if (defined $version{MAJOR} && $version{MAJOR} =~ /\d+/ &&
-        defined $version{MINOR} && $version{MINOR} =~ /\d+/ &&
-        defined $version{PATCH} && $version{PATCH} =~ /\d+/ &&
-        defined $version{STR} && $version{STR} =~ s/^"(.*)"$/$1/)
+    if (defined $version{MAJOR} and $version{MAJOR} =~ /\d+/o and
+        defined $version{MINOR} and $version{MINOR} =~ /\d+/o and
+        defined $version{PATCH} and $version{PATCH} =~ /\d+/o and
+        defined $version{STR} and $version{STR} =~ s/^"(.*)"$/$1/)
     {
-        $major   = int($version{MAJOR});
-        $minor   = int($version{MINOR});
-        $fix     = 0;
-        $patch   = int($version{PATCH});
-        $ver_str = $version{STR};
+        $major      = int $version{MAJOR};
+        $minor      = int $version{MINOR};
+        $fix        = 0;
+        $patch      = int $version{PATCH};
+        $ver_str    = $version{STR};
+        $status_str = '';
     }
-    elsif (defined $version{NUMBER} &&
-        $version{NUMBER} =~ /0x([0-9a-f]+)/i)
-    {
+    elsif (defined $version{NUMBER} and $version{NUMBER} =~ /0x([0-9a-f]+)/io) {
         my $ver_define = $1;
         if (length $ver_define == 8 and
             $ver_define =~ /^([0-9a-f])([0-9a-f]{2})([0-9a-f]{2})/io)
@@ -1053,7 +1052,7 @@ sub determine_ver_num {
     }
 
     my $ver_num = $major * 1000000 + $minor * 10000 + $fix * 100 + $patch;
-    if (!defined $ver_str) {
+    if (not defined $ver_str) {
         $ver_str = "$major.$minor.$fix";
         $ver_str .= ('', 'a' .. 'y', 'za' .. 'zz')[$patch];
         $ver_str .= $status_str;
@@ -3033,8 +3032,8 @@ Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020, 2021 Steve Hay.  All
-rights reserved.
+Copyright (C) 2004-2009, 2012, 2014, 2015, 2017, 2020, 2021, 2023 Steve Hay.
+All rights reserved.
 
 =head1 LICENCE
 
