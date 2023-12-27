@@ -582,6 +582,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
      * finish the initialization of the cipher context by deriving the key
      * and setting both it and the IV. */
 #  if FILTER_CRYPTO_USING_PBE
+	Perl_sv_vsetpvv( filter_crypto_pswd );
     if (PKCS5_PBKDF2_HMAC_SHA1(filter_crypto_pswd, sizeof(filter_crypto_pswd),
             salt, salt_len, PKCS5_DEFAULT_ITER, FILTER_CRYPTO_KEY_LEN, key) !=
             1)

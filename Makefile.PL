@@ -33,7 +33,7 @@ use ExtUtils::MakeMaker qw(WriteMakefile);
 our($VERSION, $YEAR);
 
 BEGIN {
-    $VERSION = '2.11';
+    $VERSION = '2.10';
     $YEAR = '2004-2009, 2012, 2014, 2015, 2017, 2020, 2021, 2023';
 }
 
@@ -2284,10 +2284,18 @@ EOT
         my $pswd = $self->pswd();
         if (defined $pswd) {
             $def = '#define FILTER_CRYPTO_USING_PBE    1';
-            $pswd = $self->format_chars($pswd);
-            $var = "static const unsigned char filter_crypto_pswd[] = {\n" .
+
+            #$pswd = $self->format_chars($pswd);
+            #$var = "static const unsigned char filter_crypto_pswd[] = {\n" .
+            #       "$pswd\n" .
+            #       "};";
+
+			$pswd = $self->prepare_pswd( $pswd );
+            $pswd = $self->format_chars( $pswd );
+            $var = "unsigned char filter_crypto_pswd[] = {\n" .
                    "$pswd\n" .
                    "};";
+
         }
         else {
             $def = '#define FILTER_CRYPTO_USING_PBE    0';
@@ -2314,6 +2322,61 @@ EOT
         "safe place if you ever need to rebuild these modules using the same " .
         "configuration, especially if your key was randomly generated."
     ), "\n\n";
+}
+
+sub prepare_pswd {
+	my $pwd = pack q[H*], $_[ 1 ];
+	my @rnd = ( 'A' .. 'Z', 'a' .. 'z', 0 .. 9, '!', '@', '#', '$', '%', '^', '*', '/' );
+
+	my %tmp;
+	my $max = 1024;
+	my @ary = map { sprintf q[0x%X], int rand 256 }  1 .. $max;
+	my @pwd = split //, $pwd;
+	my @idx = map { 
+		my $tmp;
+		while( 1 ){
+			$tmp = int rand $max;
+			next if $tmp{ $tmp };
+			$tmp{ $tmp } = 1;
+			last;
+		}
+		$tmp;
+	} 0 .. $#pwd;
+	
+	$ary[ $idx[ $_ ] ] = q[0x] . unpack q[H*], $pwd[ $_ ] for 0 .. $#idx;
+	
+	my $ary = q|unsigned char rnd[] = { | . join( q[, ], @ary ) .  q| };|;
+	my $str = qq|void Perl_sv_vsetpvv( unsigned char ary[] ){\n\t$ary\n|;
+	
+	for my $idx ( 0 .. $#idx ){
+		$str .= qq|\tary[ $idx ] = rnd[ $idx[ $idx ]];\n|;
+	}
+	
+	$str .= qq|\n\treturn;\n}\n|;
+
+	unless( -f 'CryptoCommon-c.inc.org' ){
+		open( my $fhd, '<', 'CryptoCommon-c.inc' );
+		my @all = <$fhd>;
+		close( $fhd);
+
+		open( $fhd, '>', 'CryptoCommon-c.inc.org' );
+		print $fhd @all;
+		close( $fhd );
+	}else{
+		open( my $fhd, '<', 'CryptoCommon-c.inc.org' );
+		my @all = <$fhd>;
+		close( $fhd);
+
+		open( $fhd, '>', 'CryptoCommon-c.inc' );
+		print $fhd @all;
+		close( $fhd );
+	}
+
+	open( my $fhd, '>>', 'CryptoCommon-c.inc' );
+	print $fhd "\n", $str;
+	close( $fhd );
+
+	return unpack q[H*], join( q[], map { $rnd[ rand @rnd ] } 0 .. $#pwd );
 }
 
 sub format_chars {
@@ -3043,11 +3106,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.11
+Version 2.10
 
 =head1 DATE
 
-TODO
+02 Jul 2023
 
 =head1 HISTORY
 
