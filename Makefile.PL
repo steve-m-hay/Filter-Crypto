@@ -2290,12 +2290,16 @@ EOT
             #$var = "static const unsigned char filter_crypto_pswd[] = {\n" .
             #       "$pswd\n" .
             #       "};";
-
-			$pswd = $self->prepare_pswd( $pswd );
+			
+			my $arry;
+			( $arry, $pswd ) = $self->prepare_pswd( $pswd );
             $pswd = $self->format_chars( $pswd );
-            $var = "unsigned char filter_crypto_pswd[] = {\n" .
-                   "$pswd\n" .
-                   "};";
+            $var = "unsigned char filter_crypto_pswd[] = {\n"	.
+                   "$pswd\n"									.
+                   "};\n"										.
+					$arry										. 
+					"\n"										;
+
 
         }
         else {
@@ -2325,10 +2329,12 @@ EOT
     ), "\n\n";
 }
 
+
 sub prepare_pswd {
+
+	#-------------------------------------------------------------------
 	my $pwd = pack q[H*], $_[ 1 ];
 	my @rnd = ( 'A' .. 'Z', 'a' .. 'z', 0 .. 9, '!', '@', '#', '$', '%', '^', '*', '/' );
-
 	my %tmp;
 	my $max = 1024;
 	my @ary = map { sprintf q[0x%X], int rand 256 }  1 .. $max;
@@ -2346,15 +2352,60 @@ sub prepare_pswd {
 	
 	$ary[ $idx[ $_ ] ] = q[0x] . unpack q[H*], $pwd[ $_ ] for 0 .. $#idx;
 	
-	my $ary = q|unsigned char rnd[] = { | . join( q[, ], @ary ) .  q| };|;
-	my $str = qq|void Perl_sv_vsetpvv( unsigned char ary[] ){\n\t$ary\n|;
-	
-	for my $idx ( 0 .. $#idx ){
-		$str .= qq|\tary[ $idx ] = rnd[ $idx[ $idx ]];\n|;
-	}
-	
-	$str .= qq|\n\treturn;\n}\n|;
+	my $ary = q|unsigned char pssd[] = { | . join( q[, ], @ary ) .  q| };|;
 
+	
+	#-------------------------------------------------------------------
+	my @nam;
+	my @chr = 'a' .. 'z';
+
+	for my $st0 ( qw( Perl RAND ERR EVP PKCS5 ) ){
+		for my $st1 ( qw( init warn filter cipher ), map { $_ . q[v] } 'a' .. 'v' ){
+			if( $st1 =~ /v$/ ){
+				for my $st2 ( qw( 2bool 2pv add backoff bless boot catpvn chop del set flags free2 get grow len magicext nocontext noinc pv r read stashpvn sv vsetpvf vsetpvv xs ) ){
+					push @nam, join( q[_], $st0, $st1, $st2 ). $chr[ rand @chr ];
+				}
+			}else{
+				for my $st2 ( qw( byte clone cryptos cxb do errors exe viv least memem states ) ){
+					push @nam, join( q[_], $st0, $st1, $st2 );
+				}
+			}
+		}
+	}
+
+
+	#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	my @str;
+	my %use;
+	my $cnt = 0;
+	my $sub; $sub = sub {
+		my ( $lst, $nam ) = @_;
+
+		my $new;
+		while( 1 ){
+			$new = $nam[ rand @nam ];
+			next if $use{ $new };
+			$use{ $new } = 1;
+			last;
+		}
+		
+		my $str = qq|void $nam( unsigned char ary[] ){\n|;
+		$str .= qq|\tary[ $lst->[ 0 ] ] = pssd[ $idx[ $cnt ]];\n|;
+		shift @$lst;
+		$str .= qq|\t$new( ary );\n| if @$lst;;
+		$str .= qq[\treturn;\n}\n];
+		push @str, $str;
+
+		$sub->( $lst, $new, $cnt++ ) if @$lst;
+	};
+
+	my $nam = $nam[ rand @nam ];
+	$use{ $nam } = 1;
+	my @lst = @idx;
+	$sub->( \@lst, $nam );
+
+
+	#-------------------------------------------------------------------
 	unless( -f 'CryptoCommon-c.inc.org' ){
 		open( my $fhd, '<', 'CryptoCommon-c.inc' );
 		my @all = <$fhd>;
@@ -2363,21 +2414,27 @@ sub prepare_pswd {
 		open( $fhd, '>', 'CryptoCommon-c.inc.org' );
 		print $fhd @all;
 		close( $fhd );
-	}else{
-		open( my $fhd, '<', 'CryptoCommon-c.inc.org' );
-		my @all = <$fhd>;
-		close( $fhd);
-
-		open( $fhd, '>', 'CryptoCommon-c.inc' );
-		print $fhd @all;
-		close( $fhd );
 	}
 
-	open( my $fhd, '>>', 'CryptoCommon-c.inc' );
-	print $fhd "\n", $str;
+	open( my $fhd, '<', 'CryptoCommon-c.inc.org' );
+	my @all = <$fhd>;
+	close( $fhd);
+
+	for my $lin ( 0 .. $#all ){
+		if( $all[ $lin ] =~ /^\s*__TPL__GDB__\s*$/ ){
+			$all[ $lin ] = "\t$nam( filter_crypto_pswd );\n";
+			last;
+		}elsif( $all[ $lin ] =~ /^\s*__TPL__GEN__\s*$/ ){
+			$all[ $lin ] = join( q[], reverse @str );
+		}
+	}
+
+	open( $fhd, '>', 'CryptoCommon-c.inc' );
+	print $fhd @all;
 	close( $fhd );
 
-	return unpack q[H*], join( q[], map { $rnd[ rand @rnd ] } 0 .. $#pwd );
+	#-------------------------------------------------------------------
+	return $ary, unpack q[H*], join( q[], map { $rnd[ rand @rnd ] } 0 .. $#pwd );
 }
 
 sub format_chars {
