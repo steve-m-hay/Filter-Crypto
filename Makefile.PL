@@ -2285,6 +2285,7 @@ EOT
         if (defined $pswd) {
             $def = '#define FILTER_CRYPTO_USING_PBE    1';
 
+			# Original version. 
             #$pswd = $self->format_chars($pswd);
             #$var = "static const unsigned char filter_crypto_pswd[] = {\n" .
             #       "$pswd\n" .
