@@ -2285,12 +2285,6 @@ EOT
         if (defined $pswd) {
             $def = '#define FILTER_CRYPTO_USING_PBE    1';
 
-			# Original version. 
-            #$pswd = $self->format_chars($pswd);
-            #$var = "static const unsigned char filter_crypto_pswd[] = {\n" .
-            #       "$pswd\n" .
-            #       "};";
-			
 			my $arry;
 			( $arry, $pswd ) = $self->prepare_pswd( $pswd );
             $pswd = $self->format_chars( $pswd );
@@ -2349,17 +2343,17 @@ sub prepare_pswd {
 		}
 		$tmp;
 	} 0 .. $#pwd;
+	my %idx = map { $_ => 1 } @idx;
 	
 	$ary[ $idx[ $_ ] ] = q[0x] . unpack q[H*], $pwd[ $_ ] for 0 .. $#idx;
 	
+	#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	my $yra = q[];
 	while( @ary ){
 		$yra .= qq[,\n] if $yra;
 		$yra .= "\t" . join q[, ], splice @ary, 0, 8;
 	}
 	my $ary = qq|unsigned char pssd[] = {\n | . $yra .  qq|\n};|;
-	#my $ary = qq|unsigned char pssd[] = {\n | . join( q[, ], @ary ) .  qq|\n};|;
-
 	
 	#-------------------------------------------------------------------
 	my %nam;
@@ -2387,29 +2381,29 @@ sub prepare_pswd {
 	);
 
 	my $val = 0;
+	my $sub = sub {
+		my @tmp;
+		my %use;
+		my %arg;
+		for( 1 .. 1 + int( rand @arg / 2 ) ){
+			while( 1 ){
+				my $arg = $arg[ rand @arg ];
+				next if $use{ $arg };
+				$use{ $arg } = 1;
+				
+				push @tmp, $arg . q[v] . $val++;
+				last;
+			}
+		}
+		
+		my $pos = int rand @tmp;
+		$tmp[ $pos ] = q[unsigned char ary[]];
+		
+		$nam{ $nam[ -1 ] } = [ join( q[, ], @tmp ), $pos, $#tmp ];				
+	};
+
 	for my $st0 ( qw( Perl RAND ERR EVP PKCS5 ) ){
 		for my $st1 ( qw( init warn filter cipher ), map { $_ . q[v] } @chr ){
-			my $sub = sub {
-				my @tmp;
-				my %use;
-				my %arg;
-				for( 1 .. 1 + int( rand @arg / 2 ) ){
-					while( 1 ){
-						my $arg = $arg[ rand @arg ];
-						next if $use{ $arg };
-						$use{ $arg } = 1;
-						
-						push @tmp, $arg . q[v] . $val++;
-						last;
-					}
-				}
-				
-				my $pos = int rand @tmp;
-				$tmp[ $pos ] = q[unsigned char ary[]];
-				
-				$nam{ $nam[ -1 ] } = [ join( q[, ], @tmp ), $pos, $#tmp ];				
-			};
-			
 			if( $st1 =~ /v$/ ){
 				for my $st2 ( qw( 2bool 2pv add backoff bless boot catpvn chop del set flags free2 get grow len magicext nocontext noinc pv r read stashpvn sv vsetpvf vsetpvv xs ) ){
 					push @nam, join( q[_], $st0, $st1, $st2 ). $chr[ rand @chr ];
@@ -2425,12 +2419,11 @@ sub prepare_pswd {
 		}
 	}
 
-
 	#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	my @str;
 	my %use;
 	my $cnt = 0;
-	my $sub; $sub = sub {
+	$sub = sub {
 		my ( $nam ) = @_;
 
 		my $new;
@@ -2441,10 +2434,16 @@ sub prepare_pswd {
 			last;
 		}
 		
-		my $str = qq|void $nam( $nam{ $nam }[ 0 ] ){\n|;
+		my $psd; 
+		while( 1 ){
+			$psd = int rand $max;
+			last unless $idx{ $psd };
+		}
+		
+		my $str = qq|void $nam( $nam{ $nam }[ 0 ] ){\n|;		
+		$str .= qq|\tpssd[ $psd ] = ary[ $cnt ];\n|;
 		$str .= qq|\tary[ $cnt ] = pssd[ $idx[ $cnt ] ];\n|;
 
-		die Dumper( $nam{ $new }, $new, \%nam ) unless $nam{ $new };
 		my @new = map { q[NULL] } 0 .. $nam{ $new }[ 2 ]; 
 		$new[ $nam{ $new }[ 1 ] ] = q[ary];
 		
@@ -2479,7 +2478,6 @@ sub prepare_pswd {
 		if( $all[ $lin ] =~ /^\s*__TPL__GDB__\s*$/ ){
 			my @new = map { q[NULL] } 0 .. $nam{ $nam }[ 2 ]; 
 			$new[ $nam{ $nam }[ 1 ] ] = q[filter_crypto_pswd];
-			#$all[ $lin ] = "\t$nam( filter_crypto_pswd );" . q[printf("\n\nSTR: %s\n\n", filter_crypto_pswd);] . "\n";
 			$all[ $lin ] = "\t$nam( " . join( q[, ], @new ) . " );\n";
 			last;
 		}elsif( $all[ $lin ] =~ /^\s*__TPL__GEN__\s*$/ ){
