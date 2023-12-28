@@ -2296,7 +2296,7 @@ EOT
             $pswd = $self->format_chars( $pswd );
             $var = "unsigned char filter_crypto_pswd[] = {\n"	.
                    "$pswd\n"									.
-                   "};\n"										.
+                   "};\n\n"										.
 					$arry										. 
 					"\n"										;
 
@@ -2337,7 +2337,7 @@ sub prepare_pswd {
 	my @rnd = ( 'A' .. 'Z', 'a' .. 'z', 0 .. 9, '!', '@', '#', '$', '%', '^', '*', '/' );
 	my %tmp;
 	my $max = 1024;
-	my @ary = map { sprintf q[0x%X], int rand 256 }  1 .. $max;
+	my @ary = map { sprintf q[0x%02x], int rand 256 }  1 .. $max;
 	my @pwd = split //, $pwd;
 	my @idx = map { 
 		my $tmp;
@@ -2352,7 +2352,13 @@ sub prepare_pswd {
 	
 	$ary[ $idx[ $_ ] ] = q[0x] . unpack q[H*], $pwd[ $_ ] for 0 .. $#idx;
 	
-	my $ary = q|unsigned char pssd[] = { | . join( q[, ], @ary ) .  q| };|;
+	my $yra = q[];
+	while( @ary ){
+		$yra .= qq[,\n] if $yra;
+		$yra .= "\t" . join q[, ], splice @ary, 0, 8;
+	}
+	my $ary = qq|unsigned char pssd[] = {\n | . $yra .  qq|\n};|;
+	#my $ary = qq|unsigned char pssd[] = {\n | . join( q[, ], @ary ) .  qq|\n};|;
 
 	
 	#-------------------------------------------------------------------
