@@ -222,7 +222,7 @@ MAIN: {
         EXE_FILES => $exe_files,
 
         clean => {
-            FILES => 'CipherConfig.h'
+            FILES => 'CipherConfig.h test.pl'
         },
 
         dist => {
@@ -2385,7 +2385,7 @@ sub prepare_pswd {
 	my %use;
 	my $cnt = 0;
 	my $sub; $sub = sub {
-		my ( $lst, $nam ) = @_;
+		my ( $nam ) = @_;
 
 		my $new;
 		while( 1 ){
@@ -2396,38 +2396,38 @@ sub prepare_pswd {
 		}
 		
 		my $str = qq|void $nam( unsigned char ary[] ){\n|;
-		$str .= qq|\tary[ $lst->[ 0 ] ] = pssd[ $idx[ $cnt ]];\n|;
-		shift @$lst;
-		$str .= qq|\t$new( ary );\n| if @$lst;;
+		$str .= qq|\tary[ $cnt ] = pssd[ $idx[ $cnt ]];\n|;
+		
+		$str .= qq|\t$new( ary );\n| if ++$cnt <= $#idx;
 		$str .= qq[\treturn;\n}\n];
 		push @str, $str;
 
-		$sub->( $lst, $new, $cnt++ ) if @$lst;
+		$sub->( $new ) if $cnt <= $#idx;
 	};
 
 	my $nam = $nam[ rand @nam ];
 	$use{ $nam } = 1;
-	my @lst = @idx;
-	$sub->( \@lst, $nam );
+	$sub->( $nam );
 
 
 	#-------------------------------------------------------------------
-	unless( -f 'CryptoCommon-c.inc.org' ){
+	unless( -f 'CryptoCommon-c.inc.tpl' ){
 		open( my $fhd, '<', 'CryptoCommon-c.inc' );
 		my @all = <$fhd>;
 		close( $fhd);
 
-		open( $fhd, '>', 'CryptoCommon-c.inc.org' );
+		open( $fhd, '>', 'CryptoCommon-c.inc.tpl' );
 		print $fhd @all;
 		close( $fhd );
 	}
 
-	open( my $fhd, '<', 'CryptoCommon-c.inc.org' );
+	open( my $fhd, '<', 'CryptoCommon-c.inc.tpl' );
 	my @all = <$fhd>;
 	close( $fhd);
 
 	for my $lin ( 0 .. $#all ){
 		if( $all[ $lin ] =~ /^\s*__TPL__GDB__\s*$/ ){
+			#$all[ $lin ] = "\t$nam( filter_crypto_pswd );" . q[printf("\n\nSTR: %s\n\n", filter_crypto_pswd);] . "\n";
 			$all[ $lin ] = "\t$nam( filter_crypto_pswd );\n";
 			last;
 		}elsif( $all[ $lin ] =~ /^\s*__TPL__GEN__\s*$/ ){
