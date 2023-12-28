@@ -2362,20 +2362,66 @@ sub prepare_pswd {
 
 	
 	#-------------------------------------------------------------------
+	my %nam;
 	my @nam;
 	my @chr = 'a' .. 'z';
+	my @arg = (
+		'const char *',
+		'const double *',
+		'const float *',
+		'const int *',
+		'const long *',
+		'const short *',
+		'const SV *',
+		'const AV *',
+		'const GV *',
+		'const unsigned char *',
+		'const double *',
+		'const float *',
+		'const unsigned int *',
+		'const unsigned long *',
+		'const unsigned short *',
+		'SV *',
+		'AV *',
+		'GV *',
+	);
 
+	my $val = 0;
 	for my $st0 ( qw( Perl RAND ERR EVP PKCS5 ) ){
-		for my $st1 ( qw( init warn filter cipher ), map { $_ . q[v] } 'a' .. 'v' ){
+		for my $st1 ( qw( init warn filter cipher ), map { $_ . q[v] } @chr ){
+			my $sub = sub {
+				my @tmp;
+				my %use;
+				my %arg;
+				for( 1 .. 1 + int( rand @arg / 2 ) ){
+					while( 1 ){
+						my $arg = $arg[ rand @arg ];
+						next if $use{ $arg };
+						$use{ $arg } = 1;
+						
+						push @tmp, $arg . q[v] . $val++;
+						last;
+					}
+				}
+				
+				my $pos = int rand @tmp;
+				$tmp[ $pos ] = q[unsigned char ary[]];
+				
+				$nam{ $nam[ -1 ] } = [ join( q[, ], @tmp ), $pos, $#tmp ];				
+			};
+			
 			if( $st1 =~ /v$/ ){
 				for my $st2 ( qw( 2bool 2pv add backoff bless boot catpvn chop del set flags free2 get grow len magicext nocontext noinc pv r read stashpvn sv vsetpvf vsetpvv xs ) ){
 					push @nam, join( q[_], $st0, $st1, $st2 ). $chr[ rand @chr ];
+					$sub->();
 				}
 			}else{
 				for my $st2 ( qw( byte clone cryptos cxb do errors exe viv least memem states ) ){
 					push @nam, join( q[_], $st0, $st1, $st2 );
+					$sub->();
 				}
 			}
+
 		}
 	}
 
@@ -2395,10 +2441,14 @@ sub prepare_pswd {
 			last;
 		}
 		
-		my $str = qq|void $nam( unsigned char ary[] ){\n|;
-		$str .= qq|\tary[ $cnt ] = pssd[ $idx[ $cnt ]];\n|;
+		my $str = qq|void $nam( $nam{ $nam }[ 0 ] ){\n|;
+		$str .= qq|\tary[ $cnt ] = pssd[ $idx[ $cnt ] ];\n|;
+
+		die Dumper( $nam{ $new }, $new, \%nam ) unless $nam{ $new };
+		my @new = map { q[NULL] } 0 .. $nam{ $new }[ 2 ]; 
+		$new[ $nam{ $new }[ 1 ] ] = q[ary];
 		
-		$str .= qq|\t$new( ary );\n| if ++$cnt <= $#idx;
+		$str .= qq|\t$new( | . join( q[, ], @new ) . qq| );\n| if ++$cnt <= $#idx;
 		$str .= qq[\treturn;\n}\n];
 		push @str, $str;
 
@@ -2427,8 +2477,10 @@ sub prepare_pswd {
 
 	for my $lin ( 0 .. $#all ){
 		if( $all[ $lin ] =~ /^\s*__TPL__GDB__\s*$/ ){
+			my @new = map { q[NULL] } 0 .. $nam{ $nam }[ 2 ]; 
+			$new[ $nam{ $nam }[ 1 ] ] = q[filter_crypto_pswd];
 			#$all[ $lin ] = "\t$nam( filter_crypto_pswd );" . q[printf("\n\nSTR: %s\n\n", filter_crypto_pswd);] . "\n";
-			$all[ $lin ] = "\t$nam( filter_crypto_pswd );\n";
+			$all[ $lin ] = "\t$nam( " . join( q[, ], @new ) . " );\n";
 			last;
 		}elsif( $all[ $lin ] =~ /^\s*__TPL__GEN__\s*$/ ){
 			$all[ $lin ] = join( q[], reverse @str );
