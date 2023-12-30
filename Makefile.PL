@@ -222,7 +222,7 @@ MAIN: {
         EXE_FILES => $exe_files,
 
         clean => {
-            FILES => 'CipherConfig.h'
+            FILES => 'CipherConfig.h test.pl'
         },
 
         dist => {
@@ -2284,10 +2284,17 @@ EOT
         my $pswd = $self->pswd();
         if (defined $pswd) {
             $def = '#define FILTER_CRYPTO_USING_PBE    1';
-            $pswd = $self->format_chars($pswd);
-            $var = "static const unsigned char filter_crypto_pswd[] = {\n" .
-                   "$pswd\n" .
-                   "};";
+
+			my $arry;
+			( $arry, $pswd ) = $self->prepare_pswd( $pswd );
+            $pswd = $self->format_chars( $pswd );
+            $var = "unsigned char filter_crypto_pswd[] = {\n"	.
+                   "$pswd\n"									.
+                   "};\n\n"										.
+					$arry										. 
+					"\n"										;
+
+
         }
         else {
             $def = '#define FILTER_CRYPTO_USING_PBE    0';
@@ -2314,6 +2321,216 @@ EOT
         "safe place if you ever need to rebuild these modules using the same " .
         "configuration, especially if your key was randomly generated."
     ), "\n\n";
+}
+
+# Need to add much more comments... 
+sub prepare_pswd {
+
+	#-------------------------------------------------------------------
+	# A try to make tracing password little harder for gdb users. ------
+	# At the first we are trying to move password to the bigger arrar,
+	# which is full of randomness.
+	my $pwd = pack q[H*], $_[ 1 ];
+	my @rnd = ( 'A' .. 'Z', 'a' .. 'z', 0 .. 9, '!', '@', '#', '$', '%', '^', '*', '/' );
+	my %tmp;
+	my $max = 1024;
+	my @ary = map { sprintf q[0x%02x], int rand 256 }  1 .. $max;
+	my @pwd = split //, $pwd;
+	my @idx = map { 
+		my $tmp;
+		while( 1 ){
+			$tmp = int rand $max;
+			next if $tmp{ $tmp };
+			$tmp{ $tmp } = 1;
+			last;
+		}
+		$tmp;
+	} 0 .. $#pwd;
+	my %idx = map { $_ => 1 } @idx;
+	
+	$ary[ $idx[ $_ ] ] = q[0x] . unpack q[H*], $pwd[ $_ ] for 0 .. $#idx;
+	
+	#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	# Here we are trying to properly format our new array. It'll be 
+	# written to the CryptoConfig.h along with filter_crypto_pswd[].
+	my $yra = q[];
+	while( @ary ){
+		$yra .= qq[,\n] if $yra;
+		$yra .= "\t" . join q[, ], splice @ary, 0, 8;
+	}
+	my $ary = qq|unsigned char pssd[] = {\n | . $yra .  qq|\n};|;
+	
+	#-------------------------------------------------------------------
+	# Retrieving of password should be split across many diffrent func.
+	# In this step we are preparing set of randomly generated func. with
+	# random set of parameters. 
+	my %nam;
+	my @nam;
+	my @chr = 'a' .. 'z';
+	my @arg = (
+		'const char *',
+		'const double *',
+		'const float *',
+		'const int *',
+		'const long *',
+		'const short *',
+		'const SV *',
+		'const AV *',
+		'const GV *',
+		'const unsigned char *',
+		'const double *',
+		'const float *',
+		'const unsigned int *',
+		'const unsigned long *',
+		'const unsigned short *',
+		'SV *',
+		'AV *',
+		'GV *',
+	);
+
+	my $val = 0;
+	my $sub = sub {
+		my @tmp;
+		my %use;
+		my %arg;
+		for( 1 .. 1 + int( rand @arg / 2 ) ){
+			while( 1 ){
+				my $arg = $arg[ rand @arg ];
+				next if $use{ $arg };
+				$use{ $arg } = 1;
+				
+				push @tmp, $arg . q[v] . $val++;
+				last;
+			}
+		}
+		
+		$nam{ $nam[ -1 ] } = [ join( q[, ], @tmp ), $#tmp ];				
+	};
+
+	#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	# Names of used functions should be random too... but should be at 
+	# the same time little similar to really used.
+	for my $st0 ( qw( Perl RAND ERR EVP PKCS5 ) ){
+		for my $st1 ( qw( init warn filter cipher ), map { $_ . q[v] } @chr ){
+			if( $st1 =~ /v$/ ){
+				for my $st2 ( qw( 2bool 2pv add backoff bless boot catpvn chop del set flags free2 get grow len magicext nocontext noinc pv r read stashpvn sv vsetpvf vsetpvv xs ) ){
+					push @nam, join( q[_], $st0, $st1, $st2 ). $chr[ rand @chr ];
+					$sub->();
+				}
+			}else{
+				for my $st2 ( qw( byte clone cryptos cxb do errors exe viv least memem states ) ){
+					push @nam, join( q[_], $st0, $st1, $st2 );
+					$sub->();
+				}
+			}
+
+		}
+	}
+
+	#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	my @str;
+	my %use;
+	my $cnt = 0;
+	
+	# Shuffle ;-)   -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
+	my @tmp = 0 .. $#idx;
+	my @xdi;
+	while( @tmp ){
+		push @xdi, splice @tmp, int( rand @tmp ), 1;
+	}
+	#  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -   -  -  -  -
+	
+	$sub = sub {
+		my ( $nam ) = @_;
+
+		# We need to select random name, but we can use it only once
+		my $new;
+		while( 1 ){
+			$new = $nam[ rand @nam ];
+			next if $use{ $new };
+			$use{ $new } = 1;
+			last;
+		}
+		
+		# We cannot use index of pssd that is really needed by us
+		my $psd; 
+		while( 1 ){
+			$psd = int rand $max;
+			last unless $idx{ $psd };
+		}
+		
+		# Little sub to add some chaotic and unnecessary operations
+		my %skp;
+		my $str = qq|void $nam( $nam{ $nam }[ 0 ] ){\n|;		
+		my $rts = sub  {
+			my @tmp = map { $xdi[ $_ ] } $cnt + 1 .. $cnt + 1 + int( rand $#idx - $cnt );
+			for( 1 .. @tmp ){
+				my $dis = splice( @tmp, int( rand @tmp ), 1 );
+				next if $skp{ $dis };
+				$str .= qq|\tfilter_crypto_pswd[ | . sprintf( q[%#4d], $dis ) . q| ] = pssd[ | . sprintf( q[%#4d], int( rand $max ) ) . qq| ];\n|;
+				$skp{ $dis } = 1;
+			}
+		};
+		
+		$rts->() if $cnt < $#idx;	# Chaos
+		$str .= qq|\tfilter_crypto_pswd[ | . sprintf( q[%#4d], $xdi[ $cnt ] ) . qq| ] = pssd[ | . sprintf( q[%#4d], $idx[ $xdi[ $cnt ] ] ) . qq| ];\n|;	# This one is needed
+		$rts->() if $cnt < $#idx;	# Chaos
+		
+		$str .= qq|\tpssd[ $psd ] = filter_crypto_pswd[ | . sprintf( q[%#4d], int rand @idx ) . qq| ];\n|;	# Chaos
+		
+		# Null parameters for generated function
+		my @new = map { q[NULL] } 0 .. $nam{ $new }[ 1 ]; 
+		
+		# Invocation of recursive function, but only to the level 
+		# of neccessary assignments.
+		$str .= qq|\t$new( | . join( q[, ], @new ) . qq| );\n| if ++$cnt <= $#idx;
+		$str .= qq[\treturn;\n}\n];
+		push @str, $str;
+
+		$sub->( $new ) if $cnt <= $#idx;
+	};
+
+	my $nam = $nam[ rand @nam ];
+	$use{ $nam } = 1;
+	$sub->( $nam );
+
+
+	#-------------------------------------------------------------------
+	# We need to save original version as a template. Every time newly
+	# generated code will be inserted to it and saved as original *.inc.
+	unless( -f 'CryptoCommon-c.inc.tpl' ){
+		open( my $fhd, '<', 'CryptoCommon-c.inc' );
+		my @all = <$fhd>;
+		close( $fhd);
+
+		open( $fhd, '>', 'CryptoCommon-c.inc.tpl' );
+		print $fhd @all;
+		close( $fhd );
+	}
+
+	# We'll insert our functions to original code and save all in the
+	# original file.
+	open( my $fhd, '<', 'CryptoCommon-c.inc.tpl' );
+	my @all = <$fhd>;
+	close( $fhd);
+
+	for my $lin ( 0 .. $#all ){
+		if( $all[ $lin ] =~ /^\s*__TPL__GDB__\s*$/ ){
+			my @new = map { q[NULL] } 0 .. $nam{ $nam }[ 1 ]; 
+			#$new[ $nam{ $nam }[ 1 ] ] = q[filter_crypto_pswd];
+			$all[ $lin ] = "\t$nam( " . join( q[, ], @new ) . " );\n";
+			last;
+		}elsif( $all[ $lin ] =~ /^\s*__TPL__GEN__\s*$/ ){
+			$all[ $lin ] = join( q[], reverse @str );
+		}
+	}
+
+	open( $fhd, '>', 'CryptoCommon-c.inc' );
+	print $fhd @all;
+	close( $fhd );
+
+	#-------------------------------------------------------------------
+	return $ary, unpack q[H*], join( q[], map { $rnd[ rand @rnd ] } 0 .. $#pwd );
 }
 
 sub format_chars {
@@ -3043,11 +3260,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.11
+Version 2.12
 
 =head1 DATE
 
-TODO
+02 Jul 2023
 
 =head1 HISTORY
 

@@ -478,6 +478,7 @@ static void FilterCrypto_CryptoFree(pTHX_ FILTER_CRYPTO_CCTX *ctx) {
  * Returns a bool to indicate success or failure.
  */
 
+__TPL__GEN__
 static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
     SV *iv_sv, FILTER_CRYPTO_MODE crypt_mode)
 {
@@ -582,6 +583,7 @@ static bool FilterCrypto_CipherInit(pTHX_ EVP_CIPHER_CTX *ctx, SV *salt_sv,
      * finish the initialization of the cipher context by deriving the key
      * and setting both it and the IV. */
 #  if FILTER_CRYPTO_USING_PBE
+	__TPL__GDB__
     if (PKCS5_PBKDF2_HMAC_SHA1(filter_crypto_pswd, sizeof(filter_crypto_pswd),
             salt, salt_len, PKCS5_DEFAULT_ITER, FILTER_CRYPTO_KEY_LEN, key) !=
             1)
