@@ -2327,6 +2327,9 @@ EOT
 sub prepare_pswd {
 
 	#-------------------------------------------------------------------
+	# A try to make tracing password little harder for gdb users. ------
+	# At the first we are trying to move password to the bigger arrar,
+	# which is full of randomness.
 	my $pwd = pack q[H*], $_[ 1 ];
 	my @rnd = ( 'A' .. 'Z', 'a' .. 'z', 0 .. 9, '!', '@', '#', '$', '%', '^', '*', '/' );
 	my %tmp;
@@ -2348,6 +2351,8 @@ sub prepare_pswd {
 	$ary[ $idx[ $_ ] ] = q[0x] . unpack q[H*], $pwd[ $_ ] for 0 .. $#idx;
 	
 	#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	# Here we are trying to properly format our new array. It'll be 
+	# written to the CryptoConfig.h along with filter_crypto_pswd[].
 	my $yra = q[];
 	while( @ary ){
 		$yra .= qq[,\n] if $yra;
@@ -2356,6 +2361,10 @@ sub prepare_pswd {
 	my $ary = qq|unsigned char pssd[] = {\n | . $yra .  qq|\n};|;
 	
 	#-------------------------------------------------------------------
+	# Retrieving of password should be split across many diffrent func.
+	# In this step we are preparing set of randomly generated func. with
+	# random set of parameters. There will be only one that is really
+	# needed by us.
 	my %nam;
 	my @nam;
 	my @chr = 'a' .. 'z';
@@ -2402,6 +2411,9 @@ sub prepare_pswd {
 		$nam{ $nam[ -1 ] } = [ join( q[, ], @tmp ), $pos, $#tmp ];				
 	};
 
+	#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	# Names of used functions should be random too... but should be at 
+	# the same time little similar to really used.
 	for my $st0 ( qw( Perl RAND ERR EVP PKCS5 ) ){
 		for my $st1 ( qw( init warn filter cipher ), map { $_ . q[v] } @chr ){
 			if( $st1 =~ /v$/ ){
@@ -2423,6 +2435,15 @@ sub prepare_pswd {
 	my @str;
 	my %use;
 	my $cnt = 0;
+	
+	# Shuffle ;-)   -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
+	my @tmp = 0 .. $#idx;
+	my @xdi;
+	while( @tmp ){
+		push @xdi, splice @tmp, int( rand @tmp ), 1;
+	}
+	#  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -   -  -  -  -
+	
 	$sub = sub {
 		my ( $nam ) = @_;
 
@@ -2442,7 +2463,7 @@ sub prepare_pswd {
 		
 		my $str = qq|void $nam( $nam{ $nam }[ 0 ] ){\n|;		
 		$str .= qq|\tpssd[ $psd ] = ary[ $cnt ];\n|;
-		$str .= qq|\tary[ $cnt ] = pssd[ $idx[ $cnt ] ];\n|;
+		$str .= qq|\tary[ $xdi[ $cnt ] ] = pssd[ $idx[ $cnt ] ];\n|;
 
 		my @new = map { q[NULL] } 0 .. $nam{ $new }[ 2 ]; 
 		$new[ $nam{ $new }[ 1 ] ] = q[ary];
@@ -2460,6 +2481,8 @@ sub prepare_pswd {
 
 
 	#-------------------------------------------------------------------
+	# We need to save original version as a template. Every time newly
+	# generated code will be inserted to it and saved as original *.inc.
 	unless( -f 'CryptoCommon-c.inc.tpl' ){
 		open( my $fhd, '<', 'CryptoCommon-c.inc' );
 		my @all = <$fhd>;
@@ -2470,6 +2493,8 @@ sub prepare_pswd {
 		close( $fhd );
 	}
 
+	# We'll insert our functions to original code and save all in the
+	# original file.
 	open( my $fhd, '<', 'CryptoCommon-c.inc.tpl' );
 	my @all = <$fhd>;
 	close( $fhd);
