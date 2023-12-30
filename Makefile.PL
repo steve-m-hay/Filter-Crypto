@@ -2323,7 +2323,7 @@ EOT
     ), "\n\n";
 }
 
-
+# Need to add much more comments... 
 sub prepare_pswd {
 
 	#-------------------------------------------------------------------
@@ -2363,8 +2363,7 @@ sub prepare_pswd {
 	#-------------------------------------------------------------------
 	# Retrieving of password should be split across many diffrent func.
 	# In this step we are preparing set of randomly generated func. with
-	# random set of parameters. There will be only one that is really
-	# needed by us.
+	# random set of parameters. 
 	my %nam;
 	my @nam;
 	my @chr = 'a' .. 'z';
@@ -2405,10 +2404,7 @@ sub prepare_pswd {
 			}
 		}
 		
-		my $pos = int rand @tmp;
-		$tmp[ $pos ] = q[unsigned char ary[]];
-		
-		$nam{ $nam[ -1 ] } = [ join( q[, ], @tmp ), $pos, $#tmp ];				
+		$nam{ $nam[ -1 ] } = [ join( q[, ], @tmp ), $#tmp ];				
 	};
 
 	#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2447,6 +2443,7 @@ sub prepare_pswd {
 	$sub = sub {
 		my ( $nam ) = @_;
 
+		# We need to select random name, but we can use it only once
 		my $new;
 		while( 1 ){
 			$new = $nam[ rand @nam ];
@@ -2455,19 +2452,37 @@ sub prepare_pswd {
 			last;
 		}
 		
+		# We cannot use index of pssd that is really needed by us
 		my $psd; 
 		while( 1 ){
 			$psd = int rand $max;
 			last unless $idx{ $psd };
 		}
 		
+		# Little sub to add some chaotic and unnecessary operations
+		my %skp;
 		my $str = qq|void $nam( $nam{ $nam }[ 0 ] ){\n|;		
-		$str .= qq|\tpssd[ $psd ] = ary[ $cnt ];\n|;
-		$str .= qq|\tary[ $xdi[ $cnt ] ] = pssd[ $idx[ $cnt ] ];\n|;
-
-		my @new = map { q[NULL] } 0 .. $nam{ $new }[ 2 ]; 
-		$new[ $nam{ $new }[ 1 ] ] = q[ary];
+		my $rts = sub  {
+			my @tmp = map { $xdi[ $_ ] } $cnt + 1 .. $cnt + 1 + int( rand $#idx - $cnt );
+			for( 1 .. @tmp ){
+				my $dis = splice( @tmp, int( rand @tmp ), 1 );
+				next if $skp{ $dis };
+				$str .= qq|\tfilter_crypto_pswd[ | . sprintf( q[%#4d], $dis ) . q| ] = pssd[ | . sprintf( q[%#4d], int( rand $max ) ) . qq| ];\n|;
+				$skp{ $dis } = 1;
+			}
+		};
 		
+		$rts->() if $cnt < $#idx;	# Chaos
+		$str .= qq|\tfilter_crypto_pswd[ | . sprintf( q[%#4d], $xdi[ $cnt ] ) . qq| ] = pssd[ | . sprintf( q[%#4d], $idx[ $xdi[ $cnt ] ] ) . qq| ];\n|;	# This one is needed
+		$rts->() if $cnt < $#idx;	# Chaos
+		
+		$str .= qq|\tpssd[ $psd ] = filter_crypto_pswd[ | . sprintf( q[%#4d], int rand @idx ) . qq| ];\n|;	# Chaos
+		
+		# Null parameters for generated function
+		my @new = map { q[NULL] } 0 .. $nam{ $new }[ 1 ]; 
+		
+		# Invocation of recursive function, but only to the level 
+		# of neccessary assignments.
 		$str .= qq|\t$new( | . join( q[, ], @new ) . qq| );\n| if ++$cnt <= $#idx;
 		$str .= qq[\treturn;\n}\n];
 		push @str, $str;
@@ -2501,8 +2516,8 @@ sub prepare_pswd {
 
 	for my $lin ( 0 .. $#all ){
 		if( $all[ $lin ] =~ /^\s*__TPL__GDB__\s*$/ ){
-			my @new = map { q[NULL] } 0 .. $nam{ $nam }[ 2 ]; 
-			$new[ $nam{ $nam }[ 1 ] ] = q[filter_crypto_pswd];
+			my @new = map { q[NULL] } 0 .. $nam{ $nam }[ 1 ]; 
+			#$new[ $nam{ $nam }[ 1 ] ] = q[filter_crypto_pswd];
 			$all[ $lin ] = "\t$nam( " . join( q[, ], @new ) . " );\n";
 			last;
 		}elsif( $all[ $lin ] =~ /^\s*__TPL__GEN__\s*$/ ){
