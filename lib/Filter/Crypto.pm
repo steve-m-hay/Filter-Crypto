@@ -248,9 +248,6 @@ L<https://www.cpantesters.org/> for details of how to get involved.
 Previous test results on CPAN Testers Reports can be viewed at
 L<https://www.cpantesters.org/distro/F/Filter-Crypto.html>.
 
-Please rate this distribution on CPAN Ratings at
-L<https://cpanratings.perl.org/rate/?distribution=Filter-Crypto>.
-
 =head1 SEE ALSO
 
 B<crypt_file>;
