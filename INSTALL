@@ -8,7 +8,7 @@ PREREQUISITES
         your perl itself, although this is not essential.  (However, there is a
         known compatibility problem when building this module with Visual Studio
         .NET 2002/2003 (VC7) or earlier if your perl was built with Visual
-        Studio 2005 (VC8) or later: see Perl RT#121448.)
+        Studio 2005 (VC8) or later: see Perl GH#13667.)
 
     OpenSSL
 

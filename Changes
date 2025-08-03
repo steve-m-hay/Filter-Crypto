@@ -83,7 +83,7 @@ Revision history for Perl distribution Filter-Crypto
       after all.  Note, however, that there is still a compatibility problem
       when building this module with Visual Studio .NET 2002/2003 (VC7) or
       earlier if your perl was built with Visual Studio 2005 (VC8) or later: see
-      Perl RT#121448.  However, that is quite an unlikely scenario, so it is not
+      Perl GH#13667.  However, that is quite an unlikely scenario, so it is not
       worth checking for in Makefile.PL.
 
     - Changed all PerlLIO_*() function calls to the corresponding lowio
